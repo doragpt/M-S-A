@@ -52,19 +52,16 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     即ヒメ（待機中）人数をカウントします。
     """
     async with semaphore:
-        # URLが"/"で終わらない場合は追加する
         if not url.endswith("/"):
             url += "/"
         attend_url = url + "attend/soon/"
 
-        # 初回アクセス
         page = await browser.newPage()
         try:
             await stealth(page)
         except Exception as e:
             print("stealth 適用エラー:", e)
 
-        # User-Agent の設定（ブラウザらしく振る舞う）
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
@@ -75,7 +72,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         if not success:
             await page.close()
             return {}
-        await asyncio.sleep(1)  # レンダリング完了待ち
+        await asyncio.sleep(1)
         content = await page.content()
         await page.close()
         soup = BeautifulSoup(content, "html.parser")
@@ -83,12 +80,14 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         # 初期値として店舗情報を「不明」と設定
         store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
 
-        # まず、<span class="logoarea"> があれば、エリア情報として取得
-        logoarea_elem = soup.find("span", class_="logoarea")
-        if logoarea_elem:
-            area = logoarea_elem.get_text(strip=True)
+        # 【変更部分】まず、エリア情報は <li class="area_menu_item current"> から取得する
+        current_area_elem = soup.find("li", class_="area_menu_item current")
+        if current_area_elem:
+            a_elem = current_area_elem.find("a")
+            if a_elem:
+                area = a_elem.get_text(strip=True)
 
-        # 不明の場合、再取得を試みる
+        # 以下、店舗情報（店舗名、業種、ジャンル）の取得（エリアは上書きしない）
         attempt = 0
         while attempt < MAX_RETRIES_FOR_INFO:
             menushop_div = soup.find("div", class_="menushopname none")
@@ -100,10 +99,8 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     match = re.search(r"(.+?)\((.+?)/(.+?)\)", store_info)
                     if match:
                         biz_type, genre, extracted_area = match.groups()
-                        # エリア情報は、<span class="logoarea"> の内容がある場合はそちらを優先
                         if area == "不明":
                             area = extracted_area
-            # もし有効な店舗名が取得できたらループを抜ける
             if store_name != "不明":
                 break
             attempt += 1
@@ -125,17 +122,17 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             content = await page.content()
             await page.close()
             soup = BeautifulSoup(content, "html.parser")
-            # 再取得時も logoarea をチェック
-            logoarea_elem = soup.find("span", class_="logoarea")
-            if logoarea_elem:
-                area = logoarea_elem.get_text(strip=True)
+            # 再取得時も、エリア情報は <li class="area_menu_item current"> から取得する
+            current_area_elem = soup.find("li", class_="area_menu_item current")
+            if current_area_elem:
+                a_elem = current_area_elem.find("a")
+                if a_elem:
+                    area = a_elem.get_text(strip=True)
 
-        # すべての再試行後も「不明」の場合は、データ取得失敗として空の辞書を返す
         if store_name == "不明":
             print("再取得に失敗: ", url)
             return {}
 
-        # 「本日」タブ内のシフト情報取得
         container = soup.find("div", class_="shukkin-list-container")
         if not container:
             return {
@@ -157,11 +154,9 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         working_staff = 0
         active_staff = 0
 
-        # 現在の日本時間（JST）を取得
         jst = pytz.timezone('Asia/Tokyo')
         current_time = datetime.now(jst)
 
-        # 各シフト枠を解析
         for wrapper in wrappers:
             title_elem = wrapper.find("div", class_="title")
             title_text = title_elem.get_text(strip=True) if title_elem else ""
@@ -170,14 +165,11 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 text = p_elem.get_text(strip=True)
                 if not text:
                     continue
-                # 「明日」「次回」「出勤予定」「お休み」が含まれる場合はスキップ
                 if any(kw in text for kw in ["明日", "次回", "出勤予定", "お休み"]):
                     continue
-                # 「完売」が含まれる場合は総出勤のみカウント
                 if "完売" in text:
                     total_staff += 1
                     continue
-                # 時刻パターン（例："10:00～15:00"）を抽出
                 match = re.search(r"(\d{1,2}):(\d{2})～(\d{1,2}):(\d{2})", text)
                 if match:
                     start_h, start_m, end_h, end_m = map(int, match.groups())
@@ -188,10 +180,8 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     if end_time < start_time:
                         end_time += timedelta(days=1)
                     total_staff += 1
-                    # 勤務中の場合、working_staffにカウント
                     if start_time <= current_time <= end_time:
                         working_staff += 1
-                        # タイトルまたはテキストに「待機中」が含まれる場合は active_staff にもカウント
                         if "待機中" in text or "待機中" in title_text:
                             active_staff += 1
 
@@ -218,7 +208,7 @@ async def _scrape_all(store_urls: list) -> list:
         list: 各店舗のスクレイピング結果をまとめたリスト（各要素は辞書）。
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = '/usr/bin/chromium-browser'
+    executable_path = '/usr/bin/google-chrome'
     browser = await launch(
         headless=True,
         executablePath=executable_path,
@@ -239,7 +229,6 @@ async def _scrape_all(store_urls: list) -> list:
     )
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # バッチ処理で実行（MAX_CONCURRENT_TASKS ごとに）
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
