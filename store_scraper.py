@@ -9,9 +9,9 @@ store_scraper.py
   - 複数店舗のスクレイピングを同時に（ただし並列数制限付きで）実行する。
 
 関数:
-  - fetch_page(page, url, retries=3): 指定URLのページ読み込みをリトライ付きで実施。
+  - fetch_page(page, url, retries=3): 指定URLのページ読み込みにリトライを含む。
   - scrape_store(browser, url, semaphore): 単一店舗のスクレイピング処理。再試行も含む。
-  - _scrape_all(store_urls): 全店舗URLリストに対し、並列スクレイピングを実行。
+  - _scrape_all(store_urls): 全店舗のスクレイピングを並列実行する。
   - scrape_store_data(store_urls): 非同期処理を同期的に実行するためのラッパー関数。
 """
 
@@ -33,14 +33,6 @@ MAX_RETRIES_FOR_INFO = 3
 async def fetch_page(page, url, retries=3):
     """
     指定したページオブジェクトで、URLのページを読み込む（リトライ付き）。
-
-    Args:
-        page: pyppeteer の Page オブジェクト。
-        url (str): 読み込むURL。
-        retries (int): リトライ回数（初期値: 3）。
-
-    Returns:
-        bool: ページの読み込みに成功した場合は True、失敗した場合は False。
     """
     for attempt in range(retries):
         try:
@@ -58,14 +50,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     店舗情報（店舗名、業種、ジャンル、エリア）を取得し、もし「不明」となった場合は
     MAX_RETRIES_FOR_INFO 回まで再取得を試みます。また、シフト情報から総出勤数、勤務中人数、
     即ヒメ（待機中）人数をカウントします。
-
-    Args:
-        browser: pyppeteer の Browser オブジェクト。
-        url (str): 店舗の基本URL。
-        semaphore: 並列実行数を制御するための asyncio.Semaphore オブジェクト。
-
-    Returns:
-        dict: スクレイピング結果の辞書。取得に失敗した場合は空の辞書を返す。
     """
     async with semaphore:
         # URLが"/"で終わらない場合は追加する
@@ -99,6 +83,11 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         # 初期値として店舗情報を「不明」と設定
         store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
 
+        # まず、<span class="logoarea"> があれば、エリア情報として取得
+        logoarea_elem = soup.find("span", class_="logoarea")
+        if logoarea_elem:
+            area = logoarea_elem.get_text(strip=True)
+
         # 不明の場合、再取得を試みる
         attempt = 0
         while attempt < MAX_RETRIES_FOR_INFO:
@@ -110,7 +99,10 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     store_info = h1_elem.next_sibling.strip() if h1_elem.next_sibling else ""
                     match = re.search(r"(.+?)\((.+?)/(.+?)\)", store_info)
                     if match:
-                        biz_type, genre, area = match.groups()
+                        biz_type, genre, extracted_area = match.groups()
+                        # エリア情報は、<span class="logoarea"> の内容がある場合はそちらを優先
+                        if area == "不明":
+                            area = extracted_area
             # もし有効な店舗名が取得できたらループを抜ける
             if store_name != "不明":
                 break
@@ -133,6 +125,10 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             content = await page.content()
             await page.close()
             soup = BeautifulSoup(content, "html.parser")
+            # 再取得時も logoarea をチェック
+            logoarea_elem = soup.find("span", class_="logoarea")
+            if logoarea_elem:
+                area = logoarea_elem.get_text(strip=True)
 
         # すべての再試行後も「不明」の場合は、データ取得失敗として空の辞書を返す
         if store_name == "不明":
@@ -189,13 +185,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     start_time = jst.localize(start_time)
                     end_time = datetime.combine(current_time.date(), datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time())
                     end_time = jst.localize(end_time)
-                    # シフトが日付をまたぐ場合の補正
                     if end_time < start_time:
                         end_time += timedelta(days=1)
                     total_staff += 1
+                    # 勤務中の場合、working_staffにカウント
                     if start_time <= current_time <= end_time:
                         working_staff += 1
-                        # 「待機中」が含まれる場合は active_staff にもカウント
+                        # タイトルまたはテキストに「待機中」が含まれる場合は active_staff にもカウント
                         if "待機中" in text or "待機中" in title_text:
                             active_staff += 1
 
@@ -222,7 +218,7 @@ async def _scrape_all(store_urls: list) -> list:
         list: 各店舗のスクレイピング結果をまとめたリスト（各要素は辞書）。
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = r"/usr/bin/google-chrome"
+    executable_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     browser = await launch(
         headless=True,
         executablePath=executable_path,
