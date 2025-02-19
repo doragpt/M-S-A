@@ -271,4 +271,4 @@ def index():
 # ---------------------------------------------------------------------
 if __name__ == '__main__':
     # 開発用デバッグモード (本番環境では不要)
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
