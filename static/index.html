@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>店舗稼働状況</title>
+  <!-- manifest.json のパスを指定 -->
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js のCDN読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .favorite-btn { cursor: pointer; font-size: 1.5rem; }
+    /* 必要に応じてテーブルセル内で省略表示する方法もありますが、今回はJSで短縮 */
+  </style>
+</head>
+<body>
+  <div class="container my-4">
+    <h1 class="text-center mb-4">店舗稼働状況</h1>
+    
+    <!-- コントロールエリア -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <input type="text" id="filter" class="form-control" placeholder="店舗名／業種／ジャンル／エリア">
+      </div>
+      <div class="col-md-4">
+        <button id="sortRanking" class="btn btn-primary w-100">ランキング順にソート</button>
+      </div>
+      <div class="col-md-4 d-flex align-items-center">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="favoritesOnly">
+          <label class="form-check-label" for="favoritesOnly">お気に入りのみ表示</label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- テーブル表示エリア -->
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>店舗名</th>
+            <th>業種</th>
+            <th>ジャンル</th>
+            <th>エリア</th>
+            <th>総出勤</th>
+            <th>勤務中</th>
+            <th>即ヒメ</th>
+            <th>稼働率 (%)</th>
+            <th>URL</th>
+            <th>お気に入り</th>
+          </tr>
+        </thead>
+        <tbody id="data">
+          <!-- データはここに挿入 -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- グラフ表示エリア -->
+    <div class="my-4">
+      <div class="card">
+        <div class="card-body">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bootstrap 5 JS Bundle (Popper含む) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let globalData = [];
+    let chartInstance = null;
+    
+    // お気に入り管理 (localStorage)
+    function getFavorites() {
+      const fav = localStorage.getItem('favorites');
+      return fav ? JSON.parse(fav) : [];
+    }
+    function setFavorites(favs) {
+      localStorage.setItem('favorites', JSON.stringify(favs));
+    }
+    function toggleFavorite(storeName) {
+      let favs = getFavorites();
+      if (favs.includes(storeName)) {
+        favs = favs.filter(name => name !== storeName);
+      } else {
+        favs.push(storeName);
+      }
+      setFavorites(favs);
+      renderTable(filteredData());
+    }
+    
+    // 短縮表示用関数
+    function shortenText(text, maxLength = 30) {
+      return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    }
+    
+    // フィルタ処理（テキストフィルタとお気に入りのみ表示）
+    function filteredData() {
+      const filterText = document.getElementById('filter').value.toLowerCase();
+      const favoritesOnly = document.getElementById('favoritesOnly').checked;
+      let data = globalData.filter(store => {
+        return (
+          (store.store_name && store.store_name.toLowerCase().includes(filterText)) ||
+          (store.biz_type && store.biz_type.toLowerCase().includes(filterText)) ||
+          (store.genre && store.genre.toLowerCase().includes(filterText)) ||
+          (store.area && store.area.toLowerCase().includes(filterText))
+        );
+      });
+      if (favoritesOnly) {
+        const favs = getFavorites();
+        data = data.filter(store => favs.includes(store.store_name));
+      }
+      return data;
+    }
+    
+    // 稼働率計算：((勤務中 - 即ヒメ) / 勤務中) * 100
+    function calcRate(store) {
+      return store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
+    }
+    
+    // APIからデータを取得し、テーブルとグラフを描画
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        globalData = data;
+        renderTable(globalData);
+        renderChart(globalData);
+        
+        document.getElementById('filter').addEventListener('keyup', () => {
+          const filtered = filteredData();
+          renderTable(filtered);
+          renderChart(filtered);
+        });
+        document.getElementById('favoritesOnly').addEventListener('change', () => {
+          const filtered = filteredData();
+          renderTable(filtered);
+          renderChart(filtered);
+        });
+        document.getElementById('sortRanking').addEventListener('click', () => {
+          const sorted = [...globalData].sort((a, b) => calcRate(b) - calcRate(a));
+          renderTable(sorted);
+          renderChart(sorted);
+        });
+      })
+      .catch(err => console.error(err));
+      
+    // テーブル描画関数
+    function renderTable(data) {
+      const container = document.getElementById('data');
+      container.innerHTML = '';
+      const favs = getFavorites();
+      data.forEach(store => {
+        const rate = store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
+        const isFav = favs.includes(store.store_name);
+        // 店舗名は短縮して表示し、title属性でフル名を表示
+        const shortName = shortenText(store.store_name);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td title="${store.store_name}">${shortName}</td>
+          <td>${store.biz_type || ''}</td>
+          <td>${store.genre || ''}</td>
+          <td>${store.area || ''}</td>
+          <td>${store.total_staff}</td>
+          <td>${store.working_staff}</td>
+          <td>${store.active_staff}</td>
+          <td>${rate}</td>
+          <td><a href="${store.url}" target="_blank" class="btn btn-sm btn-outline-primary">リンク</a></td>
+          <td><span class="favorite-btn" onclick="toggleFavorite('${store.store_name}')">${isFav ? '★' : '☆'}</span></td>
+        `;
+        container.appendChild(tr);
+      });
+    }
+    
+    // グラフ描画関数（店舗別 稼働率 (%)）
+    function renderChart(data) {
+      // グラフ用の店舗名も短縮して表示
+      const labels = data.map(store => shortenText(store.store_name, 20));
+      const rates = data.map(store => store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0);
+      
+      const ctx = document.getElementById('chart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '稼働率 (%)',
+            data: rates,
+            backgroundColor: 'rgba(63, 81, 181, 0.6)',
+            borderColor: 'rgba(63, 81, 181, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: '店舗別 稼働率 (%)',
+              font: { size: 20 }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: '稼働率 (%)',
+                font: { size: 16 }
+              },
+              ticks: { font: { size: 14 } }
+            },
+            x: {
+              title: {
+                display: true,
+                text: '店舗名',
+                font: { size: 16 }
+              },
+              ticks: { font: { size: 14 } }
+            }
+          },
+          layout: { padding: { top: 20, bottom: 20 } }
+        }
+      });
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
+  </script>
+</body>
+</html>

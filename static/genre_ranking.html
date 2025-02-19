@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>業種別 ジャンルランキング</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+<div class="container my-4">
+  <h1 class="text-center mb-4">業種別 ジャンルランキング</h1>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="industrySelect" class="form-label">業種を選択</label>
+      <select id="industrySelect" class="form-select"></select>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="mb-3">集計結果</h3>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead class="table-light">
+          <tr>
+            <th>ジャンル</th>
+            <th>店舗数</th>
+            <th>平均稼働率 (%)</th>
+          </tr>
+          </thead>
+          <tbody id="genreTable">
+          <!-- 集計結果はここに表示 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <canvas id="genreChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Bootstrap 5 JS Bundle (Popper含む) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    let globalData = [];
+    let genreChart = null;
+
+    // Calculate 稼働率: ((勤務中 - 即ヒメ) / 勤務中) * 100
+    function calcRate(store) {
+      return store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
+    }
+
+    // Fetch data from /api/data
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        globalData = data;
+        populateIndustryDropdown(data);
+        // 初期選択された業種で集計を更新
+        const selectedIndustry = document.getElementById('industrySelect').value;
+        if(selectedIndustry) {
+          updateGenreRanking(selectedIndustry);
+        }
+      })
+      .catch(err => console.error(err));
+
+    // Populate the industry dropdown with unique biz_type values
+    function populateIndustryDropdown(data) {
+      const industrySet = new Set();
+      data.forEach(store => {
+        if (store.biz_type) {
+          industrySet.add(store.biz_type);
+        }
+      });
+      const industrySelect = document.getElementById('industrySelect');
+      industrySelect.innerHTML = '';
+      industrySet.forEach(industry => {
+        const option = document.createElement('option');
+        option.value = industry;
+        option.textContent = industry;
+        industrySelect.appendChild(option);
+      });
+      industrySelect.addEventListener('change', function () {
+        updateGenreRanking(this.value);
+      });
+    }
+
+    // Update genre ranking for the selected industry
+    function updateGenreRanking(selectedIndustry) {
+      // Filter data by selected industry
+      const filteredData = globalData.filter(store => store.biz_type === selectedIndustry);
+      // Group by genre
+      const genreGroups = {};
+      filteredData.forEach(store => {
+        const genre = store.genre ? store.genre : "未設定";
+        if (!genreGroups[genre]) {
+          genreGroups[genre] = [];
+        }
+        genreGroups[genre].push(store);
+      });
+      const genreStats = [];
+      for (const genre in genreGroups) {
+        const stores = genreGroups[genre];
+        const count = stores.length;
+        let totalRate = 0;
+        let validCount = 0;
+        stores.forEach(store => {
+          const rate = calcRate(store);
+          if (!isNaN(rate)) {
+            totalRate += rate;
+            validCount++;
+          }
+        });
+        const avgRate = validCount ? (totalRate / validCount).toFixed(1) : 0;
+        genreStats.push({ genre, count, avgRate });
+      }
+      // Update table
+      const genreTable = document.getElementById('genreTable');
+      genreTable.innerHTML = '';
+      genreStats.forEach(stat => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${stat.genre}</td>
+          <td>${stat.count}</td>
+          <td>${stat.avgRate}</td>
+        `;
+        genreTable.appendChild(tr);
+      });
+      // Sort genreStats by avgRate descending
+      genreStats.sort((a, b) => b.avgRate - a.avgRate);
+      // Prepare chart data
+      const labels = genreStats.map(stat => stat.genre);
+      const rates = genreStats.map(stat => stat.avgRate);
+      const ctx = document.getElementById('genreChart').getContext('2d');
+      if (genreChart) {
+        genreChart.destroy();
+      }
+      genreChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '平均稼働率 (%)',
+            data: rates,
+            backgroundColor: 'rgba(255, 159, 64, 0.6)',
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `${selectedIndustry} 業種内のジャンル別ランキング`,
+              font: { size: 20 }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: '平均稼働率 (%)', font: { size: 16 } },
+              ticks: { font: { size: 14 } }
+            },
+            x: {
+              title: { display: true, text: 'ジャンル', font: { size: 16 } },
+              ticks: { font: { size: 14 } }
+            }
+          },
+          layout: { padding: { top: 20, bottom: 20 } }
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>時間帯別 稼働率分析</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .chart-container { width: 100%; max-width: 800px; margin: 40px auto; }
+  </style>
+</head>
+<body>
+  <div class="container my-4">
+    <h1 class="text-center mb-4">時間帯別 稼働率分析</h1>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="storeSelect" class="form-label">店舗を選択：</label>
+        <select id="storeSelect" class="form-select"></select>
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <button id="updateHourlyBtn" class="btn btn-primary w-100">更新</button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="hourlyChart"></canvas>
+    </div>
+  </div>
+  
+  <!-- Bootstrap 5 JS Bundle (Popper含む) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let globalHistoryData = [];
+    let hourlyChart = null;
+    
+    // 時間帯別のグループ化：各レコードの timestamp から「時」の値を抽出
+    function groupByHour(data) {
+      // 0～23 の配列を作成し、各要素に空配列を用意
+      const groups = Array.from({length: 24}, () => []);
+      data.forEach(record => {
+        const dt = new Date(record.timestamp);
+        const hour = dt.getHours();
+        // 稼働率計算：((勤務中 - 即ヒメ) / 勤務中) * 100（勤務中が0の場合は 0 とする）
+        const rate = record.working_staff > 0 ? ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0;
+        groups[hour].push(parseFloat(rate));
+      });
+      return groups;
+    }
+    
+    // 各時間帯の平均稼働率を計算する
+    function calculateHourlyAverages(groups) {
+      return groups.map(hourGroup => {
+        if (hourGroup.length === 0) return null;
+        const sum = hourGroup.reduce((acc, cur) => acc + cur, 0);
+        return (sum / hourGroup.length).toFixed(1);
+      });
+    }
+    
+    // グラフ描画関数
+    function renderHourlyChart(averages, storeName) {
+      const labels = Array.from({length: 24}, (_, i) => i + ":00");
+      const ctx = document.getElementById('hourlyChart').getContext('2d');
+      if (hourlyChart) hourlyChart.destroy();
+      hourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `${storeName} の時間帯別平均稼働率 (%)`,
+            data: averages,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: true,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `${storeName} の時間帯別平均稼働率 (%)`,
+              font: { size: 20 }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: '時間帯', font: { size: 16 } },
+              ticks: { font: { size: 14 } }
+            },
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: '稼働率 (%)', font: { size: 16 } },
+              ticks: { font: { size: 14 } }
+            }
+          }
+        }
+      });
+    }
+    
+    // 店舗選択とグラフ更新処理
+    function updateHourlyChart() {
+      const storeName = document.getElementById('storeSelect').value;
+      const filteredData = globalHistoryData.filter(record => record.store_name === storeName);
+      // グループ化（各時間帯のデータ）
+      const groups = groupByHour(filteredData);
+      // 各時間帯の平均稼働率
+      const hourlyAverages = calculateHourlyAverages(groups);
+      renderHourlyChart(hourlyAverages, storeName);
+    }
+    
+    // 店舗選択用ドロップダウンに店舗名を追加
+    function populateStoreDropdown(data) {
+      const stores = [...new Set(data.map(record => record.store_name))];
+      const storeSelect = document.getElementById('storeSelect');
+      storeSelect.innerHTML = '';
+      stores.forEach(store => {
+        const option = document.createElement('option');
+        option.value = store;
+        option.textContent = store;
+        storeSelect.appendChild(option);
+      });
+      // 初期表示
+      if (stores.length > 0) {
+        storeSelect.value = stores[0];
+        updateHourlyChart();
+      }
+      // 変更イベント
+      storeSelect.addEventListener('change', updateHourlyChart);
+    }
+    
+    // 初期データ取得
+    fetch('/api/history')
+      .then(response => response.json())
+      .then(data => {
+        globalHistoryData = data;
+        populateStoreDropdown(globalHistoryData);
+      })
+      .catch(err => console.error(err));
+      
+    // 更新ボタンイベント
+    document.getElementById('updateHourlyBtn').addEventListener('click', updateHourlyChart);
+  </script>
+</body>
+</html>

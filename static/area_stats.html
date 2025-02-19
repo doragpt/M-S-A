@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>エリア別統計</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="container my-4">
+    <h1 class="text-center mb-4">エリア別統計</h1>
+    
+    <!-- 統計テーブル -->
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>エリア</th>
+            <th>店舗数</th>
+            <th>平均稼働率 (%)</th>
+          </tr>
+        </thead>
+        <tbody id="areaTable">
+          <!-- 集計結果がここに表示されます -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- グラフ表示 -->
+    <div class="card">
+      <div class="card-body">
+        <canvas id="areaChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // 稼働率計算関数：((勤務中 - 即ヒメ) / 勤務中) * 100
+    function calcRate(store) {
+      return store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
+    }
+    
+    // /api/data からデータ取得し、エリア別に集計
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        // エリアごとにグループ化する
+        const areaGroups = {};
+        data.forEach(store => {
+          // エリア情報がない場合は "未設定" とする
+          const area = store.area ? store.area : "未設定";
+          if (!areaGroups[area]) {
+            areaGroups[area] = [];
+          }
+          areaGroups[area].push(store);
+        });
+        
+        // 各エリアごとに店舗数と平均稼働率を算出
+        const areaStats = [];
+        for (const area in areaGroups) {
+          const stores = areaGroups[area];
+          const storeCount = stores.length;
+          let totalRate = 0;
+          let validCount = 0;
+          stores.forEach(store => {
+            const rate = calcRate(store);
+            if (!isNaN(rate)) {
+              totalRate += rate;
+              validCount++;
+            }
+          });
+          const avgRate = validCount ? (totalRate / validCount).toFixed(1) : 0;
+          areaStats.push({ area, storeCount, avgRate });
+        }
+        
+        // テーブル更新
+        const tableBody = document.getElementById('areaTable');
+        tableBody.innerHTML = '';
+        areaStats.forEach(stat => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${stat.area}</td>
+            <td>${stat.storeCount}</td>
+            <td>${stat.avgRate}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+        
+        // グラフ更新（エリアをX軸、平均稼働率をY軸）
+        const ctx = document.getElementById('areaChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: areaStats.map(stat => stat.area),
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: areaStats.map(stat => stat.avgRate),
+              backgroundColor: 'rgba(76, 175, 80, 0.6)',
+              borderColor: 'rgba(76, 175, 80, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: 'エリア別 平均稼働率',
+                font: { size: 20 }
+              },
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: '平均稼働率 (%)',
+                  font: { size: 16 }
+                },
+                ticks: { font: { size: 14 } }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'エリア',
+                  font: { size: 16 }
+                },
+                ticks: { font: { size: 14 } }
+              }
+            },
+            layout: { padding: { top: 20, bottom: 20 } }
+          }
+        });
+      })
+      .catch(err => console.error(err));
+  </script>
+</body>
+</html>

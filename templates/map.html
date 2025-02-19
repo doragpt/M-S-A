@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>店舗マップ表示</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <style>
+    body { font-family: 'Roboto', sans-serif; background-color: #f7f7f7; margin: 0; padding: 0; }
+    #map { height: 100vh; }
+    .header { background: #007bff; color: white; padding: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>店舗マップ表示</h1>
+    <p>各店舗の稼働状況を地図上で確認できます</p>
+  </div>
+  <div id="map"></div>
+
+  <script>
+    // 固定のエリアから座標へのマッピング例（必要に応じて実際のエリアと座標に合わせてください）
+    const areaCoordinates = {
+      "新宿・歌舞伎町": [35.6938, 139.7034],
+      "吉原": [35.6442, 139.7712],
+      "船橋": [35.6940, 139.9853],
+      "関内・曙町・伊勢佐木町": [34.6690, 135.5030],
+      // 追加のエリアがあればここに記入
+    };
+
+    // マップの初期表示（日本全体を表示）
+    const map = L.map('map').setView([36.2048, 138.2529], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data © OpenStreetMap contributors'
+    }).addTo(map);
+
+    // APIから店舗データを取得してマーカーを表示
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(store => {
+          // 店舗のエリアが存在し、かつ areaCoordinates に登録されている場合のみ表示
+          if (store.area && areaCoordinates[store.area.trim()]) {
+            const coords = areaCoordinates[store.area.trim()];
+            const currentRate = store.working_staff ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
+            const marker = L.marker(coords).addTo(map);
+            marker.bindPopup(`
+              <strong>${store.store_name}</strong><br>
+              業種: ${store.biz_type}<br>
+              エリア: ${store.area}<br>
+              総出勤: ${store.total_staff}<br>
+              勤務中人数: ${store.working_staff}<br>
+              即ヒメ人数: ${store.active_staff}<br>
+              現在稼働率: ${currentRate}%<br>
+              <a href="${store.url}" target="_blank">店舗ページ</a>
+            `);
+          }
+        });
+      })
+      .catch(error => console.error('マップデータ取得エラー:', error));
+  </script>
+</body>
+</html>

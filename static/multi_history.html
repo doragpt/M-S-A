@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>複数店舗比較時系列グラフ</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Chart.js のCDN読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .chart-container { width: 100%; max-width: 1000px; margin: 40px auto; }
+  </style>
+</head>
+<body>
+  <h1>複数店舗比較時系列グラフ</h1>
+  <div class="chart-container">
+    <canvas id="multiChart"></canvas>
+  </div>
+
+  <script>
+    let multiChart = null;
+
+    // /api/history から履歴データを取得
+    fetch('/api/history')
+      .then(response => response.json())
+      .then(data => {
+        // グループ分け：店舗ごとに履歴データをまとめる
+        let grouped = {};
+        data.forEach(record => {
+          let store = record.store_name;
+          if (!grouped[store]) {
+            grouped[store] = [];
+          }
+          // 稼働率の計算：((勤務中 - 即ヒメ) / 勤務中) * 100
+          let rate = record.working_staff > 0 ? ((record.working_staff - record.active_staff) / record.working_staff * 100).toFixed(1) : 0;
+          grouped[store].push({
+            timestamp: new Date(record.timestamp),
+            rate: parseFloat(rate)
+          });
+        });
+
+        // 各店舗のデータを、timestamp昇順にソート
+        for (let store in grouped) {
+          grouped[store].sort((a, b) => a.timestamp - b.timestamp);
+        }
+
+        // 全てのタイムスタンプの集合を作成（各店舗の記録のうち、全体のラベルとして使用）
+        let allTimestampsSet = new Set();
+        for (let store in grouped) {
+          grouped[store].forEach(item => {
+            allTimestampsSet.add(item.timestamp.getTime());
+          });
+        }
+        let labelsArray = Array.from(allTimestampsSet)
+          .sort((a, b) => a - b)
+          .map(ts => new Date(ts).toLocaleString());
+
+        // 各店舗ごとに、ラベルに対応する稼働率データを作成（データが無い場合は null）
+        let datasets = [];
+        let colors = [
+          'rgba(63, 81, 181, 1)',
+          'rgba(244, 67, 54, 1)',
+          'rgba(76, 175, 80, 1)',
+          'rgba(255, 152, 0, 1)',
+          'rgba(156, 39, 176, 1)'
+        ];
+        let colorIndex = 0;
+        for (let store in grouped) {
+          let storeData = grouped[store];
+          let dataArray = labelsArray.map(label => {
+            // 各ラベル（日時）に対して、±1分以内の記録があればその値を使用
+            let labelTime = new Date(label).getTime();
+            let found = storeData.find(item => Math.abs(item.timestamp.getTime() - labelTime) < 60000);
+            return found ? found.rate : null;
+          });
+          datasets.push({
+            label: store,
+            data: dataArray,
+            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: colors[colorIndex % colors.length].replace('1)', '0.2)'),
+            fill: false,
+            tension: 0.1
+          });
+          colorIndex++;
+        }
+
+        // Chart.js で複数店舗の時系列グラフを描画
+        const ctx = document.getElementById('multiChart').getContext('2d');
+        if (multiChart) {
+          multiChart.destroy();
+        }
+        multiChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labelsArray,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: '複数店舗の時系列稼働率比較',
+                font: { size: 20 }
+              },
+              legend: {
+                position: 'bottom'
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: '日時',
+                  font: { size: 16 }
+                },
+                ticks: { font: { size: 12 } }
+              },
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: '稼働率 (%)',
+                  font: { size: 16 }
+                },
+                ticks: { font: { size: 12 } }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => console.error(err));
+  </script>
+</body>
+</html>
