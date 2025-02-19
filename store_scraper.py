@@ -222,7 +222,7 @@ async def _scrape_all(store_urls: list) -> list:
         list: 各店舗のスクレイピング結果をまとめたリスト（各要素は辞書）。
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    executable_path = r"/usr/bin/google-chrome"
     browser = await launch(
         headless=True,
         executablePath=executable_path,
