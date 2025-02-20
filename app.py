@@ -9,6 +9,9 @@ from sqlalchemy import func
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
+# 追加：Flask-Caching のインポート
+from flask_caching import Cache
+
 # ---------------------------------------------------------------------
 # 1. Flaskアプリ & DB接続設定
 # ---------------------------------------------------------------------
@@ -20,9 +23,14 @@ DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@lo
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# 追加：キャッシュ設定（Redisを利用）
+app.config['CACHE_TYPE'] = 'RedisCache'
+# 環境変数REDIS_URLが設定されていなければローカルのRedisを使用
+app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+cache = Cache(app)
+
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
-
 
 # ---------------------------------------------------------------------
 # 2. モデル定義
@@ -74,9 +82,10 @@ def scheduled_scrape():
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
     ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
       得られた結果を StoreStatus テーブルに保存する。
-    ・同一店舗＋同一タイムスタンプ（ここでは分単位で切り捨てた値）が既に存在する場合は、そのレコードを更新する（上書き）。
+    ・同一店舗＋同一タイムスタンプ（分単位切り捨て）が既に存在する場合は上書きする。
     ・処理完了後、Socket.IO を利用してクライアントに更新通知を送信する。
-    ・また、過去2年以上前のデータを削除してパフォーマンスを維持する。
+    ・また、古いデータ（2年以上前）を削除してパフォーマンスを維持する。
+    ・さらに、データ更新後にキャッシュをクリアして最新データを反映する。
     """
     with app.app_context():
         # スクレイピング実行時刻を取得（全レコードに共通の timestamp として利用）
@@ -136,6 +145,9 @@ def scheduled_scrape():
         db.session.commit()
 
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
+        # データ更新後はキャッシュをクリアして最新の情報を返すようにする
+        cache.clear()
+
         socketio.emit('update', {'data': 'Dashboard updated'})
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
@@ -187,6 +199,7 @@ def api_data():
 
 
 @app.route('/api/history')
+@cache.cached(timeout=300)  # キャッシュ：5分間有効。これによりDBアクセスと集計処理の負荷を軽減
 def api_history():
     """
     すべてのスクレイピング履歴を時系列昇順で返すエンドポイント。
