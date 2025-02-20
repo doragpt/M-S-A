@@ -72,11 +72,18 @@ from store_scraper import scrape_store_data
 def scheduled_scrape():
     """
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
-    ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、得られた結果を StoreStatus テーブルに INSERT する。
-    ・さらに、過去2年以上前のデータを削除してパフォーマンスを維持する。
+    ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
+      得られた結果を StoreStatus テーブルに保存する。
+    ・同一店舗＋同一タイムスタンプ（ここでは分単位で切り捨てた値）が既に存在する場合は、そのレコードを更新する（上書き）。
     ・処理完了後、Socket.IO を利用してクライアントに更新通知を送信する。
+    ・また、過去2年以上前のデータを削除してパフォーマンスを維持する。
     """
     with app.app_context():
+        # スクレイピング実行時刻を取得（全レコードに共通の timestamp として利用）
+        scrape_time = datetime.now()
+        # 古いデータの保持期間（過去2年以上前を削除）
+        retention_date = datetime.now() - timedelta(days=730)
+
         store_url_objs = StoreURL.query.all()
         store_urls = [s.store_url for s in store_url_objs]
         if not store_urls:
@@ -92,22 +99,39 @@ def scheduled_scrape():
 
         for record in results:
             if record:  # 空の結果はスキップ
-                new_status = StoreStatus(
-                    store_name=record.get('store_name'),
-                    biz_type=record.get('biz_type'),
-                    genre=record.get('genre'),
-                    area=record.get('area'),
-                    total_staff=record.get('total_staff'),
-                    working_staff=record.get('working_staff'),
-                    active_staff=record.get('active_staff'),
-                    url=record.get('url'),
-                    shift_time=record.get('shift_time')
-                )
-                db.session.add(new_status)
+                # 重複チェック：同じ店舗名かつ同じスクレイピング実行時刻（分単位切り捨て）で既存のレコードがあるか確認
+                existing = StoreStatus.query.filter(
+                    StoreStatus.store_name == record.get('store_name'),
+                    func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
+                ).first()
+                if existing:
+                    # 既存レコードがあればフィールドを更新
+                    existing.biz_type = record.get('biz_type')
+                    existing.genre = record.get('genre')
+                    existing.area = record.get('area')
+                    existing.total_staff = record.get('total_staff')
+                    existing.working_staff = record.get('working_staff')
+                    existing.active_staff = record.get('active_staff')
+                    existing.url = record.get('url')
+                    existing.shift_time = record.get('shift_time')
+                else:
+                    # 新規の場合は scrape_time を timestamp として新しいレコードを作成
+                    new_status = StoreStatus(
+                        timestamp=scrape_time,
+                        store_name=record.get('store_name'),
+                        biz_type=record.get('biz_type'),
+                        genre=record.get('genre'),
+                        area=record.get('area'),
+                        total_staff=record.get('total_staff'),
+                        working_staff=record.get('working_staff'),
+                        active_staff=record.get('active_staff'),
+                        url=record.get('url'),
+                        shift_time=record.get('shift_time')
+                    )
+                    db.session.add(new_status)
         db.session.commit()
 
-        # 過去2年以上前のデータを削除する（パフォーマンス維持のため）
-        retention_date = datetime.now() - timedelta(days=730)
+        # 古いデータ（2年以上前）の削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
