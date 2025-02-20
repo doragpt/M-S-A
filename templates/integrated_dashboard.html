@@ -365,7 +365,6 @@
   <!-- Socket.IO クライアントライブラリ (CDN) -->
   <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"></script>
 
-  <!-- 全体スクリプト -->
   <script>
     (function () {
       document.addEventListener("DOMContentLoaded", async () => {
@@ -380,7 +379,7 @@
               if (!response.ok) throw new Error("HTTP error " + response.status);
               return response;
             } catch (err) {
-              console.error(Fetch error (${url}), attempt ${i + 1}:, err);
+              console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
               if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
               else throw err;
             }
@@ -415,7 +414,7 @@
           favoritesFilterActive = !favoritesFilterActive;
           rows.forEach((row) => {
             const storeName = row.cells[1].innerText.trim();
-            row.style.display = favoritesFilterActive && !favorites.includes(storeName) ? "none" : "";
+            row.style.display = (favoritesFilterActive && !favorites.includes(storeName)) ? "none" : "";
           });
           document.getElementById("favoritesToggle").innerText = favoritesFilterActive
             ? "すべて表示"
@@ -423,15 +422,19 @@
         });
 
         /***********************************************
-         * 店舗稼働状況（最新データ）表示
+         * 店舗稼働状況（最新データ）表示 (/api/data)
+         * → 店舗数は最新データ件数
+         * → 平均/最高稼働率も最新データから計算
          ***********************************************/
         async function updateDashboard() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
 
-            // 上部カード
+            // 上部カード: 店舗数
             document.getElementById("totalStores").innerText = data.length;
+
+            // 上部カード: 平均稼働率
             const avgRate = data.reduce((sum, store) => {
               if (store.working_staff > 0) {
                 const r = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
@@ -441,6 +444,7 @@
             }, 0) / (data.length || 1);
             document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
 
+            // 上部カード: 最高稼働率
             const maxRate = data.reduce((max, store) => {
               if (store.working_staff > 0) {
                 const r = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
@@ -464,7 +468,8 @@
                   ? '<span class="badge bg-danger">高稼働</span>'
                   : '<span class="badge bg-secondary">低稼働</span>';
               const isFav = favorites.includes(store.store_name);
-              const rowHtml = 
+
+              const rowHtml = `
                 <tr>
                   <td>
                     <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}"
@@ -484,7 +489,7 @@
                   <td>${tagHtml}</td>
                   <td>--</td>
                   <td>--</td>
-                </tr>;
+                </tr>`;
               tableBody.insertAdjacentHTML("beforeend", rowHtml);
             });
 
@@ -519,7 +524,7 @@
               .off("click", ".store-name.clickable")
               .on("click", ".store-name.clickable", function () {
                 const store = JSON.parse(decodeURIComponent($(this).data("store")));
-                const content = 
+                const content = `
                   <strong>店舗名:</strong> ${store.store_name}<br>
                   <strong>業種:</strong> ${store.biz_type || "不明"}<br>
                   <strong>ジャンル:</strong> ${store.genre || "不明"}<br>
@@ -527,7 +532,8 @@
                   <strong>総出勤:</strong> ${store.total_staff}<br>
                   <strong>勤務中人数:</strong> ${store.working_staff}<br>
                   <strong>即ヒメ人数:</strong> ${store.active_staff}<br>
-                  <strong>店舗URL:</strong> <a href="${store.url}" target="_blank">${store.url}</a>;
+                  <strong>店舗URL:</strong> <a href="${store.url}" target="_blank">${store.url}</a>
+                `;
                 $("#storeDetailBasic").html(content);
                 updateDetailHistoryChart(store.store_name);
                 updateDetailHourlyChart(store.store_name);
@@ -539,14 +545,15 @@
         }
 
         /***********************************************
-         * トップ10店舗グラフ
+         * トップ10店舗グラフ (/api/data)
          ***********************************************/
         async function updateTop10Chart() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
+
             data.forEach((store) => {
-              store.currentRate = store.working_staff > 0
+              store.currentRate = (store.working_staff > 0)
                 ? (((store.working_staff - store.active_staff) / store.working_staff) * 100).toFixed(1)
                 : 0;
             });
@@ -590,11 +597,10 @@
                   x: {
                     beginAtZero: true,
                     max: 100,
-                    title: { display: true, text: "稼働率(%)" },
-                    ticks: { font: { family: "Roboto, sans-serif", size: 12 } }
+                    title: { display: true, text: "稼働率(%)" }
                   },
                   y: {
-                    ticks: { font: { family: "Roboto, sans-serif", size: 12 } }
+                    ticks: { font: { size: 12 } }
                   }
                 },
                 animation: { duration: 1000 }
@@ -606,7 +612,7 @@
         }
 
         /***********************************************
-         * 比較分析モーダル表示
+         * 比較分析モーダル表示 (/api/data)
          ***********************************************/
         document.getElementById("compareBtn")?.addEventListener("click", async () => {
           const selectedStores = Array.from(document.querySelectorAll(".compare-checkbox:checked"))
@@ -625,6 +631,7 @@
                 ? (((s.working_staff - s.active_staff) / s.working_staff) * 100).toFixed(1)
                 : 0
             );
+
             const ctx = document.getElementById("compareChart").getContext("2d");
             if (charts.compare) charts.compare.destroy();
             charts.compare = new Chart(ctx, {
@@ -659,7 +666,7 @@
         });
 
         /***********************************************
-         * 店舗履歴グラフ（期間指定）タブ
+         * 店舗履歴グラフ（期間指定） (/api/history)
          ***********************************************/
         async function updateHistoryChart() {
           try {
@@ -667,10 +674,11 @@
             const data = await response.json();
             const storeSelect = document.getElementById("storeSelectHistory");
             const selectedStore = storeSelect ? storeSelect.value : "";
-            let filtered = data;
+
             // 期間指定フィルタ
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
+            let filtered = data;
             if (startDate) {
               filtered = filtered.filter(record => new Date(record.timestamp) >= new Date(startDate));
             }
@@ -743,47 +751,37 @@
                 plugins: {
                   title: {
                     display: true,
-                    text: selectedStore === ""
+                    text: (selectedStore === "") 
                       ? "全店舗の平均稼働率（期間指定）"
-                      : 店舗(${selectedStore})の履歴グラフ,
-                    font: { size: 20, family: "Roboto, sans-serif" }
+                      : `店舗(${selectedStore})の履歴グラフ`,
+                    font: { size: 20 }
                   },
                   tooltip: {
                     callbacks: {
-                      label: (context) => ${context.parsed.y}%
-                    },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
+                      label: (context) => `${context.parsed.y}%`
+                    }
                   }
                 },
                 scales: {
                   y: {
                     beginAtZero: true,
                     max: 100,
-                    title: {
-                      display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
+                    title: { display: true, text: "実働率 (%)" }
                   },
                   x: {
-                    title: {
-                      display: true,
-                      text: "日時",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
+                    title: { display: true, text: "日時" }
                   }
                 },
                 animation: { duration: 1000 }
               }
             });
 
-            // ここで集計結果などを表示したければ
+            // 集計結果 (例: 平均)
             const historyStats = document.getElementById("historyStats");
-            // 例: 全期間の平均
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
               const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
-              historyStats.textContent = 期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%;
+              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
             } else {
               historyStats.textContent = "該当データなし";
             }
@@ -794,7 +792,7 @@
         }
         document.getElementById("updateHistoryBtn")?.addEventListener("click", updateHistoryChart);
 
-        // 履歴グラフ店舗ドロップダウン更新
+        // 履歴グラフ店舗ドロップダウン
         async function fillHistoryStoreDropdown() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -807,7 +805,7 @@
             });
             storeSelect.innerHTML = '<option value="">全店舗</option>';
             stores.forEach(store => {
-              storeSelect.innerHTML += <option value="${store}">${store}</option>;
+              storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
@@ -815,7 +813,7 @@
         }
 
         /***********************************************
-         * 時間帯別分析タブ
+         * 時間帯別分析タブ (/api/history)
          ***********************************************/
         async function updateHourlyAnalysis() {
           try {
@@ -842,7 +840,7 @@
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
-              labels.push(${h}:00);
+              labels.push(`${h}:00`);
               if (hourly[h] && hourly[h].count > 0) {
                 avgRates.push((hourly[h].sum / hourly[h].count).toFixed(1));
               } else {
@@ -875,11 +873,10 @@
                   title: {
                     display: true,
                     text: "時間帯別分析",
-                    font: { size: 20, family: "Roboto, sans-serif" }
+                    font: { size: 20 }
                   },
                   tooltip: {
-                    callbacks: { label: (context) => ${context.parsed.y}% },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
+                    callbacks: { label: (context) => `${context.parsed.y}%` }
                   }
                 },
                 scales: {
@@ -888,15 +885,13 @@
                     max: 100,
                     title: {
                       display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "実働率 (%)"
                     }
                   },
                   x: {
                     title: {
                       display: true,
-                      text: "時間帯",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "時間帯"
                     }
                   }
                 },
@@ -922,7 +917,7 @@
             });
             hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
             stores.forEach(store => {
-              hourlyStoreSelect.innerHTML += <option value="${store}">${store}</option>;
+              hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
           } catch (err) {
             console.error("時間帯分析店舗リスト取得エラー:", err);
@@ -930,40 +925,65 @@
         }
 
         /***********************************************
-         * エリア統計
+         * エリア統計 (/api/history) の修正例
+         * → 最新の店舗だけで集計
          ***********************************************/
         async function updateAreaStatistics() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            // 1) 最新データ (/api/data) から「いま存在する店舗集合」を作る
+            const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataLatest = await responseLatest.json();
+            const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
+
+            // 2) 履歴 (/api/history) を取得し、「最新店舗だけ」にフィルタ
+            const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const dataHistory = await responseHistory.json();
+            const filteredHistory = dataHistory.filter(record => latestStoreNames.has(record.store_name));
+
+            // 3) エリアごとに集計
+            //    - stores: ユニーク店舗名を格納するSet (重複を防ぐ)
+            //    - totalRate: 稼働率の合計
+            //    - rateCount: 稼働率を計算できた回数
             const areaData = {};
-            data.forEach(record => {
+            filteredHistory.forEach(record => {
               const area = record.area || "不明";
               if (!areaData[area]) {
-                areaData[area] = { count: 0, totalRate: 0, rateCount: 0 };
+                areaData[area] = {
+                  stores: new Set(),
+                  totalRate: 0,
+                  rateCount: 0
+                };
               }
-              areaData[area].count += 1;
+              areaData[area].stores.add(record.store_name);
               if (record.working_staff > 0) {
                 const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
                 areaData[area].totalRate += r;
                 areaData[area].rateCount += 1;
               }
             });
+
+            // 4) テーブルとグラフを描画
             const areaTable = document.getElementById("areaTable");
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
+
             for (const area in areaData) {
-              const { count, totalRate, rateCount } = areaData[area];
-              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : 0;
-              areaTable.insertAdjacentHTML("beforeend", <tr>
-                <td>${area}</td>
-                <td>${count}</td>
-                <td>${avgRate}</td>
-              </tr>);
+              const { stores, totalRate, rateCount } = areaData[area];
+              const storeCount = stores.size; // 最新のユニーク店舗数
+              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : "0.0";
+
+              areaTable.insertAdjacentHTML("beforeend", `
+                <tr>
+                  <td>${area}</td>
+                  <td>${storeCount}</td>
+                  <td>${avgRate}</td>
+                </tr>
+              `);
               labels.push(area);
               avgRates.push(parseFloat(avgRate));
             }
+
             const ctx = document.getElementById("areaChart").getContext("2d");
             if (charts.area) charts.area.destroy();
             charts.area = new Chart(ctx, {
@@ -995,69 +1015,97 @@
         }
 
         /***********************************************
-         * 業種内ジャンルランキング
+         * 業種内ジャンルランキング (/api/history) の修正例
+         * → 最新の店舗だけで集計
          ***********************************************/
-        // 1) ドロップダウン埋め込み
+        // ドロップダウン埋め込み: 業種一覧も最新データベースで作る場合
         async function fillIndustryDropdown() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const industrySelect = document.getElementById("industrySelectType");
-            if (!industrySelect) return;
+            // 最新データから業種を集める
+            const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataLatest = await responseLatest.json();
             const industries = new Set();
-            data.forEach(item => {
+            dataLatest.forEach(item => {
               if (item.biz_type && item.biz_type !== "不明") {
                 industries.add(item.biz_type);
               }
             });
+
+            const industrySelect = document.getElementById("industrySelectType");
+            if (!industrySelect) return;
             industrySelect.innerHTML = "";
             industries.forEach(ind => {
-              industrySelect.innerHTML += <option value="${ind}">${ind}</option>;
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
             });
           } catch (err) {
             console.error("業種ドロップダウン取得エラー:", err);
           }
         }
 
-        // 2) ランキング更新
         async function updateIndustryRanking() {
           try {
+            // 選択中の業種
             const industrySelect = document.getElementById("industrySelectType");
             const selectedIndustry = industrySelect ? industrySelect.value : "";
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const filtered = selectedIndustry
-              ? data.filter(record => record.biz_type === selectedIndustry)
-              : data;
 
+            // 1) 最新データ
+            const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataLatest = await responseLatest.json();
+            const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
+
+            // 2) 履歴データ
+            const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const dataHistory = await responseHistory.json();
+
+            // 3) 「最新店舗」かつ「選択業種」のレコードのみフィルタ
+            const filtered = dataHistory.filter(record => {
+              return (
+                latestStoreNames.has(record.store_name) &&
+                (selectedIndustry ? record.biz_type === selectedIndustry : true)
+              );
+            });
+
+            // 4) ジャンルごとに集計
             const genreData = {};
             filtered.forEach(record => {
               const genre = record.genre || "不明";
               if (!genreData[genre]) {
-                genreData[genre] = { count: 0, totalRate: 0, rateCount: 0 };
+                genreData[genre] = {
+                  stores: new Set(),
+                  totalRate: 0,
+                  rateCount: 0
+                };
               }
-              genreData[genre].count += 1;
+              genreData[genre].stores.add(record.store_name);
               if (record.working_staff > 0) {
                 const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
                 genreData[genre].totalRate += r;
                 genreData[genre].rateCount += 1;
               }
             });
+
+            // 5) テーブルとグラフ描画
             const typeTable = document.getElementById("typeTable");
             typeTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
+
             for (const g in genreData) {
-              const { count, totalRate, rateCount } = genreData[g];
-              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : 0;
-              typeTable.insertAdjacentHTML("beforeend", <tr>
-                <td>${g}</td>
-                <td>${count}</td>
-                <td>${avgRate}</td>
-              </tr>);
+              const { stores, totalRate, rateCount } = genreData[g];
+              const storeCount = stores.size;
+              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : "0.0";
+
+              typeTable.insertAdjacentHTML("beforeend", `
+                <tr>
+                  <td>${g}</td>
+                  <td>${storeCount}</td>
+                  <td>${avgRate}</td>
+                </tr>
+              `);
               labels.push(g);
               avgRates.push(parseFloat(avgRate));
             }
+
             const ctx = document.getElementById("typeChart").getContext("2d");
             if (charts.type) charts.type.destroy();
             charts.type = new Chart(ctx, {
@@ -1087,11 +1135,11 @@
             console.error("業種内ジャンルランキングエラー:", error);
           }
         }
-        // ドロップダウン変更時に更新
+        // 業種セレクトが変わったら再描画
         document.getElementById("industrySelectType")?.addEventListener("change", updateIndustryRanking);
 
         /***********************************************
-         * 店舗詳細モーダル内の履歴グラフ
+         * 店舗詳細モーダル内の履歴グラフ (/api/history)
          ***********************************************/
         async function updateDetailHistoryChart(storeName) {
           try {
@@ -1104,10 +1152,11 @@
               return d.toLocaleDateString() + " " + d.toTimeString().substring(0, 5);
             });
             const effectiveRates = filtered.map(record =>
-              record.working_staff > 0
+              (record.working_staff > 0)
                 ? (((record.working_staff - record.active_staff) / record.working_staff) * 100).toFixed(1)
                 : 0
             );
+
             const ctx = document.getElementById("detailHistoryChart").getContext("2d");
             if (charts.detailHistory) charts.detailHistory.destroy();
             charts.detailHistory = new Chart(ctx, {
@@ -1133,11 +1182,10 @@
                   title: {
                     display: true,
                     text: "店舗履歴グラフ",
-                    font: { size: 20, family: "Roboto, sans-serif" }
+                    font: { size: 20 }
                   },
                   tooltip: {
-                    callbacks: { label: (context) => ${context.parsed.y}% },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
+                    callbacks: { label: (context) => `${context.parsed.y}%` }
                   }
                 },
                 scales: {
@@ -1146,15 +1194,13 @@
                     max: 100,
                     title: {
                       display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "実働率 (%)"
                     }
                   },
                   x: {
                     title: {
                       display: true,
-                      text: "日時",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "日時"
                     }
                   }
                 },
@@ -1167,7 +1213,7 @@
         }
 
         /***********************************************
-         * 店舗詳細モーダル内の時間帯別分析
+         * 店舗詳細モーダル内の時間帯別分析 (/api/history)
          ***********************************************/
         async function updateDetailHourlyChart(storeName) {
           try {
@@ -1185,16 +1231,18 @@
                 hourly[hour].count += 1;
               }
             });
+
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
-              labels.push(${h}:00);
+              labels.push(`${h}:00`);
               if (hourly[h] && hourly[h].count > 0) {
                 avgRates.push((hourly[h].sum / hourly[h].count).toFixed(1));
               } else {
                 avgRates.push("0");
               }
             }
+
             const ctx = document.getElementById("detailHourlyChart").getContext("2d");
             if (charts.detailHourly) charts.detailHourly.destroy();
             charts.detailHourly = new Chart(ctx, {
@@ -1220,11 +1268,10 @@
                   title: {
                     display: true,
                     text: "店舗詳細 時間帯別分析",
-                    font: { size: 20, family: "Roboto, sans-serif" }
+                    font: { size: 20 }
                   },
                   tooltip: {
-                    callbacks: { label: (context) => ${context.parsed.y}% },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
+                    callbacks: { label: (context) => `${context.parsed.y}%` }
                   }
                 },
                 scales: {
@@ -1233,15 +1280,13 @@
                     max: 100,
                     title: {
                       display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "実働率 (%)"
                     }
                   },
                   x: {
                     title: {
                       display: true,
-                      text: "時間帯",
-                      font: { family: "Roboto, sans-serif", size: 14 }
+                      text: "時間帯"
                     }
                   }
                 },
@@ -1269,24 +1314,22 @@
         /***********************************************
          * 初期ロード時の呼び出し
          ***********************************************/
-        // 1. 店舗稼働状況
+        // 1. 店舗稼働状況 (/api/data)
         updateDashboard();
-        // 2. トップ10店舗グラフ
+        // 2. トップ10店舗グラフ (/api/data)
         updateTop10Chart();
-        // 3. エリア統計
+        // 3. エリア統計 (最新店舗だけで集計)
         updateAreaStatistics();
-        // 4. 業種内ジャンルランキング (ドロップダウン埋め込み後に更新)
-        fillIndustryDropdown().then(() => {
-          updateIndustryRanking();
-        });
-        // 5. 履歴グラフ用店舗ドロップダウン + 初回描画
-        fillHistoryStoreDropdown().then(() => {
-          updateHistoryChart();
-        });
+        // 4. 業種内ジャンルランキング
+        //    - ドロップダウン埋め込み後に本体更新
+        await fillIndustryDropdown();
+        updateIndustryRanking();
+        // 5. 履歴グラフ用ドロップダウン + 初回描画
+        await fillHistoryStoreDropdown();
+        updateHistoryChart();
         // 6. 時間帯別分析用ドロップダウン + 初回描画
-        fillHourlyStoreDropdown().then(() => {
-          updateHourlyAnalysis();
-        });
+        await fillHourlyStoreDropdown();
+        updateHourlyAnalysis();
 
       });
     })();
