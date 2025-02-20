@@ -163,7 +163,8 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         working_staff = 0   # 勤務中の人数
         active_staff = 0    # 即ヒメ（待機中）人数
 
-        # 各シフト(wrapper)ごとに処理する際、個別に現在時刻を取得して最新の値を使用する
+        jst = pytz.timezone('Asia/Tokyo')
+        # 各シフト(wrapper)ごとに処理
         for wrapper in wrappers:
             p_elems = wrapper.find_all("p", class_="time_font_size shadow shukkin_detail_time")
             for p_elem in p_elems:
@@ -181,17 +182,32 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 if match:
                     start_h, start_m, end_h, end_m = map(int, match.groups())
                     # 各シフトごとに最新の現在時刻を取得
-                    current_time = datetime.now(pytz.timezone('Asia/Tokyo'))
-                    start_time = datetime.combine(current_time.date(), datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time())
-                    start_time = pytz.timezone('Asia/Tokyo').localize(start_time)
-                    end_time = datetime.combine(current_time.date(), datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time())
-                    end_time = pytz.timezone('Asia/Tokyo').localize(end_time)
-                    if end_time < start_time:
-                        end_time += timedelta(days=1)
+                    current_time = datetime.now(jst)
+                    parsed_start = datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time()
+                    parsed_end = datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time()
+                    # シフトが日跨ぎの場合の処理
+                    if parsed_end < parsed_start:
+                        # もし current_time の時刻が parsed_end より前なら、シフトは前日の開始とみなす
+                        if current_time.time() < parsed_end:
+                            start_time = datetime.combine(current_time.date() - timedelta(days=1), parsed_start)
+                            end_time = datetime.combine(current_time.date(), parsed_end)
+                        else:
+                            start_time = datetime.combine(current_time.date(), parsed_start)
+                            end_time = datetime.combine(current_time.date() + timedelta(days=1), parsed_end)
+                    else:
+                        start_time = datetime.combine(current_time.date(), parsed_start)
+                        end_time = datetime.combine(current_time.date(), parsed_end)
+                    # ローカライズ
+                    start_time = jst.localize(start_time)
+                    end_time = jst.localize(end_time)
                     total_staff += 1
+
+                    # デバッグ用（必要に応じて有効化）
+                    # print(f"DEBUG: シフトテキスト: {text} | start_time: {start_time} | end_time: {end_time} | current_time: {current_time}")
+
                     if start_time <= current_time <= end_time:
                         working_staff += 1
-                        # 【新しい即ヒメ判定処理】
+                        # 【即ヒメ判定処理】
                         status_container = wrapper.find("div", class_="sugunavi_spacer_1line")
                         if not status_container:
                             status_container = wrapper.find("div", class_="sugunavi_spacer_2line")
@@ -203,6 +219,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                                 status_text = ""
                         else:
                             status_text = ""
+                        # 待機中と判定する条件
                         if ("待機中" in status_text) or (status_text == ""):
                             active_staff += 1
 
