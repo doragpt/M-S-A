@@ -22,7 +22,7 @@ import pytz
 import gc
 
 # 並列処理する店舗数の上限
-MAX_CONCURRENT_TASKS = 10
+MAX_CONCURRENT_TASKS = 8
 # 店舗情報が「不明」となった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 3
 
