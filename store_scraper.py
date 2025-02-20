@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pytz
 import gc
 
-MAX_CONCURRENT_TASKS = 7
+MAX_CONCURRENT_TASKS = 10
 MAX_RETRIES_FOR_INFO = 3
 
 async def fetch_page(page, url, retries=3):
