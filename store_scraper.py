@@ -233,7 +233,7 @@ async def _scrape_all(store_urls: list) -> list:
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
         results.extend(batch_results)
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
     gc.collect()
     await browser.close()
     return results
