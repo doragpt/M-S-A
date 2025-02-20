@@ -49,7 +49,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
       各シフトごとに総出勤数、勤務中人数、および「即ヒメ」（待機中）人数をカウントします。
     ・即ヒメのカウントについては、各 wrapper 内の 
       "sugunavi_spacer_1line" または "sugunavi_spacer_2line" 内にある "sugunavibox" 要素を調査し、
-      存在しない場合、または存在してそのテキストに「待機中」が含まれる場合に即ヒメとしてカウントします。
+      存在しなければ、または存在してそのテキストに「待機中」が含まれている場合に即ヒメとしてカウントします。
     
     Args:
         browser: pyppeteer のブラウザオブジェクト
@@ -163,13 +163,8 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         working_staff = 0   # 勤務中の人数
         active_staff = 0    # 即ヒメ（待機中）人数
 
-        # 現在時刻（日本時間）を取得
-        jst = pytz.timezone('Asia/Tokyo')
-        current_time = datetime.now(jst)
-
-        # 各シフト(wrapper)について処理
+        # 各シフト(wrapper)ごとに処理する際、個別に現在時刻を取得して最新の値を使用する
         for wrapper in wrappers:
-            # シフト時間の情報が含まれる p 要素群を取得
             p_elems = wrapper.find_all("p", class_="time_font_size shadow shukkin_detail_time")
             for p_elem in p_elems:
                 text = p_elem.get_text(strip=True)
@@ -182,36 +177,32 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 if "完売" in text:
                     total_staff += 1
                     continue
-                # シフト時間（例："14:00～18:00"）を正規表現で抽出
                 match = re.search(r"(\d{1,2}):(\d{2})～(\d{1,2}):(\d{2})", text)
                 if match:
                     start_h, start_m, end_h, end_m = map(int, match.groups())
+                    # 各シフトごとに最新の現在時刻を取得
+                    current_time = datetime.now(pytz.timezone('Asia/Tokyo'))
                     start_time = datetime.combine(current_time.date(), datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time())
-                    start_time = jst.localize(start_time)
+                    start_time = pytz.timezone('Asia/Tokyo').localize(start_time)
                     end_time = datetime.combine(current_time.date(), datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time())
-                    end_time = jst.localize(end_time)
+                    end_time = pytz.timezone('Asia/Tokyo').localize(end_time)
                     if end_time < start_time:
                         end_time += timedelta(days=1)
                     total_staff += 1
-                    # 現在時刻がシフト時間内なら勤務中と判断
                     if start_time <= current_time <= end_time:
                         working_staff += 1
                         # 【新しい即ヒメ判定処理】
-                        # 各シフト(wrapper)内で、まず "sugunavi_spacer_1line" を探し、
-                        # 存在しなければ "sugunavi_spacer_2line" を探す
                         status_container = wrapper.find("div", class_="sugunavi_spacer_1line")
                         if not status_container:
                             status_container = wrapper.find("div", class_="sugunavi_spacer_2line")
                         if status_container:
-                            # status_container 内に "sugunavibox" 要素があるかチェック
                             sugunavibox = status_container.find("div", class_="sugunavibox")
                             if sugunavibox:
                                 status_text = sugunavibox.get_text(strip=True)
                             else:
-                                status_text = ""  # sugunaviboxが無い場合は空文字とする
+                                status_text = ""
                         else:
                             status_text = ""
-                        # ステータス表記が無い（空）または、テキストに「待機中」が含まれている場合は即ヒメとカウント
                         if ("待機中" in status_text) or (status_text == ""):
                             active_staff += 1
 
@@ -238,7 +229,6 @@ async def _scrape_all(store_urls: list) -> list:
         list: 各店舗のスクレイピング結果（辞書のリスト）
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    # 環境に合わせたChrome実行ファイルパス（必要に応じて変更）
     executable_path = '/usr/bin/google-chrome'
     browser = await launch(
         headless=True,
