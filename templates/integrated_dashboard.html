@@ -122,7 +122,6 @@
 
     <!-- タブコンテンツ -->
     <div class="tab-content" id="dashboardTabsContent">
-
       <!-- タブ1: 店舗稼働状況 -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
         <div class="row my-4">
@@ -283,6 +282,7 @@
               <select id="industrySelectType" class="form-select"></select>
             </div>
           </div>
+          <!-- 一覧部分（店舗数）は/api/dataから取得 -->
           <div class="table-responsive mb-3">
             <table id="typeTable" class="table table-bordered table-striped">
               <thead>
@@ -295,6 +295,7 @@
               <tbody id="typeTable"></tbody>
             </table>
           </div>
+          <!-- グラフ部分は/api/historyから取得 -->
           <div class="card">
             <div class="card-body">
               <canvas id="typeChart"></canvas>
@@ -415,6 +416,7 @@
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
+
             document.getElementById("totalStores").innerText = data.length;
             const avgRate = data.reduce((sum, store) => {
               if (store.working_staff > 0) {
@@ -424,6 +426,7 @@
               return sum;
             }, 0) / (data.length || 1);
             document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
+
             const maxRate = data.reduce((max, store) => {
               if (store.working_staff > 0) {
                 const r = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
@@ -432,6 +435,7 @@
               return max;
             }, 0);
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
+
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
             data.forEach((store) => {
@@ -467,6 +471,7 @@
                 </tr>`;
               tableBody.insertAdjacentHTML("beforeend", rowHtml);
             });
+
             if ($.fn.dataTable.isDataTable("#storeTable")) {
               $("#storeTable").DataTable().destroy();
             }
@@ -475,6 +480,7 @@
               order: [[8, "desc"]],
               language: { search: "検索:" }
             });
+
             $("#storeTable tbody")
               .off("click", ".favorite-btn")
               .on("click", ".favorite-btn", function (e) {
@@ -489,6 +495,7 @@
                 }
                 localStorage.setItem("favorites", JSON.stringify(favorites));
               });
+
             $("#storeTable tbody")
               .off("click", ".store-name.clickable")
               .on("click", ".store-name.clickable", function () {
@@ -583,135 +590,81 @@
           }
         }
 
-        // ※ エリア統計：店舗数は /api/data、グラフは /api/history から集計
-        async function updateAreaStatistics() {
+        /***********************************************
+         * 業種内ジャンルランキング
+         * 一覧は /api/data から、グラフは /api/history から取得する
+         ***********************************************/
+        async function fillIndustryDropdown() {
           try {
-            // 最新の店舗数を /api/data から取得
-            const dataLatestResp = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await dataLatestResp.json();
-            const countByArea = {};
-            dataLatest.forEach(record => {
-              const area = record.area || "不明";
-              if (!countByArea[area]) {
-                countByArea[area] = 0;
-              }
-              countByArea[area] += 1;
-            });
-            // 平均稼働率は /api/history から取得
-            const dataHistoryResp = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await dataHistoryResp.json();
-            const areaData = {};
-            dataHistory.forEach(record => {
-              const area = record.area || "不明";
-              if (!areaData[area]) {
-                areaData[area] = { totalRate: 0, rateCount: 0 };
-              }
-              if (record.working_staff > 0) {
-                const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-                areaData[area].totalRate += r;
-                areaData[area].rateCount += 1;
+            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const data = await response.json();
+            const industrySelect = document.getElementById("industrySelectType");
+            if (!industrySelect) return;
+            const industries = new Set();
+            data.forEach(item => {
+              if (item.biz_type && item.biz_type !== "不明") {
+                industries.add(item.biz_type);
               }
             });
-            const areaTable = document.getElementById("areaTable");
-            areaTable.innerHTML = "";
-            const labels = [];
-            const avgRates = [];
-            for (const area in countByArea) {
-              const count = countByArea[area];
-              const avgRate = areaData[area] && areaData[area].rateCount > 0
-                  ? (areaData[area].totalRate / areaData[area].rateCount).toFixed(1)
-                  : "0";
-              areaTable.insertAdjacentHTML("beforeend", `<tr>
-                <td>${area}</td>
-                <td>${count}</td>
-                <td>${avgRate}</td>
-              </tr>`);
-              labels.push(area);
-              avgRates.push(parseFloat(avgRate));
-            }
-            const ctx = document.getElementById("areaChart").getContext("2d");
-            if (charts.area) charts.area.destroy();
-            charts.area = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: labels,
-                datasets: [{
-                  label: "平均稼働率 (%)",
-                  data: avgRates,
-                  backgroundColor: "rgba(153, 102, 255, 0.7)",
-                  borderColor: "rgba(153, 102, 255, 1)",
-                  borderWidth: 1
-                }]
-              },
-              options: {
-                responsive: true,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: { display: true, text: "平均稼働率 (%)" }
-                  }
-                }
-              }
+            industrySelect.innerHTML = '<option value="">全業種</option>';
+            industries.forEach(ind => {
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
             });
-          } catch (error) {
-            console.error("エリア統計エラー:", error);
+          } catch (err) {
+            console.error("業種ドロップダウン取得エラー:", err);
           }
         }
 
-        // ※ 業種内ジャンルランキング：店舗数は /api/data、グラフは /api/history から集計
         async function updateIndustryRanking() {
           try {
-            const industrySelect = document.getElementById("industrySelectType");
-            const selectedIndustry = industrySelect ? industrySelect.value : "";
-            // 最新店舗データ（カウント用）
-            const dataLatestResp = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await dataLatestResp.json();
-            // 履歴データ（平均稼働率計算用）
-            const dataHistoryResp = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await dataHistoryResp.json();
-
-            const filteredLatest = selectedIndustry
-              ? dataLatest.filter(record => record.biz_type === selectedIndustry)
-              : dataLatest;
-            const countByGenre = {};
-            filteredLatest.forEach(record => {
+            // 一覧（テーブル）部分：/api/dataから各ジャンルの店舗数を集計
+            const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataData = await responseData.json();
+            const genreTable = {};
+            dataData.forEach(record => {
               const genre = record.genre || "不明";
-              if (!countByGenre[genre]) {
-                countByGenre[genre] = 0;
+              if (!genreTable[genre]) {
+                genreTable[genre] = { count: 0 };
               }
-              countByGenre[genre] += 1;
-            });
-            const filteredHistory = selectedIndustry
-              ? dataHistory.filter(record => record.biz_type === selectedIndustry)
-              : dataHistory;
-            const genreData = {};
-            filteredHistory.forEach(record => {
-              const genre = record.genre || "不明";
-              if (!genreData[genre]) {
-                genreData[genre] = { totalRate: 0, rateCount: 0 };
-              }
-              if (record.working_staff > 0) {
-                const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-                genreData[genre].totalRate += r;
-                genreData[genre].rateCount += 1;
-              }
+              genreTable[genre].count += 1;
             });
             const typeTable = document.getElementById("typeTable");
             typeTable.innerHTML = "";
-            const labels = [];
-            const avgRates = [];
-            for (const genre in countByGenre) {
-              const count = countByGenre[genre];
-              const avgRate = genreData[genre] && genreData[genre].rateCount > 0
-                  ? (genreData[genre].totalRate / genreData[genre].rateCount).toFixed(1)
-                  : "0";
+            for (const genre in genreTable) {
+              const count = genreTable[genre].count;
               typeTable.insertAdjacentHTML("beforeend", `<tr>
                 <td>${genre}</td>
                 <td>${count}</td>
-                <td>${avgRate}</td>
+                <td>--</td>
               </tr>`);
+            }
+            
+            // グラフ部分：/api/historyから各ジャンルの平均稼働率を計算
+            const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const dataHistory = await responseHistory.json();
+            const industrySelect = document.getElementById("industrySelectType");
+            const selectedIndustry = industrySelect ? industrySelect.value : "";
+            let filteredHistory = selectedIndustry
+                                  ? dataHistory.filter(record => record.biz_type === selectedIndustry)
+                                  : dataHistory;
+            const genreGraph = {};
+            filteredHistory.forEach(record => {
+              const genre = record.genre || "不明";
+              if (!genreGraph[genre]) {
+                genreGraph[genre] = { totalRate: 0, count: 0 };
+              }
+              if (record.working_staff > 0) {
+                const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+                genreGraph[genre].totalRate += rate;
+                genreGraph[genre].count += 1;
+              }
+            });
+            const labels = [];
+            const avgRates = [];
+            for (const genre in genreGraph) {
               labels.push(genre);
+              const { totalRate, count } = genreGraph[genre];
+              const avgRate = count > 0 ? (totalRate / count).toFixed(1) : 0;
               avgRates.push(parseFloat(avgRate));
             }
             const ctx = document.getElementById("typeChart").getContext("2d");
@@ -745,6 +698,9 @@
         }
         document.getElementById("industrySelectType")?.addEventListener("change", updateIndustryRanking);
 
+        /***********************************************
+         * 店舗詳細モーダル内の履歴グラフ
+         ***********************************************/
         async function updateDetailHistoryChart(storeName) {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -818,6 +774,9 @@
           }
         }
 
+        /***********************************************
+         * 店舗詳細モーダル内の時間帯別分析
+         ***********************************************/
         async function updateDetailHourlyChart(storeName) {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -902,6 +861,9 @@
           }
         }
 
+        /***********************************************
+         * Socket.IOによるリアルタイム更新
+         ***********************************************/
         const socket = io();
         socket.on("update", (msg) => {
           console.log("Socket update received:", msg.data);
@@ -911,6 +873,9 @@
           updateIndustryRanking();
         });
 
+        /***********************************************
+         * 初期ロード時の呼び出し
+         ***********************************************/
         updateDashboard();
         updateTop10Chart();
         updateAreaStatistics();
