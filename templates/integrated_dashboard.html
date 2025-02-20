@@ -415,7 +415,6 @@
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
-
             document.getElementById("totalStores").innerText = data.length;
             const avgRate = data.reduce((sum, store) => {
               if (store.working_staff > 0) {
@@ -425,7 +424,6 @@
               return sum;
             }, 0) / (data.length || 1);
             document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-
             const maxRate = data.reduce((max, store) => {
               if (store.working_staff > 0) {
                 const r = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
@@ -434,7 +432,6 @@
               return max;
             }, 0);
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
-
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
             data.forEach((store) => {
@@ -470,7 +467,6 @@
                 </tr>`;
               tableBody.insertAdjacentHTML("beforeend", rowHtml);
             });
-
             if ($.fn.dataTable.isDataTable("#storeTable")) {
               $("#storeTable").DataTable().destroy();
             }
@@ -479,7 +475,6 @@
               order: [[8, "desc"]],
               language: { search: "検索:" }
             });
-
             $("#storeTable tbody")
               .off("click", ".favorite-btn")
               .on("click", ".favorite-btn", function (e) {
@@ -494,7 +489,6 @@
                 }
                 localStorage.setItem("favorites", JSON.stringify(favorites));
               });
-
             $("#storeTable tbody")
               .off("click", ".store-name.clickable")
               .on("click", ".store-name.clickable", function () {
@@ -589,308 +583,29 @@
           }
         }
 
-        document.getElementById("compareBtn")?.addEventListener("click", async () => {
-          const selectedStores = Array.from(document.querySelectorAll(".compare-checkbox:checked"))
-                                      .map(cb => cb.getAttribute("data-store-name"));
-          if (selectedStores.length < 2) {
-            alert("比較分析は2店舗以上選択してください。");
-            return;
-          }
-          try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
-            const compareData = data.filter(store => selectedStores.includes(store.store_name));
-            const labels = compareData.map(s => s.store_name);
-            const rates = compareData.map(s =>
-              s.working_staff > 0
-                ? (((s.working_staff - s.active_staff) / s.working_staff) * 100).toFixed(1)
-                : 0
-            );
-            const ctx = document.getElementById("compareChart").getContext("2d");
-            if (charts.compare) charts.compare.destroy();
-            charts.compare = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    label: "現在稼働率 (%)",
-                    data: rates,
-                    backgroundColor: "rgba(54, 162, 235, 0.6)",
-                    borderColor: "rgba(54, 162, 235, 1)",
-                    borderWidth: 1
-                  }
-                ]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: "比較分析",
-                    font: { size: 20 }
-                  }
-                }
-              }
-            });
-            new bootstrap.Modal(document.getElementById("compareModal")).show();
-          } catch (error) {
-            console.error("比較分析エラー:", error);
-          }
-        });
-
-        async function updateHistoryChart() {
-          try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const storeSelect = document.getElementById("storeSelectHistory");
-            const selectedStore = storeSelect ? storeSelect.value : "";
-            let filtered = data;
-            const startDate = document.getElementById("startDate")?.value || "";
-            const endDate = document.getElementById("endDate")?.value || "";
-            if (startDate) {
-              filtered = filtered.filter(record => new Date(record.timestamp) >= new Date(startDate));
-            }
-            if (endDate) {
-              filtered = filtered.filter(record => new Date(record.timestamp) <= new Date(endDate));
-            }
-            filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            let labels = [];
-            let effectiveRates = [];
-            if (!selectedStore) {
-              const aggregator = {};
-              filtered.forEach(record => {
-                const d = new Date(record.timestamp);
-                const dateStr = d.toLocaleDateString() + " " + d.toTimeString().substring(0, 5);
-                if (!aggregator[dateStr]) aggregator[dateStr] = { sum: 0, count: 0 };
-                if (record.working_staff > 0) {
-                  const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-                  aggregator[dateStr].sum += r;
-                }
-                aggregator[dateStr].count += 1;
-              });
-              const dateKeys = Object.keys(aggregator).sort((a, b) => new Date(a) - new Date(b));
-              labels = dateKeys;
-              effectiveRates = dateKeys.map(key => {
-                const avg = aggregator[key].count > 0 ? aggregator[key].sum / aggregator[key].count : 0;
-                return avg.toFixed(1);
-              });
-            } else {
-              filtered = filtered.filter(record => record.store_name === selectedStore);
-              labels = filtered.map(record => {
-                const d = new Date(record.timestamp);
-                return d.toLocaleDateString() + " " + d.toTimeString().substring(0, 5);
-              });
-              effectiveRates = filtered.map(record => {
-                if (record.working_staff > 0) {
-                  return (((record.working_staff - record.active_staff) / record.working_staff) * 100).toFixed(1);
-                }
-                return 0;
-              });
-            }
-            const ctx = document.getElementById("historyChart").getContext("2d");
-            if (charts.history) charts.history.destroy();
-            charts.history = new Chart(ctx, {
-              type: "line",
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    label: "実働率 (%)",
-                    data: effectiveRates,
-                    borderColor: "rgba(255, 99, 132, 1)",
-                    backgroundColor: "rgba(255, 99, 132, 0.2)",
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5
-                  }
-                ]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: selectedStore === "" ? "全店舗の平均稼働率（期間指定）" : `店舗(${selectedStore})の履歴グラフ`,
-                    font: { size: 20, family: "Roboto, sans-serif" }
-                  },
-                  tooltip: {
-                    callbacks: { label: (context) => `${context.parsed.y}%` },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                      display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
-                  },
-                  x: {
-                    title: {
-                      display: true,
-                      text: "日時",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
-                  }
-                },
-                animation: { duration: 1000 }
-              }
-            });
-            const historyStats = document.getElementById("historyStats");
-            if (effectiveRates.length > 0) {
-              const numericRates = effectiveRates.map(Number);
-              const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
-              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
-            } else {
-              historyStats.textContent = "該当データなし";
-            }
-          } catch (error) {
-            console.error("履歴グラフエラー:", error);
-          }
-        }
-        document.getElementById("updateHistoryBtn")?.addEventListener("click", updateHistoryChart);
-
-        async function fillHistoryStoreDropdown() {
-          try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const storeSelect = document.getElementById("storeSelectHistory");
-            if (!storeSelect) return;
-            const stores = new Set();
-            data.forEach(item => {
-              if (item.store_name) stores.add(item.store_name);
-            });
-            storeSelect.innerHTML = '<option value="">全店舗</option>';
-            stores.forEach(store => {
-              storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
-            });
-          } catch (err) {
-            console.error("履歴グラフ店舗リスト取得エラー:", err);
-          }
-        }
-
-        async function updateHourlyAnalysis() {
-          try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
-            const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
-            let filtered = selectedStore ? data.filter(record => record.store_name === selectedStore) : data;
-            const hourly = {};
-            filtered.forEach(record => {
-              if (record.working_staff > 0) {
-                const d = new Date(record.timestamp);
-                const hour = d.getHours();
-                const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-                if (!hourly[hour]) hourly[hour] = { sum: 0, count: 0 };
-                hourly[hour].sum += rate;
-                hourly[hour].count += 1;
-              }
-            });
-            const labels = [];
-            const avgRates = [];
-            for (let h = 0; h < 24; h++) {
-              labels.push(`${h}:00`);
-              if (hourly[h] && hourly[h].count > 0) {
-                avgRates.push((hourly[h].sum / hourly[h].count).toFixed(1));
-              } else {
-                avgRates.push("0");
-              }
-            }
-            const ctx = document.getElementById("hourlyChart").getContext("2d");
-            if (charts.hourly) charts.hourly.destroy();
-            charts.hourly = new Chart(ctx, {
-              type: "line",
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    label: "平均実働率 (%)",
-                    data: avgRates,
-                    borderColor: "rgba(255, 159, 64, 1)",
-                    backgroundColor: "rgba(255, 159, 64, 0.2)",
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5
-                  }
-                ]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: "時間帯別分析",
-                    font: { size: 20, family: "Roboto, sans-serif" }
-                  },
-                  tooltip: {
-                    callbacks: { label: (context) => `${context.parsed.y}%` },
-                    bodyFont: { family: "Roboto, sans-serif", size: 12 }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                      display: true,
-                      text: "実働率 (%)",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
-                  },
-                  x: {
-                    title: {
-                      display: true,
-                      text: "時間帯",
-                      font: { family: "Roboto, sans-serif", size: 14 }
-                    }
-                  }
-                },
-                animation: { duration: 1000 }
-              }
-            });
-          } catch (err) {
-            console.error("時間帯別分析エラー:", err);
-          }
-        }
-        document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
-
-        async function fillHourlyStoreDropdown() {
-          try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
-            if (!hourlyStoreSelect) return;
-            const stores = new Set();
-            data.forEach(item => {
-              if (item.store_name) stores.add(item.store_name);
-            });
-            hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
-            stores.forEach(store => {
-              hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`;
-            });
-          } catch (err) {
-            console.error("時間帯分析店舗リスト取得エラー:", err);
-          }
-        }
-
+        // ※ エリア統計：店舗数は /api/data、グラフは /api/history から集計
         async function updateAreaStatistics() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            // 最新の店舗数を /api/data から取得
+            const dataLatestResp = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataLatest = await dataLatestResp.json();
+            const countByArea = {};
+            dataLatest.forEach(record => {
+              const area = record.area || "不明";
+              if (!countByArea[area]) {
+                countByArea[area] = 0;
+              }
+              countByArea[area] += 1;
+            });
+            // 平均稼働率は /api/history から取得
+            const dataHistoryResp = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const dataHistory = await dataHistoryResp.json();
             const areaData = {};
-            data.forEach(record => {
+            dataHistory.forEach(record => {
               const area = record.area || "不明";
               if (!areaData[area]) {
-                areaData[area] = { count: 0, totalRate: 0, rateCount: 0 };
+                areaData[area] = { totalRate: 0, rateCount: 0 };
               }
-              areaData[area].count += 1;
               if (record.working_staff > 0) {
                 const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
                 areaData[area].totalRate += r;
@@ -901,9 +616,11 @@
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
-            for (const area in areaData) {
-              const { count, totalRate, rateCount } = areaData[area];
-              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : 0;
+            for (const area in countByArea) {
+              const count = countByArea[area];
+              const avgRate = areaData[area] && areaData[area].rateCount > 0
+                  ? (areaData[area].totalRate / areaData[area].rateCount).toFixed(1)
+                  : "0";
               areaTable.insertAdjacentHTML("beforeend", `<tr>
                 <td>${area}</td>
                 <td>${count}</td>
@@ -942,41 +659,38 @@
           }
         }
 
-        async function fillIndustryDropdown() {
-          try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const industrySelect = document.getElementById("industrySelectType");
-            if (!industrySelect) return;
-            const industries = new Set();
-            data.forEach(item => {
-              if (item.biz_type && item.biz_type !== "不明") {
-                industries.add(item.biz_type);
-              }
-            });
-            industrySelect.innerHTML = "";
-            industries.forEach(ind => {
-              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
-            });
-          } catch (err) {
-            console.error("業種ドロップダウン取得エラー:", err);
-          }
-        }
-
+        // ※ 業種内ジャンルランキング：店舗数は /api/data、グラフは /api/history から集計
         async function updateIndustryRanking() {
           try {
             const industrySelect = document.getElementById("industrySelectType");
             const selectedIndustry = industrySelect ? industrySelect.value : "";
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            const filtered = selectedIndustry ? data.filter(record => record.biz_type === selectedIndustry) : data;
+            // 最新店舗データ（カウント用）
+            const dataLatestResp = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const dataLatest = await dataLatestResp.json();
+            // 履歴データ（平均稼働率計算用）
+            const dataHistoryResp = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const dataHistory = await dataHistoryResp.json();
+
+            const filteredLatest = selectedIndustry
+              ? dataLatest.filter(record => record.biz_type === selectedIndustry)
+              : dataLatest;
+            const countByGenre = {};
+            filteredLatest.forEach(record => {
+              const genre = record.genre || "不明";
+              if (!countByGenre[genre]) {
+                countByGenre[genre] = 0;
+              }
+              countByGenre[genre] += 1;
+            });
+            const filteredHistory = selectedIndustry
+              ? dataHistory.filter(record => record.biz_type === selectedIndustry)
+              : dataHistory;
             const genreData = {};
-            filtered.forEach(record => {
+            filteredHistory.forEach(record => {
               const genre = record.genre || "不明";
               if (!genreData[genre]) {
-                genreData[genre] = { count: 0, totalRate: 0, rateCount: 0 };
+                genreData[genre] = { totalRate: 0, rateCount: 0 };
               }
-              genreData[genre].count += 1;
               if (record.working_staff > 0) {
                 const r = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
                 genreData[genre].totalRate += r;
@@ -987,15 +701,17 @@
             typeTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
-            for (const g in genreData) {
-              const { count, totalRate, rateCount } = genreData[g];
-              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : 0;
+            for (const genre in countByGenre) {
+              const count = countByGenre[genre];
+              const avgRate = genreData[genre] && genreData[genre].rateCount > 0
+                  ? (genreData[genre].totalRate / genreData[genre].rateCount).toFixed(1)
+                  : "0";
               typeTable.insertAdjacentHTML("beforeend", `<tr>
-                <td>${g}</td>
+                <td>${genre}</td>
                 <td>${count}</td>
                 <td>${avgRate}</td>
               </tr>`);
-              labels.push(g);
+              labels.push(genre);
               avgRates.push(parseFloat(avgRate));
             }
             const ctx = document.getElementById("typeChart").getContext("2d");
