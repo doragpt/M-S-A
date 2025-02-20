@@ -1,20 +1,3 @@
-"""
-store_scraper.py
-
-このモジュールは、店舗情報をウェブサイトからスクレイピングする機能を提供します。
-主な処理は以下のとおりです:
-  - pyppeteerとpyppeteer_stealthを用いてヘッドレスブラウザを操作し、店舗の出勤情報ページを読み込む。
-  - BeautifulSoupを利用してHTMLをパースし、店舗名、業種、ジャンル、エリア、シフト情報などを抽出する。
-  - 店舗情報が「不明」の場合、最大 MAX_RETRIES_FOR_INFO 回まで再取得を試みる。
-  - 複数店舗のスクレイピングを同時に（ただし並列数制限付きで）実行する。
-
-関数:
-  - fetch_page(page, url, retries=3): 指定URLのページ読み込みにリトライを含む。
-  - scrape_store(browser, url, semaphore): 単一店舗のスクレイピング処理。再試行も含む。
-  - _scrape_all(store_urls): 全店舗のスクレイピングを並列実行する。
-  - scrape_store_data(store_urls): 非同期処理を同期的に実行するためのラッパー関数。
-"""
-
 import asyncio
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
@@ -24,16 +7,10 @@ from datetime import datetime, timedelta
 import pytz
 import gc
 
-# 一度に処理する店舗数（並列数の上限）
 MAX_CONCURRENT_TASKS = 7
-
-# 店舗情報が「不明」になった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 3
 
 async def fetch_page(page, url, retries=3):
-    """
-    指定したページオブジェクトで、URLのページを読み込む（リトライ付き）。
-    """
     for attempt in range(retries):
         try:
             await page.goto(url, waitUntil='networkidle0', timeout=30000)
@@ -44,13 +21,6 @@ async def fetch_page(page, url, retries=3):
     return False
 
 async def scrape_store(browser, url: str, semaphore) -> dict:
-    """
-    単一店舗の「本日出勤」情報をスクレイピングします。
-
-    店舗情報（店舗名、業種、ジャンル、エリア）を取得し、もし「不明」となった場合は
-    MAX_RETRIES_FOR_INFO 回まで再取得を試みます。また、シフト情報から総出勤数、勤務中人数、
-    即ヒメ（待機中）人数をカウントします。
-    """
     async with semaphore:
         if not url.endswith("/"):
             url += "/"
@@ -77,17 +47,14 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         await page.close()
         soup = BeautifulSoup(content, "html.parser")
 
-        # 初期値として店舗情報を「不明」と設定
         store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
 
-        # 【変更部分】まず、エリア情報は <li class="area_menu_item current"> から取得する
         current_area_elem = soup.find("li", class_="area_menu_item current")
         if current_area_elem:
             a_elem = current_area_elem.find("a")
             if a_elem:
                 area = a_elem.get_text(strip=True)
 
-        # 以下、店舗情報（店舗名、業種、ジャンル）の取得（エリアは上書きしない）
         attempt = 0
         while attempt < MAX_RETRIES_FOR_INFO:
             menushop_div = soup.find("div", class_="menushopname none")
@@ -122,7 +89,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             content = await page.content()
             await page.close()
             soup = BeautifulSoup(content, "html.parser")
-            # 再取得時も、エリア情報は <li class="area_menu_item current"> から取得する
             current_area_elem = soup.find("li", class_="area_menu_item current")
             if current_area_elem:
                 a_elem = current_area_elem.find("a")
@@ -158,13 +124,17 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         current_time = datetime.now(jst)
 
         for wrapper in wrappers:
+            # タイトル要素からテキストを取得
             title_elem = wrapper.find("div", class_="title")
             title_text = title_elem.get_text(strip=True) if title_elem else ""
+            # wrapper全体のテキストを取得（即ヒメ判定に利用）
+            wrapper_text = wrapper.get_text(strip=True)
             p_elems = wrapper.find_all("p", class_="time_font_size shadow shukkin_detail_time")
             for p_elem in p_elems:
                 text = p_elem.get_text(strip=True)
                 if not text:
                     continue
+                # 「明日」「次回」「出勤予定」「お休み」が含まれる場合は対象外
                 if any(kw in text for kw in ["明日", "次回", "出勤予定", "お休み"]):
                     continue
                 if "完売" in text:
@@ -182,7 +152,9 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     total_staff += 1
                     if start_time <= current_time <= end_time:
                         working_staff += 1
-                        if "待機中" in text or "待機中" in title_text:
+                        # 【修正箇所】
+                        # wrapper全体のテキストに「待機中」が含まれているか、または全体テキストが空の場合は即ヒメと判断
+                        if ("待機中" in wrapper_text) or (wrapper_text == ""):
                             active_staff += 1
 
         return {
@@ -198,15 +170,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         }
 
 async def _scrape_all(store_urls: list) -> list:
-    """
-    複数店舗のスクレイピングを、並列実行数制限付きで実行します。
-
-    Args:
-        store_urls (list): スクレイピング対象の店舗URLのリスト。
-
-    Returns:
-        list: 各店舗のスクレイピング結果をまとめたリスト（各要素は辞書）。
-    """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     executable_path = '/usr/bin/google-chrome'
     browser = await launch(
@@ -239,13 +202,4 @@ async def _scrape_all(store_urls: list) -> list:
     return results
 
 def scrape_store_data(store_urls: list) -> list:
-    """
-    非同期スクレイピング処理の同期ラッパー関数。
-
-    Args:
-        store_urls (list): スクレイピング対象店舗のURLリスト。
-
-    Returns:
-        list: 各店舗のスクレイピング結果を含むリスト。
-    """
     return asyncio.run(_scrape_all(store_urls))
