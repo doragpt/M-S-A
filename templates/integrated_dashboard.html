@@ -916,7 +916,7 @@
               if (!areaData[area]) {
                 areaData[area] = { stores: new Set(), totalRate: 0, rateCount: 0 };
               }
-              areaData[area].stores.add(record.store_name);
+              areaData[area].stores.add(record.id);
               if (record.working_staff > 0) {
                 areaData[area].totalRate += ((record.working_staff - record.active_staff) / record.working_staff * 100);
                 areaData[area].rateCount += 1;
