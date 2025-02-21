@@ -25,7 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 追加：キャッシュ設定（Redisを利用）
 app.config['CACHE_TYPE'] = 'RedisCache'
-# 環境変数REDIS_URLが設定されていなければローカルのRedisを使用
+# 環境変数 REDIS_URL が設定されていなければローカルの Redis を使用
 app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 cache = Cache(app)
 
@@ -63,13 +63,11 @@ class StoreURL(db.Model):
     store_url = db.Column(db.Text, unique=True, nullable=False)
     error_flag = db.Column(db.Integer, default=0)
 
-
 # ---------------------------------------------------------------------
 # 3. テーブル作成
 # ---------------------------------------------------------------------
 with app.app_context():
     db.create_all()
-
 
 # ---------------------------------------------------------------------
 # 4. スクレイピング処理 & 定期実行
@@ -83,14 +81,14 @@ def scheduled_scrape():
     ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
       得られた結果を StoreStatus テーブルに保存する。
     ・同一店舗＋同一タイムスタンプ（分単位切り捨て）が既に存在する場合は上書きする。
-    ・処理完了後、Socket.IO を利用してクライアントに更新通知を送信する。
-    ・また、古いデータ（2年以上前）を削除してパフォーマンスを維持する。
-    ・さらに、データ更新後にキャッシュをクリアして最新データを反映する。
+    ・古いデータ（2年以上前）を削除してパフォーマンスを維持する。
+    ・データ更新後にキャッシュをクリアして最新情報を反映する。
+    ・処理完了後、Socket.IO でクライアントへ更新通知を送信する。
     """
     with app.app_context():
-        # スクレイピング実行時刻（全レコード共通）
+        # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
-        # 古いデータ保持期間（過去2年以上前を削除）
+        # 古いデータ削除：過去2年以上前
         retention_date = datetime.now() - timedelta(days=730)
 
         store_url_objs = StoreURL.query.all()
@@ -106,15 +104,14 @@ def scheduled_scrape():
             app.logger.error("スクレイピング中のエラー: %s", e)
             return
 
+        # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
         for record in results:
             if record:  # 空の結果はスキップ
-                # 重複チェック：同じ店舗名かつ同じスクレイピング実行時刻（分単位切り捨て）で既存のレコードを確認
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
                     func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
                 ).first()
                 if existing:
-                    # 既存レコードがあれば更新
                     existing.biz_type = record.get('biz_type')
                     existing.genre = record.get('genre')
                     existing.area = record.get('area')
@@ -124,7 +121,6 @@ def scheduled_scrape():
                     existing.url = record.get('url')
                     existing.shift_time = record.get('shift_time')
                 else:
-                    # 新規レコード作成
                     new_status = StoreStatus(
                         timestamp=scrape_time,
                         store_name=record.get('store_name'),
@@ -140,13 +136,15 @@ def scheduled_scrape():
                     db.session.add(new_status)
         db.session.commit()
 
-        # 古いデータ（2年以上前）の削除
+        # 古いデータの削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
-        # キャッシュクリア
+        # キャッシュクリア（特に /api/history 用キャッシュを削除）
         cache.clear()
+
+        # Socket.IO でクライアントへ通知
         socketio.emit('update', {'data': 'Dashboard updated'})
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
@@ -155,28 +153,23 @@ scheduler = BackgroundScheduler(executors=executors)
 scheduler.add_job(scheduled_scrape, 'interval', hours=1)
 scheduler.start()
 
-
 # ---------------------------------------------------------------------
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
 def api_data():
     """
-    各店舗ごとの最新レコードのみを返すエンドポイント。
-    ※同じ店舗名でも、エリアが異なれば別店舗としてグループ化するように変更。
-    タイムゾーンは JST (Asia/Tokyo) に変換して返します。
+    各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
     """
-    # 店舗名とエリアの複合キーで最新の timestamp を取得するサブクエリ
+    # 各店舗の最新タイムスタンプをサブクエリで取得
     subq = db.session.query(
         StoreStatus.store_name,
-        StoreStatus.area,
         func.max(StoreStatus.timestamp).label("max_time")
-    ).group_by(StoreStatus.store_name, StoreStatus.area).subquery()
+    ).group_by(StoreStatus.store_name).subquery()
 
     query = db.session.query(StoreStatus).join(
         subq,
         (StoreStatus.store_name == subq.c.store_name) &
-        (StoreStatus.area == subq.c.area) &
         (StoreStatus.timestamp == subq.c.max_time)
     ).order_by(StoreStatus.timestamp.desc())
 
@@ -201,11 +194,10 @@ def api_data():
 
 
 @app.route('/api/history')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効
+@cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷を軽減）
 def api_history():
     """
-    すべてのスクレイピング履歴を時系列昇順で返すエンドポイント。
-    タイムゾーンは JST (Asia/Tokyo) に変換して返します。
+    全スクレイピング履歴を時系列昇順で返すエンドポイント（タイムゾーンは JST）。
     """
     results = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).all()
     data = []
@@ -234,8 +226,6 @@ def api_history():
 def manage_store_urls():
     """
     管理画面：店舗URL の追加・編集・削除を行うページ
-    - GET: 登録済みURL一覧を表示
-    - POST: 新規URLを追加
     """
     if request.method == 'POST':
         store_url = request.form.get('store_url', '').strip()
