@@ -88,9 +88,9 @@ def scheduled_scrape():
     ・さらに、データ更新後にキャッシュをクリアして最新データを反映する。
     """
     with app.app_context():
-        # スクレイピング実行時刻を取得（全レコードに共通の timestamp として利用）
+        # スクレイピング実行時刻（全レコード共通）
         scrape_time = datetime.now()
-        # 古いデータの保持期間（過去2年以上前を削除）
+        # 古いデータ保持期間（過去2年以上前を削除）
         retention_date = datetime.now() - timedelta(days=730)
 
         store_url_objs = StoreURL.query.all()
@@ -108,13 +108,13 @@ def scheduled_scrape():
 
         for record in results:
             if record:  # 空の結果はスキップ
-                # 重複チェック：同じ店舗名かつ同じスクレイピング実行時刻（分単位切り捨て）で既存のレコードがあるか確認
+                # 重複チェック：同じ店舗名かつ同じスクレイピング実行時刻（分単位切り捨て）で既存のレコードを確認
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
                     func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
                 ).first()
                 if existing:
-                    # 既存レコードがあればフィールドを更新
+                    # 既存レコードがあれば更新
                     existing.biz_type = record.get('biz_type')
                     existing.genre = record.get('genre')
                     existing.area = record.get('area')
@@ -124,7 +124,7 @@ def scheduled_scrape():
                     existing.url = record.get('url')
                     existing.shift_time = record.get('shift_time')
                 else:
-                    # 新規の場合は scrape_time を timestamp として新しいレコードを作成
+                    # 新規レコード作成
                     new_status = StoreStatus(
                         timestamp=scrape_time,
                         store_name=record.get('store_name'),
@@ -145,9 +145,8 @@ def scheduled_scrape():
         db.session.commit()
 
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
-        # データ更新後はキャッシュをクリアして最新の情報を返すようにする
+        # キャッシュクリア
         cache.clear()
-
         socketio.emit('update', {'data': 'Dashboard updated'})
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
@@ -164,17 +163,20 @@ scheduler.start()
 def api_data():
     """
     各店舗ごとの最新レコードのみを返すエンドポイント。
+    ※同じ店舗名でも、エリアが異なれば別店舗としてグループ化するように変更。
     タイムゾーンは JST (Asia/Tokyo) に変換して返します。
     """
-    # 各店舗の最新 timestamp をサブクエリで取得
+    # 店舗名とエリアの複合キーで最新の timestamp を取得するサブクエリ
     subq = db.session.query(
         StoreStatus.store_name,
+        StoreStatus.area,
         func.max(StoreStatus.timestamp).label("max_time")
-    ).group_by(StoreStatus.store_name).subquery()
+    ).group_by(StoreStatus.store_name, StoreStatus.area).subquery()
 
     query = db.session.query(StoreStatus).join(
         subq,
         (StoreStatus.store_name == subq.c.store_name) &
+        (StoreStatus.area == subq.c.area) &
         (StoreStatus.timestamp == subq.c.max_time)
     ).order_by(StoreStatus.timestamp.desc())
 
@@ -199,7 +201,7 @@ def api_data():
 
 
 @app.route('/api/history')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効。これによりDBアクセスと集計処理の負荷を軽減
+@cache.cached(timeout=300)  # キャッシュ：5分間有効
 def api_history():
     """
     すべてのスクレイピング履歴を時系列昇順で返すエンドポイント。
