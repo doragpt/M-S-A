@@ -80,10 +80,11 @@ def scheduled_scrape():
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
     ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
       得られた結果を StoreStatus テーブルに保存する。
-    ・同一店舗＋同一タイムスタンプ（分単位切り捨て）が既に存在する場合は上書きする。
+    ・重複チェックは「店舗名＋エリア＋スクレイピング実行時刻（分単位切り捨て）」で行い、
+      既に同じ複合キーが存在する場合はそのレコードを更新する（上書き）。
     ・古いデータ（2年以上前）を削除してパフォーマンスを維持する。
     ・データ更新後にキャッシュをクリアして最新情報を反映する。
-    ・処理完了後、Socket.IO でクライアントへ更新通知を送信する。
+    ・処理完了後、Socket.IO を利用してクライアントへ更新通知を送信する。
     """
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
@@ -107,11 +108,14 @@ def scheduled_scrape():
         # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
         for record in results:
             if record:  # 空の結果はスキップ
+                # 重複チェック：店舗名とエリアと実行時刻（分単位）でチェック
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
+                    StoreStatus.area == record.get('area'),
                     func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
                 ).first()
                 if existing:
+                    # 既存レコードがあれば更新
                     existing.biz_type = record.get('biz_type')
                     existing.genre = record.get('genre')
                     existing.area = record.get('area')
@@ -121,6 +125,7 @@ def scheduled_scrape():
                     existing.url = record.get('url')
                     existing.shift_time = record.get('shift_time')
                 else:
+                    # 新規の場合は新たにレコードを追加
                     new_status = StoreStatus(
                         timestamp=scrape_time,
                         store_name=record.get('store_name'),
@@ -136,15 +141,15 @@ def scheduled_scrape():
                     db.session.add(new_status)
         db.session.commit()
 
-        # 古いデータの削除
+        # 古いデータ（2年以上前）の削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
-        # キャッシュクリア（特に /api/history 用キャッシュを削除）
+        # キャッシュクリア：特に/api/historyのキャッシュを削除
         cache.clear()
 
-        # Socket.IO でクライアントへ通知
+        # Socket.IO でクライアントへ更新通知
         socketio.emit('update', {'data': 'Dashboard updated'})
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
@@ -194,7 +199,7 @@ def api_data():
 
 
 @app.route('/api/history')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷を軽減）
+@cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷軽減）
 def api_history():
     """
     全スクレイピング履歴を時系列昇順で返すエンドポイント（タイムゾーンは JST）。
@@ -262,7 +267,7 @@ def delete_store_url(id):
 @app.route('/admin/edit/<int:id>', methods=['GET', 'POST'])
 def edit_store_url(id):
     """
-    店舗URL の編集ページ
+    店舗URL の編集ページ（編集機能追加）
     """
     url_obj = StoreURL.query.get_or_404(id)
     if request.method == 'POST':
@@ -271,6 +276,7 @@ def edit_store_url(id):
             flash("URLを入力してください。", "warning")
             return redirect(url_for('edit_store_url', id=id))
 
+        # 重複チェック（他のレコードと重複していないか）
         conflict = StoreURL.query.filter(StoreURL.store_url == new_url, StoreURL.id != id).first()
         if conflict:
             flash("そのURLは既に他の店舗として登録されています。", "warning")
