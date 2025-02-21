@@ -43,7 +43,9 @@
           <td>{{ url.store_url }}</td>
           <td>{{ "エラー" if url.error_flag else "正常" }}</td>
           <td>
-            <!-- 編集機能実装済みの場合はここにリンクを追加 -->
+            <!-- 編集リンクを追加 -->
+            <a href="{{ url_for('edit_store_url', id=url.id) }}" class="btn btn-sm btn-primary">編集</a>
+            <!-- 削除ボタン -->
             <form method="post" action="{{ url_for('delete_store_url', id=url.id) }}" style="display:inline;">
               <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('本当に削除しますか？');">削除</button>
             </form>
