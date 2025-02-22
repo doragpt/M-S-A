@@ -127,6 +127,12 @@
           業種内ジャンルランキング
         </a>
       </li>
+      <!-- 新規追加：平均稼働ランキングタブ -->
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="ranking-tab" data-bs-toggle="tab" href="#ranking" role="tab">
+          平均稼働ランキング
+        </a>
+      </li>
     </ul>
 
     <!-- タブコンテンツ -->
@@ -295,7 +301,7 @@
             </div>
           </div>
           <div class="table-responsive mb-3">
-            <table class="table table-bordered table-striped">
+            <table id="typeTable" class="table table-bordered table-striped">
               <thead>
                 <tr>
                   <th>ジャンル</th>
@@ -313,6 +319,44 @@
           </div>
         </div>
       </div><!-- /タブ5 -->
+
+      <!-- タブ6: 平均稼働ランキング -->
+      <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
+        <div class="my-4">
+          <h2 class="mb-4 text-center">平均稼働ランキング</h2>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="rankingTypeSelect" class="form-label">ランキングタイプ</label>
+              <select id="rankingTypeSelect" class="form-select">
+                <option value="all" selected>全店舗</option>
+                <option value="industry">業種別</option>
+              </select>
+            </div>
+            <div class="col-md-6" id="industryFilterDiv" style="display: none;">
+              <label for="industrySelectRanking" class="form-label">業種を選択</label>
+              <select id="industrySelectRanking" class="form-select">
+                <!-- 業種リストはJSで動的に追加 -->
+              </select>
+            </div>
+          </div>
+          <button id="updateRankingBtn" class="btn btn-primary mb-3">ランキング更新</button>
+          <div class="table-responsive">
+            <table id="rankingTable" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>順位</th>
+                  <th>店舗名</th>
+                  <th>業種</th>
+                  <th>ジャンル</th>
+                  <th>エリア</th>
+                  <th>平均稼働率 (%)</th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /タブ6 -->
 
     </div> <!-- /tab-content -->
   </div> <!-- /container-fluid -->
@@ -1175,6 +1219,103 @@
             console.error("店舗詳細時間帯分析エラー:", err);
           }
         }
+
+        /***********************************************
+         * 平均稼働ランキングタブの更新 (/api/history)
+         ***********************************************/
+        async function updateAverageRanking() {
+          try {
+            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const data = await response.json();
+
+            // 各店舗ごとに平均稼働率を算出
+            const storeStats = {};
+            data.forEach(record => {
+              if (record.working_staff > 0) {
+                const rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
+                if (!storeStats[record.store_name]) {
+                  storeStats[record.store_name] = {
+                    store_name: record.store_name,
+                    biz_type: record.biz_type || "",
+                    genre: record.genre || "",
+                    area: record.area || "",
+                    totalRate: 0,
+                    count: 0
+                  };
+                }
+                storeStats[record.store_name].totalRate += rate;
+                storeStats[record.store_name].count += 1;
+              }
+            });
+            const rankingArray = Object.values(storeStats).map(store => {
+              return { ...store, avgRate: store.count > 0 ? (store.totalRate / store.count) : 0 };
+            });
+
+            // ランキングタイプによってフィルタ
+            const rankingType = document.getElementById("rankingTypeSelect").value;
+            let filteredArray = rankingArray;
+            if (rankingType === "industry") {
+              const selectedIndustry = document.getElementById("industrySelectRanking").value;
+              filteredArray = rankingArray.filter(store => store.biz_type === selectedIndustry);
+            }
+
+            // 平均稼働率の降順にソート
+            filteredArray.sort((a, b) => b.avgRate - a.avgRate);
+
+            // テーブルに結果を表示
+            const tbody = document.getElementById("rankingTableBody");
+            tbody.innerHTML = "";
+            filteredArray.forEach((store, index) => {
+              const rowHtml = `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${store.store_name}</td>
+                  <td>${store.biz_type}</td>
+                  <td>${store.genre}</td>
+                  <td>${store.area}</td>
+                  <td>${store.avgRate.toFixed(1)}</td>
+                </tr>
+              `;
+              tbody.insertAdjacentHTML("beforeend", rowHtml);
+            });
+          } catch (error) {
+            console.error("平均稼働ランキングエラー:", error);
+          }
+        }
+
+        /***********************************************
+         * 業種別ランキング用の業種ドロップダウンを更新
+         ***********************************************/
+        async function fillIndustryDropdownForRanking() {
+          try {
+            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const data = await response.json();
+            const industries = new Set();
+            data.forEach(record => {
+              if (record.biz_type) industries.add(record.biz_type);
+            });
+            const industrySelect = document.getElementById("industrySelectRanking");
+            industrySelect.innerHTML = "";
+            industries.forEach(ind => {
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
+            });
+          } catch (err) {
+            console.error("ランキング業種ドロップダウン取得エラー:", err);
+          }
+        }
+
+        // ランキングタイプの変更イベント
+        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
+          if (this.value === "industry") {
+            document.getElementById("industryFilterDiv").style.display = "";
+            await fillIndustryDropdownForRanking();
+          } else {
+            document.getElementById("industryFilterDiv").style.display = "none";
+          }
+        });
+
+        // ランキング更新ボタンのイベント登録
+        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
 
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知
