@@ -54,7 +54,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     Args:
         browser: pyppeteer のブラウザオブジェクト
         url (str): 店舗基本URL（必要に応じて末尾に "/" を追加）
-        semaphore: 並列処理制御用のセマフォ
+        semaphore: 並列実行制御用のセマフォ
     
     Returns:
         dict: 取得した店舗情報および出勤シフトの集計結果
@@ -161,7 +161,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
 
         total_staff = 0     # 総出勤数
         working_staff = 0   # 勤務中の人数
-        active_staff = 0    # 即ヒメ（待機中）人数
+        active_staff = 0    # 即ヒメの人数
 
         jst = pytz.timezone('Asia/Tokyo')
         # 各シフト(wrapper)ごとに処理
@@ -181,13 +181,10 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 match = re.search(r"(\d{1,2}):(\d{2})～(\d{1,2}):(\d{2})", text)
                 if match:
                     start_h, start_m, end_h, end_m = map(int, match.groups())
-                    # 各シフトごとに最新の現在時刻を取得
                     current_time = datetime.now(jst)
                     parsed_start = datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time()
                     parsed_end = datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time()
-                    # シフトが日跨ぎの場合の処理
                     if parsed_end < parsed_start:
-                        # もし current_time の時刻が parsed_end より前なら、シフトは前日の開始とみなす
                         if current_time.time() < parsed_end:
                             start_time = datetime.combine(current_time.date() - timedelta(days=1), parsed_start)
                             end_time = datetime.combine(current_time.date(), parsed_end)
@@ -197,17 +194,12 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     else:
                         start_time = datetime.combine(current_time.date(), parsed_start)
                         end_time = datetime.combine(current_time.date(), parsed_end)
-                    # ローカライズ
                     start_time = jst.localize(start_time)
                     end_time = jst.localize(end_time)
                     total_staff += 1
 
-                    # デバッグ用（必要に応じて有効化）
-                    # print(f"DEBUG: シフトテキスト: {text} | start_time: {start_time} | end_time: {end_time} | current_time: {current_time}")
-
                     if start_time <= current_time <= end_time:
                         working_staff += 1
-                        # 【即ヒメ判定処理】
                         status_container = wrapper.find("div", class_="sugunavi_spacer_1line")
                         if not status_container:
                             status_container = wrapper.find("div", class_="sugunavi_spacer_2line")
@@ -219,7 +211,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                                 status_text = ""
                         else:
                             status_text = ""
-                        # 待機中と判定する条件
                         if ("待機中" in status_text) or (status_text == ""):
                             active_staff += 1
 
