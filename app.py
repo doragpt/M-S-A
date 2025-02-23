@@ -153,9 +153,10 @@ def scheduled_scrape():
         socketio.emit('update', {'data': 'Dashboard updated'})
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
+# ジョブIDを 'scrape_job' として登録
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
 scheduler = BackgroundScheduler(executors=executors)
-scheduler.add_job(scheduled_scrape, 'interval', hours=1)
+scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
 scheduler.start()
 
 # ---------------------------------------------------------------------
@@ -302,7 +303,28 @@ def index():
 
 
 # ---------------------------------------------------------------------
-# 8. メイン実行部
+# 8. 手動スクレイピング実行ルート（定期スクレイピングの次回実行時刻を更新）
+# ---------------------------------------------------------------------
+@app.route('/admin/manual_scrape', methods=['POST'])
+def manual_scrape():
+    """
+    管理画面などから手動でスクレイピングを実行し、その完了時刻を基準に
+    次回定期スクレイピングの実行時刻を現在時刻＋1時間に更新するルート
+    """
+    # 手動実行
+    scheduled_scrape()
+    # 次回実行時刻を現在時刻＋1時間に設定
+    next_time = datetime.now() + timedelta(hours=1)
+    try:
+        scheduler.modify_job('scrape_job', next_run_time=next_time)
+        flash("手動スクレイピングを実行しました。次回は {} に実行されます。".format(next_time.strftime("%Y-%m-%d %H:%M:%S")), "success")
+    except Exception as e:
+        flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
+    return redirect(url_for('manage_store_urls'))
+
+
+# ---------------------------------------------------------------------
+# 9. メイン実行部
 # ---------------------------------------------------------------------
 if __name__ == '__main__':
     # 開発用デバッグモード (本番環境では不要)
