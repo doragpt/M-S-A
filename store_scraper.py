@@ -1,17 +1,3 @@
-"""
-store_scraper.py
-
-このモジュールは、店舗の「本日出勤」情報をウェブサイトからスクレイピングするためのものです。
-主な機能：
-  - pyppeteer と pyppeteer_stealth を用いてヘッドレスブラウザで対象ページにアクセス
-  - BeautifulSoup によりHTMLをパースし、店舗名、業種、ジャンル、エリア情報を取得
-  - 「本日出勤」の情報は、出勤情報ページ内の「item-0」部分から取得します（明日の出勤情報は対象外）
-  - 各シフト情報(wrapper)から、総出勤数、勤務中人数、及び「即ヒメ（待機中）人数」をカウントします。
-    ※ 即ヒメのカウントは、シフト内の「sugunavi_spacer_1line」または「sugunavi_spacer_2line」内に
-       「sugunavibox」要素が存在するかどうかで判断します。存在しなければ、またはテキストに「待機中」
-       が含まれていれば、即ヒメとしてカウントします。
-"""
-
 import asyncio
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
@@ -21,81 +7,98 @@ from datetime import datetime, timedelta
 import pytz
 import gc
 
-# 並列処理する店舗数の上限
+# -------------------------------
+# 定数設定
+# -------------------------------
+# 並列処理する店舗数の上限（同時に処理するタスク数）
 MAX_CONCURRENT_TASKS = 10
-# 店舗情報が「不明」となった場合の再試行回数
+# 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 3
 
-async def fetch_page(page, url, retries=3):
+# -------------------------------
+# fetch_page 関数
+# -------------------------------
+async def fetch_page(page, url, retries=3, timeout=20000):
     """
-    指定ページで与えられたURLの読み込みを行い、ネットワークアイドル状態になるまで待機します。
-    リトライも実施します。
+    指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する関数
+    
+    Parameters:
+      - page: pyppeteer のページオブジェクト
+      - url: アクセスするURL
+      - retries: リトライ回数（デフォルト3回）
+      - timeout: タイムアウト（ミリ秒単位、デフォルト20000ms=20秒）
+    
+    Returns:
+      - True: ページの読み込みに成功した場合
+      - False: 全てのリトライで失敗した場合
     """
     for attempt in range(retries):
         try:
-            await page.goto(url, waitUntil='networkidle0', timeout=30000)
+            await page.goto(url, waitUntil='networkidle0', timeout=timeout)
             return True
         except Exception as e:
             print(f"ページロード失敗（リトライ {attempt+1}/{retries}）: {url} - {e}")
             await asyncio.sleep(5)
     return False
 
+# -------------------------------
+# scrape_store 関数
+# -------------------------------
 async def scrape_store(browser, url: str, semaphore) -> dict:
     """
-    単一店舗の「本日出勤」情報をスクレイピングする関数。
+    単一店舗の「本日出勤」情報をスクレイピングする関数
+    - ヘッドレスブラウザを用いて対象ページにアクセス
+    - BeautifulSoup でHTMLをパースして店舗情報とシフト情報を取得
+    - ページ再利用により再取得時に新規ページ作成のオーバーヘッドを削減
     
-    ・店舗情報（店舗名、業種、ジャンル、エリア）は、対象ページ内の特定要素から取得します。
-    ・出勤情報は、shukkin-list-container 内の item-0 に含まれるシフト(wrapper)情報から取得し、
-      各シフトごとに総出勤数、勤務中人数、および「即ヒメ」（待機中）人数をカウントします。
-    ・即ヒメのカウントについては、各 wrapper 内の 
-      "sugunavi_spacer_1line" または "sugunavi_spacer_2line" 内にある "sugunavibox" 要素を調査し、
-      存在しなければ、または存在してそのテキストに「待機中」が含まれている場合に即ヒメとしてカウントします。
-    
-    Args:
-        browser: pyppeteer のブラウザオブジェクト
-        url (str): 店舗基本URL（必要に応じて末尾に "/" を追加）
-        semaphore: 並列実行制御用のセマフォ
+    Parameters:
+      - browser: pyppeteer のブラウザオブジェクト
+      - url: 店舗の基本URL（必要に応じて末尾に "/" を追加）
+      - semaphore: 並列実行制御用のセマフォ
     
     Returns:
-        dict: 取得した店舗情報および出勤シフトの集計結果
+      - dict: 取得した店舗情報およびシフト情報の集計結果
     """
     async with semaphore:
+        # URLの末尾に "/" がなければ追加し、出勤情報ページのURLを作成
         if not url.endswith("/"):
             url += "/"
         attend_url = url + "attend/soon/"
 
+        # 新規ページを作成
         page = await browser.newPage()
         try:
-            await stealth(page)
+            await stealth(page)  # 検出回避のため stealth を適用
         except Exception as e:
             print("stealth 適用エラー:", e)
-
+        # ユーザーエージェントを設定
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         )
 
         print("初回アクセス中:", attend_url)
-        success = await fetch_page(page, attend_url)
+        # 指定URLにアクセス。タイムアウト20秒、リトライ3回
+        success = await fetch_page(page, attend_url, retries=3, timeout=20000)
         if not success:
             await page.close()
             return {}
+        # ページ読み込み後、1秒待機
         await asyncio.sleep(1)
+        # ページコンテンツを取得し、BeautifulSoupでパース
         content = await page.content()
-        await page.close()
         soup = BeautifulSoup(content, "html.parser")
 
-        # 初期値：店舗情報を「不明」として設定
+        # 店舗情報の初期値を「不明」とする
         store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
-
-        # エリア情報は、<li class="area_menu_item current"> 内のテキストから取得
+        # エリア情報の取得（現在のエリアを示す <li> 要素から）
         current_area_elem = soup.find("li", class_="area_menu_item current")
         if current_area_elem:
             a_elem = current_area_elem.find("a")
             if a_elem:
                 area = a_elem.get_text(strip=True)
 
-        # 店舗名、業種、ジャンルは <div class="menushopname none"> 内の h1 要素から取得
+        # 店舗名、業種、ジャンルの情報取得（再取得時は同じページを再利用）
         attempt = 0
         while attempt < MAX_RETRIES_FOR_INFO:
             menushop_div = soup.find("div", class_="menushopname none")
@@ -103,46 +106,40 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 h1_elem = menushop_div.find("h1")
                 if h1_elem:
                     store_name = h1_elem.get_text(strip=True)
+                    # h1 の次の要素から店舗情報を取得する
                     store_info = h1_elem.next_sibling.strip() if h1_elem.next_sibling else ""
                     match = re.search(r"(.+?)\((.+?)/(.+?)\)", store_info)
                     if match:
                         biz_type, genre, extracted_area = match.groups()
                         if area == "不明":
                             area = extracted_area
+            # 情報が取得できたらループ終了
             if store_name != "不明":
                 break
             attempt += 1
             print(f"店舗情報再取得試行 {attempt} 回目: {url}")
-            page = await browser.newPage()
-            try:
-                await stealth(page)
-            except Exception as e:
-                print("stealth 再適用エラー:", e)
-            await page.setUserAgent(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-            )
-            success = await fetch_page(page, attend_url)
+            # 同じページを再利用して再度アクセス
+            success = await fetch_page(page, attend_url, retries=3, timeout=20000)
             if not success:
                 await page.close()
                 return {}
             await asyncio.sleep(1)
             content = await page.content()
-            await page.close()
             soup = BeautifulSoup(content, "html.parser")
             current_area_elem = soup.find("li", class_="area_menu_item current")
             if current_area_elem:
                 a_elem = current_area_elem.find("a")
                 if a_elem:
                     area = a_elem.get_text(strip=True)
-
         if store_name == "不明":
             print("再取得に失敗: ", url)
+            await page.close()
             return {}
 
-        # 出勤情報のコンテナ取得
+        # 出勤情報の取得
         container = soup.find("div", class_="shukkin-list-container")
         if not container:
+            await page.close()
             return {
                 "store_name": store_name,
                 "biz_type": biz_type,
@@ -154,36 +151,38 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 "url": url,
                 "shift_time": ""
             }
-        # 本日の出勤情報は item-0 部分（明日の出勤情報は item-1 以降）
+        # 本日の出勤情報は "item-0" 部分にある（明日の情報は対象外）
         today_tab = container.find("div", class_="item-0")
         wrappers = today_tab.find_all("div", class_="sugunavi_wrapper") if today_tab else []
         print("シフト件数:", len(wrappers))
 
         total_staff = 0     # 総出勤数
         working_staff = 0   # 勤務中の人数
-        active_staff = 0    # 即ヒメの人数
+        active_staff = 0    # 「即ヒメ」（待機中）の人数
 
         jst = pytz.timezone('Asia/Tokyo')
-        # 各シフト(wrapper)ごとに処理
+        # 各シフト（wrapper）ごとにループ処理
         for wrapper in wrappers:
             p_elems = wrapper.find_all("p", class_="time_font_size shadow shukkin_detail_time")
             for p_elem in p_elems:
                 text = p_elem.get_text(strip=True)
                 if not text:
                     continue
-                # 「明日」「次回」「出勤予定」「お休み」などは対象外とする
+                # 「明日」「次回」「出勤予定」「お休み」などが含まれている場合はスキップ
                 if any(kw in text for kw in ["明日", "次回", "出勤予定", "お休み"]):
                     continue
-                # 「完売」の場合は出勤数のみカウント
+                # 「完売」の場合は出勤数のみをカウント
                 if "完売" in text:
                     total_staff += 1
                     continue
+                # シフト時間（例： "10:00～18:00"）のパターンを抽出
                 match = re.search(r"(\d{1,2}):(\d{2})～(\d{1,2}):(\d{2})", text)
                 if match:
                     start_h, start_m, end_h, end_m = map(int, match.groups())
                     current_time = datetime.now(jst)
                     parsed_start = datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time()
                     parsed_end = datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time()
+                    # シフトが日を跨ぐ場合の処理
                     if parsed_end < parsed_start:
                         if current_time.time() < parsed_end:
                             start_time = datetime.combine(current_time.date() - timedelta(days=1), parsed_start)
@@ -194,10 +193,11 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                     else:
                         start_time = datetime.combine(current_time.date(), parsed_start)
                         end_time = datetime.combine(current_time.date(), parsed_end)
+                    # タイムゾーンを適用
                     start_time = jst.localize(start_time)
                     end_time = jst.localize(end_time)
                     total_staff += 1
-
+                    # 現在の時刻がシフト内にある場合は勤務中とカウント
                     if start_time <= current_time <= end_time:
                         working_staff += 1
                         status_container = wrapper.find("div", class_="sugunavi_spacer_1line")
@@ -213,7 +213,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                             status_text = ""
                         if ("待機中" in status_text) or (status_text == ""):
                             active_staff += 1
-
+        await page.close()
         return {
             "store_name": store_name,
             "biz_type": biz_type,
@@ -226,15 +226,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             "shift_time": ""
         }
 
+# -------------------------------
+# _scrape_all 関数
+# -------------------------------
 async def _scrape_all(store_urls: list) -> list:
     """
-    複数店舗のスクレイピングを、並列実行数制限付きで実行する関数。
-    
-    Args:
-        store_urls (list): 対象店舗のURLリスト
-    
-    Returns:
-        list: 各店舗のスクレイピング結果（辞書のリスト）
+    複数店舗のスクレイピングを並列実行数制限付きで実行する関数
+    - バッチ処理間の待機時間を3秒から2秒に短縮
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     executable_path = '/usr/bin/google-chrome'
@@ -256,25 +254,24 @@ async def _scrape_all(store_urls: list) -> list:
             "--disable-infobars"
         ]
     )
+    # 各店舗URLに対するスクレイピングタスクを作成
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
+    # タスクをバッチ単位で実行し、各バッチの間は2秒待機
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
         results.extend(batch_results)
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)  # 待機時間を2秒に変更
     gc.collect()
     await browser.close()
     return results
 
+# -------------------------------
+# scrape_store_data 関数
+# -------------------------------
 def scrape_store_data(store_urls: list) -> list:
     """
-    非同期スクレイピング処理を同期的に実行するラッパー関数。
-    
-    Args:
-        store_urls (list): 対象店舗のURLリスト
-    
-    Returns:
-        list: 各店舗のスクレイピング結果（辞書のリスト）
+    非同期スクレイピング処理を同期的に実行するラッパー関数
     """
     return asyncio.run(_scrape_all(store_urls))
