@@ -215,71 +215,33 @@ def api_data():
 def api_history():
     """
     全スクレイピング履歴を返すエンドポイント（JST）
-    クエリパラメータ:
-      - page, per_page: ページネーション用（指定がなければ全件取得しない）
-      - all=true      : このパラメータが指定された場合、全件取得モードで返す
+    ※ページネーションは廃止し、全件返す
     """
     try:
-        if request.args.get('all', 'false').lower() == 'true':
-            # 全件取得モード
-            results = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).all()
-            data = []
-            jst = pytz.timezone('Asia/Tokyo')
-            for r in results:
-                dt = r.timestamp
-                if dt is None:
-                    app.logger.warning(f"Record id {r.id} の timestamp が None です。UTC現在時刻を設定します。")
-                    dt = datetime.utcnow().replace(tzinfo=pytz.utc)
-                elif dt.tzinfo is None:
-                    dt = pytz.utc.localize(dt)
-                data.append({
-                    "id": r.id,
-                    "timestamp": dt.astimezone(jst).isoformat(),
-                    "store_name": r.store_name,
-                    "biz_type": r.biz_type,
-                    "genre": r.genre,
-                    "area": r.area,
-                    "total_staff": r.total_staff,
-                    "working_staff": r.working_staff,
-                    "active_staff": r.active_staff,
-                    "url": r.url,
-                    "shift_time": r.shift_time
-                })
-            return jsonify({"data": data, "total": len(data)})
-        else:
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 50, type=int)
-            pagination = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).paginate(page=page, per_page=per_page, error_out=False)
-            results = pagination.items
-            data = []
-            jst = pytz.timezone('Asia/Tokyo')
-            for r in results:
-                dt = r.timestamp
-                if dt is None:
-                    app.logger.warning(f"Record id {r.id} の timestamp が None です。UTC現在時刻を設定します。")
-                    dt = datetime.utcnow().replace(tzinfo=pytz.utc)
-                elif dt.tzinfo is None:
-                    dt = pytz.utc.localize(dt)
-                data.append({
-                    "id": r.id,
-                    "timestamp": dt.astimezone(jst).isoformat(),
-                    "store_name": r.store_name,
-                    "biz_type": r.biz_type,
-                    "genre": r.genre,
-                    "area": r.area,
-                    "total_staff": r.total_staff,
-                    "working_staff": r.working_staff,
-                    "active_staff": r.active_staff,
-                    "url": r.url,
-                    "shift_time": r.shift_time
-                })
-            return jsonify({
-                "data": data,
-                "total": pagination.total,
-                "page": pagination.page,
-                "per_page": pagination.per_page,
-                "pages": pagination.pages
+        results = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).all()
+        data = []
+        jst = pytz.timezone('Asia/Tokyo')
+        for r in results:
+            dt = r.timestamp
+            if dt is None:
+                app.logger.warning(f"Record id {r.id} の timestamp が None です。UTC現在時刻を設定します。")
+                dt = datetime.utcnow().replace(tzinfo=pytz.utc)
+            elif dt.tzinfo is None:
+                dt = pytz.utc.localize(dt)
+            data.append({
+                "id": r.id,
+                "timestamp": dt.astimezone(jst).isoformat(),
+                "store_name": r.store_name,
+                "biz_type": r.biz_type,
+                "genre": r.genre,
+                "area": r.area,
+                "total_staff": r.total_staff,
+                "working_staff": r.working_staff,
+                "active_staff": r.active_staff,
+                "url": r.url,
+                "shift_time": r.shift_time
             })
+        return jsonify({"data": data, "total": len(data)})
     except Exception as e:
         app.logger.error("api_history エラー: %s", e)
         return jsonify({"error": "Internal Server Error"}), 500
