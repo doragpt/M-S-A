@@ -15,7 +15,6 @@ from flask_compress import Compress  # JSON圧縮用
 # 1. Flaskアプリ & DB接続設定
 # ---------------------------------------------------------------------
 app = Flask(__name__, template_folder='templates', static_folder='static')
-# 秘密鍵は環境変数で設定（デフォルト値はサンプル用なので、本番では必ず設定してください）
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@localhost:5432/store_data')
@@ -154,7 +153,6 @@ def scheduled_scrape():
                 url_obj.error_flag = 1
                 url_obj.last_error = "スクレイピング失敗"
         db.session.commit()
-        # 古いデータの削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
@@ -189,9 +187,13 @@ def api_data():
         data = []
         jst = pytz.timezone('Asia/Tokyo')
         for r in results:
+            # r.timestamp が naive の場合、UTCとして tzinfo を付与する
+            dt = r.timestamp
+            if dt.tzinfo is None:
+                dt = pytz.utc.localize(dt)
             data.append({
                 "id": r.id,
-                "timestamp": r.timestamp.astimezone(jst).isoformat(),
+                "timestamp": dt.astimezone(jst).isoformat(),
                 "store_name": r.store_name,
                 "biz_type": r.biz_type,
                 "genre": r.genre,
@@ -222,9 +224,12 @@ def api_history():
         data = []
         jst = pytz.timezone('Asia/Tokyo')
         for r in results:
+            dt = r.timestamp
+            if dt.tzinfo is None:
+                dt = pytz.utc.localize(dt)
             data.append({
                 "id": r.id,
-                "timestamp": r.timestamp.astimezone(jst).isoformat(),
+                "timestamp": dt.astimezone(jst).isoformat(),
                 "store_name": r.store_name,
                 "biz_type": r.biz_type,
                 "genre": r.genre,
@@ -298,7 +303,7 @@ def edit_store_url(id):
     return render_template('edit_store_url.html', url_data=url_obj)
 
 # ---------------------------------------------------------------------
-# 8. 統合ダッシュボードルート ※認証付き（トップページにも認証を追加）
+# 8. 統合ダッシュボードルート ※認証付き
 # ---------------------------------------------------------------------
 @app.route('/')
 @requires_auth
