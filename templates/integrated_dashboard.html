@@ -200,12 +200,6 @@
             <button id="compareBtn" class="btn btn-info mt-2">比較分析</button>
           </div>
         </div>
-        <!-- トップ10店舗グラフ -->
-        <div class="row my-3">
-          <div class="col">
-            <canvas id="currentRateChart"></canvas>
-          </div>
-        </div>
       </div>
       
       <!-- タブ2: 店舗履歴グラフ（期間指定） -->
@@ -597,58 +591,6 @@
         }
 
         /***********************************************
-         * updateTop10Chart: トップ10店舗グラフ更新 (/api/data)
-         ***********************************************/
-        async function updateTop10Chart() {
-          try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
-            data.forEach(store => {
-              store.currentRate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
-            });
-            const topData = data.sort((a, b) => b.currentRate - a.currentRate).slice(0, 10);
-            const labels = topData.map(store => store.store_name);
-            const rates = topData.map(store => store.currentRate);
-            const ctx = document.getElementById("currentRateChart").getContext("2d");
-            if (charts.currentRate) charts.currentRate.destroy();
-            charts.currentRate = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: labels,
-                datasets: [{
-                  label: "現在稼働率 (%)",
-                  data: rates,
-                  backgroundColor: "rgba(75, 192, 192, 0.7)",
-                  borderColor: "rgba(75, 192, 192, 1)",
-                  borderWidth: 1
-                }]
-              },
-              options: {
-                indexAxis: "y",
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: "トップ10店舗の現在稼働率",
-                    font: { size: 20 }
-                  },
-                  tooltip: { callbacks: { label: context => `${context.parsed.x}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } },
-                  legend: { display: false }
-                },
-                scales: {
-                  x: { beginAtZero: true, max: 100, title: { display: true, text: "稼働率(%)" } },
-                  y: { ticks: { font: { size: 12 } } }
-                },
-                animation: { duration: 1000 }
-              }
-            });
-          } catch (error) {
-            console.error("トップ10店舗グラフエラー:", error);
-          }
-        }
-
-        /***********************************************
          * updateHistoryChart: 店舗履歴グラフ更新 (/api/history)
          ***********************************************/
         async function updateHistoryChart() {
@@ -842,11 +784,11 @@
 
         /***********************************************
          * updateAreaStatistics: エリア統計更新
-         * ・店舗数は /api/data から、平均稼働率は /api/history から計算
+         * ・店舗数は /api/data から取得
+         * ・平均稼働率は /api/history から計算
          ***********************************************/
         async function updateAreaStatistics() {
           try {
-            // 最新データから店舗数
             const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
             const dataLatest = await responseData.json();
             const areaStoreCount = {};
@@ -855,7 +797,6 @@
               if (!areaStoreCount[area]) { areaStoreCount[area] = 0; }
               areaStoreCount[area]++;
             });
-            // 履歴データから平均稼働率を計算
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
             const areaRateData = {};
@@ -1000,6 +941,30 @@
           }
         }
 
+        async function fillIndustryDropdownForRanking() {
+          try {
+            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const data = await response.json();
+            const industries = new Set();
+            data.forEach(record => { if (record.biz_type) industries.add(record.biz_type); });
+            const industrySelect = document.getElementById("industrySelectRanking");
+            industrySelect.innerHTML = "";
+            industries.forEach(ind => { industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`; });
+          } catch (err) {
+            console.error("ランキング業種ドロップダウン取得エラー:", err);
+          }
+        }
+
+        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
+          if (this.value === "industry") {
+            document.getElementById("industryFilterDiv").style.display = "";
+            await fillIndustryDropdownForRanking();
+          } else {
+            document.getElementById("industryFilterDiv").style.display = "none";
+          }
+        });
+        document.getElementById("updateRankingBtn").addEventListener("click", updateIndustryRanking);
+
         /***********************************************
          * updateDetailHistoryChart: 店舗詳細モーダル内履歴グラフ更新 (/api/history)
          ***********************************************/
@@ -1136,9 +1101,10 @@
                 storeStats[record.store_name].count++;
               }
             });
-            const rankingArray = Object.values(storeStats).map(store => {
-              return { ...store, avgRate: store.count > 0 ? (store.totalRate / store.count) : 0 };
-            });
+            const rankingArray = Object.values(storeStats).map(store => ({
+              ...store,
+              avgRate: store.count > 0 ? (store.totalRate / store.count) : 0
+            }));
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let filteredArray = rankingArray;
             if (rankingType === "industry") {
@@ -1183,7 +1149,6 @@
           }
         }
 
-        // ランキングタイプ変更イベント
         document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
           if (this.value === "industry") {
             document.getElementById("industryFilterDiv").style.display = "";
@@ -1201,7 +1166,6 @@
         socket.on("update", (msg) => {
           console.log("Socket update received:", msg.data);
           updateDashboard();
-          updateTop10Chart();
           updateAreaStatistics();
           updateIndustryRanking();
           const toastEl = document.getElementById("updateToast");
@@ -1213,7 +1177,6 @@
          * 初期ロード処理
          ***********************************************/
         updateDashboard();
-        updateTop10Chart();
         updateAreaStatistics();
         await fillIndustryDropdown();
         updateIndustryRanking();
