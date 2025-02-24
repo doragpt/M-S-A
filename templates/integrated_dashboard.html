@@ -144,7 +144,6 @@
       <!-- タブ1: 店舗稼働状況 -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
         <div class="row my-4">
-          <!-- 各カード：店舗数、平均稼働率、最高稼働率 -->
           <div class="col-md-4 mb-3">
             <div class="card text-white bg-primary">
               <div class="card-header">店舗数</div>
@@ -197,7 +196,6 @@
                 <tbody id="dataTable"></tbody>
               </table>
             </div>
-            <!-- CSVエクスポート・比較分析ボタン -->
             <button id="exportCSV" class="btn btn-secondary mt-2">CSVエクスポート</button>
             <button id="compareBtn" class="btn btn-info mt-2">比較分析</button>
           </div>
@@ -433,8 +431,6 @@
   <script>
     (function () {
       document.addEventListener("DOMContentLoaded", async () => {
-
-        // ローディングスピナー操作関数
         function showSpinner() { document.getElementById("loadingSpinner").style.display = "block"; }
         function hideSpinner() { document.getElementById("loadingSpinner").style.display = "none"; }
 
@@ -637,10 +633,7 @@
                     font: { size: 20 }
                   },
                   tooltip: { callbacks: { label: context => `${context.parsed.x}%` } },
-                  zoom: {
-                    pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
-                  },
+                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } },
                   legend: { display: false }
                 },
                 scales: {
@@ -715,18 +708,9 @@
               options: {
                 responsive: true,
                 plugins: {
-                  title: {
-                    display: true,
-                    text: (selectedStore === "") 
-                          ? "全店舗の平均稼働率（期間指定）"
-                          : `店舗(${selectedStore})の履歴グラフ`,
-                    font: { size: 20 }
-                  },
+                  title: { display: true, text: (selectedStore === "") ? "全店舗の平均稼働率（期間指定）" : `店舗(${selectedStore})の履歴グラフ`, font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: {
-                    pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
-                  }
+                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -761,9 +745,7 @@
             const stores = new Set();
             data.forEach(item => { if (item.store_name) stores.add(item.store_name); });
             storeSelect.innerHTML = '<option value="">全店舗</option>';
-            stores.forEach(store => {
-              storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
-            });
+            stores.forEach(store => { storeSelect.innerHTML += `<option value="${store}">${store}</option>`; });
             storeSelect.value = savedHistoryStore;
             storeSelect.addEventListener("change", () => { localStorage.setItem("historyStoreFilter", storeSelect.value); });
           } catch (err) {
@@ -860,12 +842,11 @@
 
         /***********************************************
          * updateAreaStatistics: エリア統計更新
-         * ・店舗数は /api/data から取得
-         * ・平均稼働率は /api/history から計算
+         * ・店舗数は /api/data から、平均稼働率は /api/history から計算
          ***********************************************/
         async function updateAreaStatistics() {
           try {
-            // /api/data から最新データを取得し、各エリアの店舗数をカウント
+            // 最新データから店舗数
             const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
             const dataLatest = await responseData.json();
             const areaStoreCount = {};
@@ -874,21 +855,18 @@
               if (!areaStoreCount[area]) { areaStoreCount[area] = 0; }
               areaStoreCount[area]++;
             });
-            // /api/history から履歴データを取得し、各エリアの平均稼働率を計算
+            // 履歴データから平均稼働率を計算
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
             const areaRateData = {};
             dataHistory.forEach(record => {
               const area = record.area || "不明";
               if (record.working_staff > 0) {
-                if (!areaRateData[area]) {
-                  areaRateData[area] = { totalRate: 0, count: 0 };
-                }
+                if (!areaRateData[area]) { areaRateData[area] = { totalRate: 0, count: 0 }; }
                 areaRateData[area].totalRate += ((record.working_staff - record.active_staff) / record.working_staff * 100);
                 areaRateData[area].count++;
               }
             });
-            // テーブル表示用に、両方のデータを統合
             const areaTable = document.getElementById("areaTable");
             areaTable.innerHTML = "";
             const labels = [];
