@@ -205,7 +205,8 @@
             <canvas id="currentRateChart"></canvas>
           </div>
         </div>
-      </div>
+      </div><!-- /タブ1 -->
+
       <!-- タブ2: 店舗履歴グラフ（期間指定） -->
       <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
         <div class="my-4">
@@ -241,7 +242,8 @@
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /タブ2 -->
+
       <!-- タブ3: 時間帯別分析 -->
       <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
         <div class="my-4">
@@ -261,7 +263,8 @@
             <canvas id="hourlyChart"></canvas>
           </div>
         </div>
-      </div>
+      </div><!-- /タブ3 -->
+
       <!-- タブ4: エリア統計 -->
       <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
         <div class="my-4">
@@ -284,7 +287,8 @@
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /タブ4 -->
+
       <!-- タブ5: 業種内ジャンルランキング -->
       <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
         <div class="my-4">
@@ -313,7 +317,8 @@
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /タブ5 -->
+
       <!-- タブ6: 平均稼働ランキング -->
       <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
         <div class="my-4">
@@ -348,9 +353,9 @@
             </table>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
+      </div><!-- /タブ6 -->
+    </div> <!-- /tab-content -->
+  </div> <!-- /container-fluid -->
 
   <!-- 店舗詳細モーダル -->
   <div class="modal fade" id="storeDetailModal" tabindex="-1" aria-labelledby="storeDetailModalLabel" aria-hidden="true">
@@ -718,7 +723,9 @@
                 plugins: {
                   title: { 
                     display: true, 
-                    text: (selectedStore === "") ? "全店舗の平均稼働率（期間指定）" : `店舗(${selectedStore})の履歴グラフ`,
+                    text: (selectedStore === "") 
+                          ? "全店舗の平均稼働率（期間指定）" 
+                          : `店舗(${selectedStore})の履歴グラフ`,
                     font: { size: 20 }
                   },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
@@ -1249,7 +1256,7 @@
             document.getElementById("industryFilterDiv").style.display = "none";
           }
         });
-        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
+        document.getElementById("updateRankingBtn").addEventListener("click", updateIndustryRanking);
 
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知
