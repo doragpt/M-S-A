@@ -74,7 +74,7 @@ with app.app_context():
 # 追加：簡易認証デコレータ（管理画面などに適用）
 # ---------------------------------------------------------------------
 def check_auth(username, password):
-    return username == os.environ.get('ADMIN_USER', 'admin') and password == os.environ.get('ADMIN_PASS', 'password')
+    return username == os.environ.get('ADMIN_USER', 'omochi') and password == os.environ.get('ADMIN_PASS', '0293')
 
 def authenticate():
     return Response('認証が必要です', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
