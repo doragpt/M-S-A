@@ -97,8 +97,7 @@ from store_scraper import scrape_store_data
 def scheduled_scrape():
     """
     APScheduler により1時間おきに実行されるスクレイピングジョブ
-    ・StoreURLテーブルの各店舗URLに対してスクレイピングを実施し、
-      結果をStoreStatusテーブルに保存する。
+    ・StoreURLテーブルの各店舗URLに対してスクレイピングを実施し、結果をStoreStatusテーブルに保存する。
     ・同一店舗・エリア・分単位の重複は更新する形にする。
     ・スクレイピング失敗時は StoreURL の error_flag と last_error に記録する。
     ・古いデータ（2年以上前）は削除し、キャッシュをクリア後、Socket.IO で更新通知する。
@@ -153,6 +152,7 @@ def scheduled_scrape():
                 url_obj.error_flag = 1
                 url_obj.last_error = "スクレイピング失敗"
         db.session.commit()
+        # 古いデータの削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
         app.logger.info("スクレイピング完了＆古いデータ削除完了。")
@@ -187,9 +187,12 @@ def api_data():
         data = []
         jst = pytz.timezone('Asia/Tokyo')
         for r in results:
-            # r.timestamp が naive の場合、UTCとして tzinfo を付与する
             dt = r.timestamp
-            if dt.tzinfo is None:
+            if dt is None:
+                # 万が一 timestamp が None なら、UTC の現在時刻を設定
+                app.logger.warning(f"Record id {r.id} の timestamp が None です。UTC現在時刻を設定します。")
+                dt = datetime.utcnow().replace(tzinfo=pytz.utc)
+            elif dt.tzinfo is None:
                 dt = pytz.utc.localize(dt)
             data.append({
                 "id": r.id,
@@ -225,7 +228,10 @@ def api_history():
         jst = pytz.timezone('Asia/Tokyo')
         for r in results:
             dt = r.timestamp
-            if dt.tzinfo is None:
+            if dt is None:
+                app.logger.warning(f"Record id {r.id} の timestamp が None です。UTC現在時刻を設定します。")
+                dt = datetime.utcnow().replace(tzinfo=pytz.utc)
+            elif dt.tzinfo is None:
                 dt = pytz.utc.localize(dt)
             data.append({
                 "id": r.id,
