@@ -14,15 +14,14 @@ from flask_caching import Cache
 # 1. Flaskアプリ & DB接続設定
 # ---------------------------------------------------------------------
 app = Flask(__name__, template_folder='templates', static_folder='static')
-# 秘密鍵は必ず環境変数で設定する（デフォルト値は使用しないことが望ましい）
+# 秘密鍵は必ず環境変数で設定すること（デフォルト値は実際には使わないことを推奨）
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 
-# DATABASE_URL: 環境変数が設定されていなければローカル設定
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@localhost:5432/store_data')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# キャッシュ設定（Redis利用）
+# キャッシュ設定（Redisを利用）
 app.config['CACHE_TYPE'] = 'RedisCache'
 app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 cache = Cache(app)
@@ -36,7 +35,7 @@ socketio = SocketIO(app)
 class StoreStatus(db.Model):
     """
     店舗ごとのスクレイピング結果を保存するテーブル
-    ※各レコードはある時点での店舗稼働情報を表す
+    ※各レコードは、ある時点での店舗の稼働情報を表す
     """
     __tablename__ = 'store_status'
     id = db.Column(db.Integer, primary_key=True)
@@ -50,13 +49,12 @@ class StoreStatus(db.Model):
     active_staff = db.Column(db.Integer)
     url = db.Column(db.Text)
     shift_time = db.Column(db.Text)
-    # 複合インデックスで検索を高速化
     __table_args__ = (Index('ix_store_status_name_area_timestamp', 'store_name', 'area', 'timestamp'),)
 
 class StoreURL(db.Model):
     """
-    スクレイピング対象店舗URLを管理するテーブル
-    ※エラー発生時の管理のため、error_flag と last_error を追加
+    スクレイピング対象の店舗URLを保存するテーブル
+    ※エラー発生時に error_flag, last_error で状態を記録
     """
     __tablename__ = 'store_urls'
     id = db.Column(db.Integer, primary_key=True)
@@ -71,10 +69,11 @@ with app.app_context():
     db.create_all()
 
 # ---------------------------------------------------------------------
-# 追加：簡易認証デコレータ（管理画面などに適用）
+# 4. 簡易Basic認証デコレータの定義
 # ---------------------------------------------------------------------
 def check_auth(username, password):
-    return username == os.environ.get('ADMIN_USER', 'omochi') and password == os.environ.get('ADMIN_PASS', '0293')
+    # 環境変数ADMIN_USER, ADMIN_PASSが設定されていなければデフォルト値を使用
+    return username == os.environ.get('ADMIN_USER', 'admin') and password == os.environ.get('ADMIN_PASS', 'password')
 
 def authenticate():
     return Response('認証が必要です', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
@@ -89,7 +88,7 @@ def requires_auth(f):
     return decorated
 
 # ---------------------------------------------------------------------
-# 4. スクレイピング処理 & 定期実行
+# 5. スクレイピング処理 & 定期実行
 # ---------------------------------------------------------------------
 from store_scraper import scrape_store_data
 
@@ -97,14 +96,13 @@ def scheduled_scrape():
     """
     APScheduler により1時間おきに実行されるスクレイピングジョブ
     ・StoreURLテーブルの各店舗URLに対してスクレイピングを実施し、結果をStoreStatusテーブルに保存
-    ・同一店舗・エリア・分単位の重複を更新する形にする
-    ・エラーが発生した場合、StoreURLテーブルのerror_flagとlast_errorを更新
-    ・古いデータ（2年以上前）は削除し、キャッシュクリアとSocket.IOでの更新通知を行う
+    ・同一店舗・エリア・分単位の重複は更新する
+    ・失敗時はStoreURLのerror_flag, last_errorに記録
+    ・古いデータ（2年以上前）は削除し、キャッシュクリア・Socket.IOで更新通知
     """
     with app.app_context():
         scrape_time = datetime.now()
         retention_date = datetime.now() - timedelta(days=730)
-
         store_url_objs = StoreURL.query.all()
         store_urls = [s.store_url for s in store_url_objs]
         if not store_urls:
@@ -118,13 +116,10 @@ def scheduled_scrape():
             app.logger.error("スクレイピング中のエラー: %s", e)
             return
 
-        # 結果をDBに保存
         for url_obj, record in zip(store_url_objs, results):
             if record:
-                # スクレイピング成功ならエラーフラグを0に更新
                 url_obj.error_flag = 0
                 url_obj.last_error = None
-                # 重複チェック
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
                     StoreStatus.area == record.get('area'),
@@ -154,12 +149,10 @@ def scheduled_scrape():
                     )
                     db.session.add(new_status)
             else:
-                # スクレイピング失敗の場合、エラー情報をStoreURLに記録
                 url_obj.error_flag = 1
                 url_obj.last_error = "スクレイピング失敗"
         db.session.commit()
 
-        # 古いデータの削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
@@ -167,14 +160,14 @@ def scheduled_scrape():
         cache.clear()
         socketio.emit('update', {'data': 'Dashboard updated'})
 
-# APSchedulerの設定（ジョブID 'scrape_job' として1時間間隔で実行）
+# 定期スクレイピングジョブを1時間間隔で登録（ジョブID 'scrape_job'）
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
 scheduler = BackgroundScheduler(executors=executors)
 scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
 scheduler.start()
 
 # ---------------------------------------------------------------------
-# 5. API エンドポイント
+# 6. APIエンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
 def api_data():
@@ -247,7 +240,7 @@ def api_history():
     })
 
 # ---------------------------------------------------------------------
-# 6. 管理画面 (店舗URL管理) ※認証付き
+# 7. 管理画面（店舗URL管理） ※認証付き
 # ---------------------------------------------------------------------
 @app.route('/admin/manage', methods=['GET', 'POST'])
 @requires_auth
@@ -307,9 +300,10 @@ def edit_store_url(id):
     return render_template('edit_store_url.html', url_data=url_obj)
 
 # ---------------------------------------------------------------------
-# 7. 統合ダッシュボードルート
+# 8. 統合ダッシュボードルート ※認証付き（トップページにも認証を追加）
 # ---------------------------------------------------------------------
 @app.route('/')
+@requires_auth
 def index():
     """
     統合ダッシュボードのHTMLを返すルート
@@ -317,13 +311,13 @@ def index():
     return render_template('integrated_dashboard.html')
 
 # ---------------------------------------------------------------------
-# 8. 手動スクレイピング実行ルート（定期スクレイピングの次回実行時刻更新） ※認証付き
+# 9. 手動スクレイピング実行ルート ※認証付き
 # ---------------------------------------------------------------------
 @app.route('/admin/manual_scrape', methods=['POST'])
 @requires_auth
 def manual_scrape():
     """
-    管理画面から手動でスクレイピングを実行し、その完了時刻を基準に次回定期スクレイピングを現在時刻＋1時間に更新する
+    管理画面から手動でスクレイピングを実行し、次回定期スクレイピング実行時刻を現在時刻＋1時間に更新する
     """
     scheduled_scrape()  # 手動実行
     next_time = datetime.now() + timedelta(hours=1)
@@ -335,7 +329,7 @@ def manual_scrape():
     return redirect(url_for('manage_store_urls'))
 
 # ---------------------------------------------------------------------
-# 9. メイン実行部
+# 10. メイン実行部
 # ---------------------------------------------------------------------
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
