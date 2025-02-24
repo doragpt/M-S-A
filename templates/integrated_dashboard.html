@@ -87,9 +87,25 @@
       right: 20px;
       z-index: 1055;
     }
+    /* ローディングスピナー */
+    #loadingSpinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      display: none;
+    }
   </style>
 </head>
 <body>
+  <!-- ローディングスピナー -->
+  <div id="loadingSpinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
   <!-- ヘッダー -->
   <div class="header" id="pageHeader">
     <h1>統合ダッシュボード</h1>
@@ -103,35 +119,22 @@
     <!-- メインタブ -->
     <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab">
-          店舗稼働状況
-        </a>
+        <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab">店舗稼働状況</a>
       </li>
       <li class="nav-item" role="presentation">
-        <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history" role="tab">
-          店舗履歴グラフ（期間指定）
-        </a>
+        <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history" role="tab">店舗履歴グラフ（期間指定）</a>
       </li>
       <li class="nav-item" role="presentation">
-        <a class="nav-link" id="hourly-tab" data-bs-toggle="tab" href="#hourly" role="tab">
-          時間帯別分析
-        </a>
+        <a class="nav-link" id="hourly-tab" data-bs-toggle="tab" href="#hourly" role="tab">時間帯別分析</a>
       </li>
       <li class="nav-item" role="presentation">
-        <a class="nav-link" id="area-tab" data-bs-toggle="tab" href="#area" role="tab">
-          エリア統計
-        </a>
+        <a class="nav-link" id="area-tab" data-bs-toggle="tab" href="#area" role="tab">エリア統計</a>
       </li>
       <li class="nav-item" role="presentation">
-        <a class="nav-link" id="type-tab" data-bs-toggle="tab" href="#type" role="tab">
-          業種内ジャンルランキング
-        </a>
+        <a class="nav-link" id="type-tab" data-bs-toggle="tab" href="#type" role="tab">業種内ジャンルランキング</a>
       </li>
-      <!-- 新規追加：平均稼働ランキングタブ -->
       <li class="nav-item" role="presentation">
-        <a class="nav-link" id="ranking-tab" data-bs-toggle="tab" href="#ranking" role="tab">
-          平均稼働ランキング
-        </a>
+        <a class="nav-link" id="ranking-tab" data-bs-toggle="tab" href="#ranking" role="tab">平均稼働ランキング</a>
       </li>
     </ul>
 
@@ -140,7 +143,6 @@
       <!-- タブ1: 店舗稼働状況 -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
         <div class="row my-4">
-          <!-- 各カード：店舗数、平均稼働率、最高稼働率 -->
           <div class="col-md-4 mb-3">
             <div class="card text-white bg-primary">
               <div class="card-header">店舗数</div>
@@ -169,7 +171,6 @@
             </div>
           </div>
         </div>
-
         <!-- 店舗情報テーブル -->
         <div class="row">
           <div class="col">
@@ -194,20 +195,17 @@
                 <tbody id="dataTable"></tbody>
               </table>
             </div>
-            <!-- CSVエクスポートボタン追加 -->
             <button id="exportCSV" class="btn btn-secondary mt-2">CSVエクスポート</button>
             <button id="compareBtn" class="btn btn-info mt-2">比較分析</button>
           </div>
         </div>
-
         <!-- トップ10店舗グラフ -->
         <div class="row my-3">
           <div class="col">
             <canvas id="currentRateChart"></canvas>
           </div>
         </div>
-      </div><!-- /タブ1 -->
-
+      </div>
       <!-- タブ2: 店舗履歴グラフ（期間指定） -->
       <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
         <div class="my-4">
@@ -243,8 +241,7 @@
             </div>
           </div>
         </div>
-      </div><!-- /タブ2 -->
-
+      </div>
       <!-- タブ3: 時間帯別分析 -->
       <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
         <div class="my-4">
@@ -264,8 +261,7 @@
             <canvas id="hourlyChart"></canvas>
           </div>
         </div>
-      </div><!-- /タブ3 -->
-
+      </div>
       <!-- タブ4: エリア統計 -->
       <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
         <div class="my-4">
@@ -288,8 +284,7 @@
             </div>
           </div>
         </div>
-      </div><!-- /タブ4 -->
-
+      </div>
       <!-- タブ5: 業種内ジャンルランキング -->
       <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
         <div class="my-4">
@@ -318,8 +313,7 @@
             </div>
           </div>
         </div>
-      </div><!-- /タブ5 -->
-
+      </div>
       <!-- タブ6: 平均稼働ランキング -->
       <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
         <div class="my-4">
@@ -334,9 +328,7 @@
             </div>
             <div class="col-md-6" id="industryFilterDiv" style="display: none;">
               <label for="industrySelectRanking" class="form-label">業種を選択</label>
-              <select id="industrySelectRanking" class="form-select">
-                <!-- 業種リストはJSで動的に追加 -->
-              </select>
+              <select id="industrySelectRanking" class="form-select"></select>
             </div>
           </div>
           <button id="updateRankingBtn" class="btn btn-primary mb-3">ランキング更新</button>
@@ -356,10 +348,9 @@
             </table>
           </div>
         </div>
-      </div><!-- /タブ6 -->
-
-    </div> <!-- /tab-content -->
-  </div> <!-- /container-fluid -->
+      </div>
+    </div>
+  </div>
 
   <!-- 店舗詳細モーダル -->
   <div class="modal fade" id="storeDetailModal" tabindex="-1" aria-labelledby="storeDetailModalLabel" aria-hidden="true">
@@ -372,7 +363,6 @@
         <div class="modal-body">
           <div id="storeDetailBasic"></div>
           <hr />
-          <!-- モーダル内タブ：履歴グラフ・時間帯別分析 -->
           <ul class="nav nav-tabs" id="detailTabs" role="tablist">
             <li class="nav-item" role="presentation">
               <a class="nav-link active" id="detail-history-tab" data-bs-toggle="tab" href="#detailHistory" role="tab">履歴グラフ</a>
@@ -425,11 +415,10 @@
     </div>
   </div>
 
-  <!-- jQuery, DataTables, Bootstrap JS -->
+  <!-- jQuery, DataTables, Bootstrap JS, Socket.IO -->
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Socket.IO クライアントライブラリ -->
   <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"></script>
 
   <script>
@@ -468,8 +457,6 @@
         };
         let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
         let favoritesFilterActive = false;
-
-        // ユーザー設定（フィルタ値）の復元
         const savedIndustry = localStorage.getItem("industryFilter") || "";
         const savedHistoryStore = localStorage.getItem("historyStoreFilter") || "";
         const savedHourlyStore = localStorage.getItem("hourlyStoreFilter") || "";
@@ -488,19 +475,17 @@
             const storeName = row.cells[1].innerText.trim();
             row.style.display = (favoritesFilterActive && !favorites.includes(storeName)) ? "none" : "";
           });
-          document.getElementById("favoritesToggle").innerText = favoritesFilterActive
-            ? "すべて表示"
-            : "お気に入りのみ表示";
+          document.getElementById("favoritesToggle").innerText = favoritesFilterActive ? "すべて表示" : "お気に入りのみ表示";
         });
 
         /***********************************************
-         * CSVエクスポート機能：店舗テーブルの内容をCSV形式でダウンロード
+         * CSVエクスポート機能
          ***********************************************/
         document.getElementById("exportCSV")?.addEventListener("click", () => {
           const rows = Array.from(document.querySelectorAll("#storeTable tr"));
           const csvContent = rows.map(row => {
             return Array.from(row.cells)
-                        .map(cell => `${cell.innerText.trim().replace(/"/g, '""')}`)
+                        .map(cell => `"${cell.innerText.trim().replace(/"/g, '""')}"`)
                         .join(",");
           }).join("\n");
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -513,15 +498,12 @@
         });
 
         /***********************************************
-         * 店舗稼働状況更新 (/api/data)
-         * 最新データから店舗数、平均/最高稼働率を計算しテーブル更新
+         * updateDashboard: 店舗稼働状況更新 (/api/data)
          ***********************************************/
         async function updateDashboard() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
-
-            // 上部カード更新
             document.getElementById("totalStores").innerText = data.length;
             const avgRate = data.reduce((sum, store) => {
               if (store.working_staff > 0) {
@@ -538,7 +520,6 @@
             }, 0);
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
 
-            // テーブル更新
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
             data.forEach((store) => {
@@ -570,7 +551,6 @@
               tableBody.insertAdjacentHTML("beforeend", rowHtml);
             });
 
-            // DataTables 初期化
             if ($.fn.dataTable.isDataTable("#storeTable")) {
               $("#storeTable").DataTable().destroy();
             }
@@ -580,7 +560,6 @@
               language: { search: "検索:" }
             });
 
-            // お気に入りボタンイベント
             $("#storeTable tbody").off("click", ".favorite-btn").on("click", ".favorite-btn", function (e) {
               e.stopPropagation();
               const storeName = $(this).data("store-name");
@@ -594,7 +573,6 @@
               localStorage.setItem("favorites", JSON.stringify(favorites));
             });
 
-            // 店舗詳細モーダル表示
             $("#storeTable tbody").off("click", ".store-name.clickable").on("click", ".store-name.clickable", function () {
               const store = JSON.parse(decodeURIComponent($(this).data("store")));
               const content = `
@@ -618,8 +596,7 @@
         }
 
         /***********************************************
-         * トップ10店舗グラフ更新 (/api/data)
-         * ズーム／パン機能を有効化
+         * updateTop10Chart: トップ10店舗グラフ更新 (/api/data)
          ***********************************************/
         async function updateTop10Chart() {
           try {
@@ -680,68 +657,14 @@
         }
 
         /***********************************************
-         * 比較分析モーダル (/api/data)
-         ***********************************************/
-        document.getElementById("compareBtn")?.addEventListener("click", async () => {
-          const selectedStores = Array.from(document.querySelectorAll(".compare-checkbox:checked"))
-                                        .map(cb => cb.getAttribute("data-store-name"));
-          if (selectedStores.length < 2) {
-            alert("比較分析は2店舗以上選択してください。");
-            return;
-          }
-          try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
-            const compareData = data.filter(store => selectedStores.includes(store.store_name));
-            const labels = compareData.map(s => s.store_name);
-            const rates = compareData.map(s => s.working_staff > 0 ? ((s.working_staff - s.active_staff) / s.working_staff * 100).toFixed(1) : 0);
-            const ctx = document.getElementById("compareChart").getContext("2d");
-            if (charts.compare) charts.compare.destroy();
-            charts.compare = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: labels,
-                datasets: [{
-                  label: "現在稼働率 (%)",
-                  data: rates,
-                  backgroundColor: "rgba(54, 162, 235, 0.6)",
-                  borderColor: "rgba(54, 162, 235, 1)",
-                  borderWidth: 1
-                }]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: "比較分析",
-                    font: { size: 20 }
-                  },
-                  zoom: {
-                    pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
-                  }
-                }
-              }
-            });
-            new bootstrap.Modal(document.getElementById("compareModal")).show();
-          } catch (error) {
-            console.error("比較分析エラー:", error);
-          }
-        });
-
-        /***********************************************
-         * 店舗履歴グラフ（期間指定） (/api/history)
+         * updateHistoryChart: 店舗履歴グラフ更新 (/api/history)
          ***********************************************/
         async function updateHistoryChart() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const data = await response.json(); // api/history は全件データを返す
             const storeSelect = document.getElementById("storeSelectHistory");
-            // 復元したフィルタ値をセット
-            if(storeSelect) {
-              storeSelect.value = savedHistoryStore;
-            }
+            if (storeSelect) { storeSelect.value = savedHistoryStore; }
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
@@ -793,11 +716,9 @@
               options: {
                 responsive: true,
                 plugins: {
-                  title: {
-                    display: true,
-                    text: (selectedStore === "") 
-                          ? "全店舗の平均稼働率（期間指定）"
-                          : `店舗(${selectedStore})の履歴グラフ`,
+                  title: { 
+                    display: true, 
+                    text: (selectedStore === "") ? "全店舗の平均稼働率（期間指定）" : `店舗(${selectedStore})の履歴グラフ`,
                     font: { size: 20 }
                   },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
@@ -813,7 +734,6 @@
                 animation: { duration: 1000 }
               }
             });
-            // 統計結果表示
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
@@ -828,7 +748,9 @@
         }
         document.getElementById("updateHistoryBtn")?.addEventListener("click", updateHistoryChart);
 
-        // 履歴グラフ用店舗ドロップダウン更新（フィルタ値保存）
+        /***********************************************
+         * fillHistoryStoreDropdown: 履歴グラフ用店舗ドロップダウン更新
+         ***********************************************/
         async function fillHistoryStoreDropdown() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -841,19 +763,15 @@
             stores.forEach(store => {
               storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
-            // 復元済みのフィルタを反映
             storeSelect.value = savedHistoryStore;
-            // 保存イベント
-            storeSelect.addEventListener("change", () => {
-              localStorage.setItem("historyStoreFilter", storeSelect.value);
-            });
+            storeSelect.addEventListener("change", () => { localStorage.setItem("historyStoreFilter", storeSelect.value); });
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
           }
         }
 
         /***********************************************
-         * 時間帯別分析 (/api/history)
+         * updateHourlyAnalysis: 時間帯別分析更新 (/api/history)
          ***********************************************/
         async function updateHourlyAnalysis() {
           try {
@@ -925,7 +843,9 @@
         }
         document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
 
-        // 時間帯分析用店舗ドロップダウン更新
+        /***********************************************
+         * fillHourlyStoreDropdown: 時間帯分析用店舗ドロップダウン更新
+         ***********************************************/
         async function fillHourlyStoreDropdown() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -945,7 +865,7 @@
         }
 
         /***********************************************
-         * エリア統計 (/api/history) の更新（最新店舗のみ集計）
+         * updateAreaStatistics: エリア統計更新 (/api/history)
          ***********************************************/
         async function updateAreaStatistics() {
           try {
@@ -1012,7 +932,7 @@
         }
 
         /***********************************************
-         * 業種内ジャンルランキング (/api/history) の更新（最新店舗のみ集計）
+         * fillIndustryDropdown: 業種内ジャンルランキング用ドロップダウン更新
          ***********************************************/
         async function fillIndustryDropdown() {
           try {
@@ -1026,7 +946,6 @@
             industries.forEach(ind => {
               industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
             });
-            // 復元済みの値を反映
             industrySelect.value = savedIndustry;
             industrySelect.addEventListener("change", () => {
               localStorage.setItem("industryFilter", industrySelect.value);
@@ -1104,8 +1023,34 @@
           }
         }
 
+        async function fillIndustryDropdownForRanking() {
+          try {
+            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const data = await response.json();
+            const industries = new Set();
+            data.forEach(record => { if (record.biz_type) industries.add(record.biz_type); });
+            const industrySelect = document.getElementById("industrySelectRanking");
+            industrySelect.innerHTML = "";
+            industries.forEach(ind => {
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
+            });
+          } catch (err) {
+            console.error("ランキング業種ドロップダウン取得エラー:", err);
+          }
+        }
+
+        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
+          if (this.value === "industry") {
+            document.getElementById("industryFilterDiv").style.display = "";
+            await fillIndustryDropdownForRanking();
+          } else {
+            document.getElementById("industryFilterDiv").style.display = "none";
+          }
+        });
+        document.getElementById("updateRankingBtn").addEventListener("click", updateIndustryRanking);
+
         /***********************************************
-         * 店舗詳細モーダル内の履歴グラフ (/api/history)
+         * updateDetailHistoryChart: 店舗詳細モーダル内履歴グラフ更新 (/api/history)
          ***********************************************/
         async function updateDetailHistoryChart(storeName) {
           try {
@@ -1158,7 +1103,7 @@
         }
 
         /***********************************************
-         * 店舗詳細モーダル内の時間帯別分析 (/api/history)
+         * updateDetailHourlyChart: 店舗詳細モーダル内時間帯分析更新 (/api/history)
          ***********************************************/
         async function updateDetailHourlyChart(storeName) {
           try {
@@ -1222,14 +1167,12 @@
         }
 
         /***********************************************
-         * 平均稼働ランキングタブの更新 (/api/history)
+         * updateAverageRanking: 平均稼働ランキング更新 (/api/history)
          ***********************************************/
         async function updateAverageRanking() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
-
-            // 各店舗ごとに平均稼働率を算出
             const storeStats = {};
             data.forEach(record => {
               if (record.working_staff > 0) {
@@ -1248,22 +1191,17 @@
                 storeStats[record.store_name].count += 1;
               }
             });
-            const rankingArray = Object.values(storeStats).map(store => {
-              return { ...store, avgRate: store.count > 0 ? (store.totalRate / store.count) : 0 };
-            });
-
-            // ランキングタイプによってフィルタ
+            const rankingArray = Object.values(storeStats).map(store => ({
+              ...store,
+              avgRate: store.count > 0 ? (store.totalRate / store.count) : 0
+            }));
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let filteredArray = rankingArray;
             if (rankingType === "industry") {
               const selectedIndustry = document.getElementById("industrySelectRanking").value;
               filteredArray = rankingArray.filter(store => store.biz_type === selectedIndustry);
             }
-
-            // 平均稼働率の降順にソート
             filteredArray.sort((a, b) => b.avgRate - a.avgRate);
-
-            // テーブルに結果を表示
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
             filteredArray.forEach((store, index) => {
@@ -1285,16 +1223,14 @@
         }
 
         /***********************************************
-         * 業種別ランキング用の業種ドロップダウンを更新
+         * fillIndustryDropdownForRanking: 業種別ランキング用ドロップダウン更新
          ***********************************************/
         async function fillIndustryDropdownForRanking() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
             const industries = new Set();
-            data.forEach(record => {
-              if (record.biz_type) industries.add(record.biz_type);
-            });
+            data.forEach(record => { if (record.biz_type) industries.add(record.biz_type); });
             const industrySelect = document.getElementById("industrySelectRanking");
             industrySelect.innerHTML = "";
             industries.forEach(ind => {
@@ -1305,7 +1241,6 @@
           }
         }
 
-        // ランキングタイプの変更イベント
         document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
           if (this.value === "industry") {
             document.getElementById("industryFilterDiv").style.display = "";
@@ -1314,8 +1249,6 @@
             document.getElementById("industryFilterDiv").style.display = "none";
           }
         });
-
-        // ランキング更新ボタンのイベント登録
         document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
 
         /***********************************************
@@ -1328,7 +1261,6 @@
           updateTop10Chart();
           updateAreaStatistics();
           updateIndustryRanking();
-          // トースト通知表示
           const toastEl = document.getElementById("updateToast");
           const toast = new bootstrap.Toast(toastEl);
           toast.show();
