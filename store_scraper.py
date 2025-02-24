@@ -19,7 +19,7 @@ MAX_RETRIES_FOR_INFO = 3
 # -------------------------------
 async def fetch_page(page, url, retries=3, timeout=20000):
     """
-    指定ページでURLにアクセスし、ネットワークアイドル状態になるまで待機する
+    指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する
     Parameters:
       - page: pyppeteer のページオブジェクト
       - url: アクセスするURL
@@ -27,7 +27,7 @@ async def fetch_page(page, url, retries=3, timeout=20000):
       - timeout: タイムアウト（ミリ秒単位、デフォルト20000ms）
     Returns:
       - True: 成功
-      - False: すべてのリトライで失敗
+      - False: 全てのリトライで失敗
     """
     for attempt in range(retries):
         try:
@@ -48,7 +48,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     - BeautifulSoupでHTMLをパースし、店舗情報・シフト情報を取得
     - 同一ページを再利用して再取得を試み、作成オーバーヘッドを削減
     Parameters:
-      - browser: pyppeteerのブラウザオブジェクト
+      - browser: pyppeteer のブラウザオブジェクト
       - url: 店舗基本URL（末尾に "/" を追加）
       - semaphore: 並列実行制御用セマフォ
     Returns:
@@ -78,7 +78,7 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         content = await page.content()
         soup = BeautifulSoup(content, "html.parser")
 
-        # 初期値の設定
+        # 初期値設定
         store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
         current_area_elem = soup.find("li", class_="area_menu_item current")
         if current_area_elem:
@@ -86,7 +86,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             if a_elem:
                 area = a_elem.get_text(strip=True)
 
-        # 店舗情報の取得（再取得は同一ページを再利用）
         attempt = 0
         while attempt < MAX_RETRIES_FOR_INFO:
             menushop_div = soup.find("div", class_="menushopname none")
@@ -121,7 +120,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             await page.close()
             return {}
 
-        # 出勤情報の取得
         container = soup.find("div", class_="shukkin-list-container")
         if not container:
             await page.close()
@@ -204,8 +202,8 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
 # -------------------------------
 async def _scrape_all(store_urls: list) -> list:
     """
-    複数店舗のスクレイピングを並列実行数制限付きで実行
-    バッチ処理間の待機時間を2秒に設定
+    複数店舗のスクレイピングを、並列実行数制限付きで実行する関数
+    バッチ間の待機時間は2秒に設定
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     executable_path = '/usr/bin/google-chrome'
