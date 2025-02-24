@@ -135,230 +135,230 @@
       </li>
     </ul>
 
-<!-- タブコンテンツ -->
-<div class="tab-content" id="dashboardTabsContent">
-  <!-- タブ1: 店舗稼働状況 -->
-  <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-    <div class="row my-4">
-      <!-- 各カード：店舗数、平均稼働率、最高稼働率 -->
-      <div class="col-md-4 mb-3">
-        <div class="card text-white bg-primary">
-          <div class="card-header">店舗数</div>
-          <div class="card-body">
-            <h5 id="totalStores" class="card-title">--</h5>
-            <p class="card-text">現在データがある店舗数</p>
+    <!-- タブコンテンツ -->
+    <div class="tab-content" id="dashboardTabsContent">
+      <!-- タブ1: 店舗稼働状況 -->
+      <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+        <div class="row my-4">
+          <!-- 各カード：店舗数、平均稼働率、最高稼働率 -->
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary">
+              <div class="card-header">店舗数</div>
+              <div class="card-body">
+                <h5 id="totalStores" class="card-title">--</h5>
+                <p class="card-text">現在データがある店舗数</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success">
+              <div class="card-header">平均稼働率</div>
+              <div class="card-body">
+                <h5 id="avgRate" class="card-title">--</h5>
+                <p class="card-text">勤務中キャストに対する実働率</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card text-white bg-warning">
+              <div class="card-header">最高稼働率</div>
+              <div class="card-body">
+                <h5 id="maxRate" class="card-title">--</h5>
+                <p class="card-text">最高の稼働率店舗の稼働率</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="card text-white bg-success">
-          <div class="card-header">平均稼働率</div>
-          <div class="card-body">
-            <h5 id="avgRate" class="card-title">--</h5>
-            <p class="card-text">勤務中キャストに対する実働率</p>
+
+        <!-- 店舗情報テーブル -->
+        <div class="row">
+          <div class="col">
+            <div class="table-responsive">
+              <table id="storeTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>選択</th>
+                    <th>店舗名</th>
+                    <th>業種</th>
+                    <th>ジャンル</th>
+                    <th>エリア</th>
+                    <th>総出勤</th>
+                    <th>勤務中人数</th>
+                    <th>即ヒメ人数</th>
+                    <th>現在稼働率 (%)</th>
+                    <th>状態</th>
+                    <th>直近1週間の稼働率 (%)</th>
+                    <th>直近1か月の稼働率 (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="dataTable"></tbody>
+              </table>
+            </div>
+            <!-- CSVエクスポートボタン追加 -->
+            <button id="exportCSV" class="btn btn-secondary mt-2">CSVエクスポート</button>
+            <button id="compareBtn" class="btn btn-info mt-2">比較分析</button>
           </div>
         </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="card text-white bg-warning">
-          <div class="card-header">最高稼働率</div>
-          <div class="card-body">
-            <h5 id="maxRate" class="card-title">--</h5>
-            <p class="card-text">最高の稼働率店舗の稼働率</p>
+
+        <!-- トップ10店舗グラフ -->
+        <div class="row my-3">
+          <div class="col">
+            <canvas id="currentRateChart"></canvas>
           </div>
         </div>
-      </div>
-    </div>
+      </div><!-- /タブ1 -->
 
-    <!-- 店舗情報テーブル -->
-    <div class="row">
-      <div class="col">
-        <div class="table-responsive">
-          <table id="storeTable" class="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th>選択</th>
-                <th>店舗名</th>
-                <th>業種</th>
-                <th>ジャンル</th>
-                <th>エリア</th>
-                <th>総出勤</th>
-                <th>勤務中人数</th>
-                <th>即ヒメ人数</th>
-                <th>現在稼働率 (%)</th>
-                <th>状態</th>
-                <th>直近1週間の稼働率 (%)</th>
-                <th>直近1か月の稼働率 (%)</th>
-              </tr>
-            </thead>
-            <tbody id="dataTable"></tbody>
-          </table>
+      <!-- タブ2: 店舗履歴グラフ（期間指定） -->
+      <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        <div class="my-4">
+          <h3>店舗履歴グラフ（期間指定）</h3>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="storeSelectHistory" class="form-label">店舗選択</label>
+              <select id="storeSelectHistory" class="form-select">
+                <option value="">全店舗</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="startDate" class="form-label">開始日</label>
+              <input type="date" id="startDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+              <label for="endDate" class="form-label">終了日</label>
+              <input type="date" id="endDate" class="form-control" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button id="updateHistoryBtn" class="btn btn-primary w-100">更新</button>
+            </div>
+          </div>
+          <div class="card mb-3">
+            <div class="card-body">
+              <canvas id="historyChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">集計結果</h5>
+              <p id="historyStats" class="mb-0">--</p>
+            </div>
+          </div>
         </div>
-        <!-- CSVエクスポートボタン追加 -->
-        <button id="exportCSV" class="btn btn-secondary mt-2">CSVエクスポート</button>
-        <button id="compareBtn" class="btn btn-info mt-2">比較分析</button>
-      </div>
-    </div>
+      </div><!-- /タブ2 -->
 
-    <!-- トップ10店舗グラフ -->
-    <div class="row my-3">
-      <div class="col">
-        <canvas id="currentRateChart"></canvas>
-      </div>
-    </div>
-  </div><!-- /タブ1 -->
+      <!-- タブ3: 時間帯別分析 -->
+      <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
+        <div class="my-4">
+          <h3>時間帯別分析</h3>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="hourlyStoreSelect" class="form-label">店舗選択</label>
+              <select id="hourlyStoreSelect" class="form-select">
+                <option value="">全店舗</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button id="updateHourlyBtn" class="btn btn-primary w-100">更新</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="hourlyChart"></canvas>
+          </div>
+        </div>
+      </div><!-- /タブ3 -->
 
-  <!-- タブ2: 店舗履歴グラフ（期間指定） -->
-  <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
-    <div class="my-4">
-      <h3>店舗履歴グラフ（期間指定）</h3>
-      <div class="row mb-3">
-        <div class="col-md-3">
-          <label for="storeSelectHistory" class="form-label">店舗選択</label>
-          <select id="storeSelectHistory" class="form-select">
-            <option value="">全店舗</option>
-          </select>
+      <!-- タブ4: エリア統計 -->
+      <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
+        <div class="my-4">
+          <h2 class="mb-4 text-center">エリア統計</h2>
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>エリア</th>
+                  <th>店舗数</th>
+                  <th>平均稼働率 (%)</th>
+                </tr>
+              </thead>
+              <tbody id="areaTable"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <canvas id="areaChart"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="col-md-3">
-          <label for="startDate" class="form-label">開始日</label>
-          <input type="date" id="startDate" class="form-control" />
-        </div>
-        <div class="col-md-3">
-          <label for="endDate" class="form-label">終了日</label>
-          <input type="date" id="endDate" class="form-control" />
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button id="updateHistoryBtn" class="btn btn-primary w-100">更新</button>
-        </div>
-      </div>
-      <div class="card mb-3">
-        <div class="card-body">
-          <canvas id="historyChart"></canvas>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">集計結果</h5>
-          <p id="historyStats" class="mb-0">--</p>
-        </div>
-      </div>
-    </div>
-  </div><!-- /タブ2 -->
+      </div><!-- /タブ4 -->
 
-  <!-- タブ3: 時間帯別分析 -->
-  <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
-    <div class="my-4">
-      <h3>時間帯別分析</h3>
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label for="hourlyStoreSelect" class="form-label">店舗選択</label>
-          <select id="hourlyStoreSelect" class="form-select">
-            <option value="">全店舗</option>
-          </select>
+      <!-- タブ5: 業種内ジャンルランキング -->
+      <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
+        <div class="my-4">
+          <h2 class="mb-4 text-center">業種内ジャンルランキング</h2>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="industrySelectType" class="form-label">業種を選択</label>
+              <select id="industrySelectType" class="form-select"></select>
+            </div>
+          </div>
+          <div class="table-responsive mb-3">
+            <table id="typeTable" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>ジャンル</th>
+                  <th>店舗数</th>
+                  <th>平均稼働率 (%)</th>
+                </tr>
+              </thead>
+              <tbody id="typeTable"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <canvas id="typeChart"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-          <button id="updateHourlyBtn" class="btn btn-primary w-100">更新</button>
-        </div>
-      </div>
-      <div class="chart-container">
-        <canvas id="hourlyChart"></canvas>
-      </div>
-    </div>
-  </div><!-- /タブ3 -->
+      </div><!-- /タブ5 -->
 
-  <!-- タブ4: エリア統計 -->
-  <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
-    <div class="my-4">
-      <h2 class="mb-4 text-center">エリア統計</h2>
-      <div class="table-responsive mb-3">
-        <table class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>エリア</th>
-              <th>店舗数</th>
-              <th>平均稼働率 (%)</th>
-            </tr>
-          </thead>
-          <tbody id="areaTable"></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <canvas id="areaChart"></canvas>
+      <!-- タブ6: 平均稼働ランキング -->
+      <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
+        <div class="my-4">
+          <h2 class="mb-4 text-center">平均稼働ランキング</h2>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="rankingTypeSelect" class="form-label">ランキングタイプ</label>
+              <select id="rankingTypeSelect" class="form-select">
+                <option value="all" selected>全店舗</option>
+                <option value="industry">業種別</option>
+              </select>
+            </div>
+            <div class="col-md-6" id="industryFilterDiv" style="display: none;">
+              <label for="industrySelectRanking" class="form-label">業種を選択</label>
+              <select id="industrySelectRanking" class="form-select">
+                <!-- 業種リストはJSで動的に追加 -->
+              </select>
+            </div>
+          </div>
+          <button id="updateRankingBtn" class="btn btn-primary mb-3">ランキング更新</button>
+          <div class="table-responsive">
+            <table id="rankingTable" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>順位</th>
+                  <th>店舗名</th>
+                  <th>業種</th>
+                  <th>ジャンル</th>
+                  <th>エリア</th>
+                  <th>平均稼働率 (%)</th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody"></tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </div>
-  </div><!-- /タブ4 -->
+      </div><!-- /タブ6 -->
 
-  <!-- タブ5: 業種内ジャンルランキング -->
-  <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
-    <div class="my-4">
-      <h2 class="mb-4 text-center">業種内ジャンルランキング</h2>
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label for="industrySelectType" class="form-label">業種を選択</label>
-          <select id="industrySelectType" class="form-select"></select>
-        </div>
-      </div>
-      <div class="table-responsive mb-3">
-        <table id="typeTable" class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>ジャンル</th>
-              <th>店舗数</th>
-              <th>平均稼働率 (%)</th>
-            </tr>
-          </thead>
-          <tbody id="typeTable"></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <canvas id="typeChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div><!-- /タブ5 -->
-
-  <!-- タブ6: 平均稼働ランキング -->
-  <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
-    <div class="my-4">
-      <h2 class="mb-4 text-center">平均稼働ランキング</h2>
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label for="rankingTypeSelect" class="form-label">ランキングタイプ</label>
-          <select id="rankingTypeSelect" class="form-select">
-            <option value="all" selected>全店舗</option>
-            <option value="industry">業種別</option>
-          </select>
-        </div>
-        <div class="col-md-6" id="industryFilterDiv" style="display: none;">
-          <label for="industrySelectRanking" class="form-label">業種を選択</label>
-          <select id="industrySelectRanking" class="form-select">
-            <!-- 業種リストはJSで動的に追加 -->
-          </select>
-        </div>
-      </div>
-      <button id="updateRankingBtn" class="btn btn-primary mb-3">ランキング更新</button>
-      <div class="table-responsive">
-        <table id="rankingTable" class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>順位</th>
-              <th>店舗名</th>
-              <th>業種</th>
-              <th>ジャンル</th>
-              <th>エリア</th>
-              <th>平均稼働率 (%)</th>
-            </tr>
-          </thead>
-          <tbody id="rankingTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div><!-- /タブ6 -->
-
-</div> <!-- /tab-content -->
+    </div> <!-- /tab-content -->
   </div> <!-- /container-fluid -->
 
   <!-- 店舗詳細モーダル -->
@@ -446,7 +446,7 @@
               if (!response.ok) throw new Error("HTTP error " + response.status);
               return response;
             } catch (err) {
-              console.error(Fetch error (${url}), attempt ${i + 1}:, err);
+              console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
               if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
               else throw err;
             }
@@ -500,7 +500,7 @@
           const rows = Array.from(document.querySelectorAll("#storeTable tr"));
           const csvContent = rows.map(row => {
             return Array.from(row.cells)
-                        .map(cell => "${cell.innerText.trim().replace(/"/g, '""')}")
+                        .map(cell => `${cell.innerText.trim().replace(/"/g, '""')}`)
                         .join(",");
           }).join("\n");
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -548,7 +548,7 @@
                               ? '<span class="badge bg-danger">高稼働</span>' 
                               : '<span class="badge bg-secondary">低稼働</span>';
               const isFav = favorites.includes(store.store_name);
-              const rowHtml = 
+              const rowHtml = `
                 <tr>
                   <td>
                     <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}" data-store-name="${store.store_name}">★</button>
@@ -565,7 +565,8 @@
                   <td>${tagHtml}</td>
                   <td>--</td>
                   <td>--</td>
-                </tr>;
+                </tr>
+              `;
               tableBody.insertAdjacentHTML("beforeend", rowHtml);
             });
 
@@ -596,23 +597,16 @@
             // 店舗詳細モーダル表示
             $("#storeTable tbody").off("click", ".store-name.clickable").on("click", ".store-name.clickable", function () {
               const store = JSON.parse(decodeURIComponent($(this).data("store")));
-              const content = 
-                <strong>店舗名:</strong> ${store.store_name}
-
-                <strong>業種:</strong> ${store.biz_type || "不明"}
-
-                <strong>ジャンル:</strong> ${store.genre || "不明"}
-
-                <strong>エリア:</strong> ${store.area || "不明"}
-
-                <strong>総出勤:</strong> ${store.total_staff}
-
-                <strong>勤務中人数:</strong> ${store.working_staff}
-
-                <strong>即ヒメ人数:</strong> ${store.active_staff}
-
+              const content = `
+                <strong>店舗名:</strong> ${store.store_name}<br>
+                <strong>業種:</strong> ${store.biz_type || "不明"}<br>
+                <strong>ジャンル:</strong> ${store.genre || "不明"}<br>
+                <strong>エリア:</strong> ${store.area || "不明"}<br>
+                <strong>総出勤:</strong> ${store.total_staff}<br>
+                <strong>勤務中人数:</strong> ${store.working_staff}<br>
+                <strong>即ヒメ人数:</strong> ${store.active_staff}<br>
                 <strong>店舗URL:</strong> <a href="${store.url}" target="_blank">${store.url}</a>
-              ;
+              `;
               $("#storeDetailBasic").html(content);
               updateDetailHistoryChart(store.store_name);
               updateDetailHourlyChart(store.store_name);
@@ -661,7 +655,7 @@
                     font: { size: 20 }
                   },
                   tooltip: {
-                    callbacks: { label: context => ${context.parsed.x}% }
+                    callbacks: { label: context => `${context.parsed.x}%` }
                   },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
@@ -803,10 +797,10 @@
                     display: true,
                     text: (selectedStore === "") 
                           ? "全店舗の平均稼働率（期間指定）"
-                          : 店舗(${selectedStore})の履歴グラフ,
+                          : `店舗(${selectedStore})の履歴グラフ`,
                     font: { size: 20 }
                   },
-                  tooltip: { callbacks: { label: context => ${context.parsed.y}% } },
+                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
                     zoom: { enabled: true, mode: 'xy' }
@@ -824,7 +818,7 @@
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
               const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
-              historyStats.textContent = 期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%;
+              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
             } else {
               historyStats.textContent = "該当データなし";
             }
@@ -845,7 +839,7 @@
             data.forEach(item => { if (item.store_name) stores.add(item.store_name); });
             storeSelect.innerHTML = '<option value="">全店舗</option>';
             stores.forEach(store => {
-              storeSelect.innerHTML += <option value="${store}">${store}</option>;
+              storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
             // 復元済みのフィルタを反映
             storeSelect.value = savedHistoryStore;
@@ -888,7 +882,7 @@
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
-              labels.push(${h}:00);
+              labels.push(`${h}:00`);
               avgRates.push(hourly[h] && hourly[h].count > 0 ? (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
             }
             const ctx = document.getElementById("hourlyChart").getContext("2d");
@@ -912,7 +906,7 @@
                 responsive: true,
                 plugins: {
                   title: { display: true, text: "時間帯別分析", font: { size: 20 } },
-                  tooltip: { callbacks: { label: context => ${context.parsed.y}% } },
+                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
                     zoom: { enabled: true, mode: 'xy' }
@@ -942,7 +936,7 @@
             data.forEach(item => { if (item.store_name) stores.add(item.store_name); });
             hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
             stores.forEach(store => {
-              hourlyStoreSelect.innerHTML += <option value="${store}">${store}</option>;
+              hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
             hourlyStoreSelect.value = savedHourlyStore;
           } catch (err) {
@@ -981,13 +975,13 @@
               const { stores, totalRate, rateCount } = areaData[area];
               const storeCount = stores.size;
               const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : "0.0";
-              areaTable.insertAdjacentHTML("beforeend", 
+              areaTable.insertAdjacentHTML("beforeend", `
                 <tr>
                   <td>${area}</td>
                   <td>${storeCount}</td>
                   <td>${avgRate}</td>
                 </tr>
-              );
+              `);
               labels.push(area);
               avgRates.push(parseFloat(avgRate));
             }
@@ -1030,7 +1024,7 @@
             if (!industrySelect) return;
             industrySelect.innerHTML = "";
             industries.forEach(ind => {
-              industrySelect.innerHTML += <option value="${ind}">${ind}</option>;
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
             });
             // 復元済みの値を反映
             industrySelect.value = savedIndustry;
@@ -1074,13 +1068,13 @@
               const { stores, totalRate, rateCount } = genreData[g];
               const storeCount = stores.size;
               const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : "0.0";
-              typeTable.insertAdjacentHTML("beforeend", 
+              typeTable.insertAdjacentHTML("beforeend", `
                 <tr>
                   <td>${g}</td>
                   <td>${storeCount}</td>
                   <td>${avgRate}</td>
                 </tr>
-              );
+              `);
               labels.push(g);
               avgRates.push(parseFloat(avgRate));
             }
@@ -1145,7 +1139,7 @@
                 responsive: true,
                 plugins: {
                   title: { display: true, text: "店舗履歴グラフ", font: { size: 20 } },
-                  tooltip: { callbacks: { label: context => ${context.parsed.y}% } },
+                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
                     zoom: { enabled: true, mode: 'xy' }
@@ -1185,7 +1179,7 @@
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
-              labels.push(${h}:00);
+              labels.push(`${h}:00`);
               avgRates.push(hourly[h] && hourly[h].count > 0 ? (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
             }
             const ctx = document.getElementById("detailHourlyChart").getContext("2d");
@@ -1209,7 +1203,7 @@
                 responsive: true,
                 plugins: {
                   title: { display: true, text: "店舗詳細 時間帯別分析", font: { size: 20 } },
-                  tooltip: { callbacks: { label: context => ${context.parsed.y}% } },
+                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
                     zoom: { enabled: true, mode: 'xy' }
@@ -1273,7 +1267,7 @@
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
             filteredArray.forEach((store, index) => {
-              const rowHtml = 
+              const rowHtml = `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${store.store_name}</td>
@@ -1282,7 +1276,7 @@
                   <td>${store.area}</td>
                   <td>${store.avgRate.toFixed(1)}</td>
                 </tr>
-              ;
+              `;
               tbody.insertAdjacentHTML("beforeend", rowHtml);
             });
           } catch (error) {
@@ -1304,7 +1298,7 @@
             const industrySelect = document.getElementById("industrySelectRanking");
             industrySelect.innerHTML = "";
             industries.forEach(ind => {
-              industrySelect.innerHTML += <option value="${ind}">${ind}</option>;
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`;
             });
           } catch (err) {
             console.error("ランキング業種ドロップダウン取得エラー:", err);
