@@ -222,7 +222,7 @@ def api_history():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 50, type=int)
-        pagination = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).paginate(page, per_page, error_out=False)
+        pagination = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).paginate(page=page, per_page=per_page, error_out=False)
         results = pagination.items
         data = []
         jst = pytz.timezone('Asia/Tokyo')
