@@ -667,7 +667,7 @@
         async function updateHistoryChart() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json(); // api/history は全件データを返す
+            const data = await response.json(); // 全件データを返す前提
             const storeSelect = document.getElementById("storeSelectHistory");
             if (storeSelect) { storeSelect.value = savedHistoryStore; }
             const selectedStore = storeSelect ? storeSelect.value : "";
