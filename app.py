@@ -14,14 +14,14 @@ from flask_caching import Cache
 # 1. Flaskアプリ & DB接続設定
 # ---------------------------------------------------------------------
 app = Flask(__name__, template_folder='templates', static_folder='static')
-# 秘密鍵は必ず環境変数で設定すること（デフォルト値は実際には使わないことを推奨）
+# 秘密鍵は環境変数で設定（デフォルト値はあくまでサンプルです）
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@localhost:5432/store_data')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# キャッシュ設定（Redisを利用）
+# キャッシュ設定（Redis利用）
 app.config['CACHE_TYPE'] = 'RedisCache'
 app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 cache = Cache(app)
@@ -35,7 +35,7 @@ socketio = SocketIO(app)
 class StoreStatus(db.Model):
     """
     店舗ごとのスクレイピング結果を保存するテーブル
-    ※各レコードは、ある時点での店舗の稼働情報を表す
+    ※各レコードは、ある時点での店舗稼働情報を表す
     """
     __tablename__ = 'store_status'
     id = db.Column(db.Integer, primary_key=True)
@@ -54,7 +54,7 @@ class StoreStatus(db.Model):
 class StoreURL(db.Model):
     """
     スクレイピング対象の店舗URLを保存するテーブル
-    ※エラー発生時に error_flag, last_error で状態を記録
+    ※エラー発生時に error_flag と last_error を記録
     """
     __tablename__ = 'store_urls'
     id = db.Column(db.Integer, primary_key=True)
@@ -72,7 +72,6 @@ with app.app_context():
 # 4. 簡易Basic認証デコレータの定義
 # ---------------------------------------------------------------------
 def check_auth(username, password):
-    # 環境変数ADMIN_USER, ADMIN_PASSが設定されていなければデフォルト値を使用
     return username == os.environ.get('ADMIN_USER', 'admin') and password == os.environ.get('ADMIN_PASS', 'password')
 
 def authenticate():
@@ -95,10 +94,11 @@ from store_scraper import scrape_store_data
 def scheduled_scrape():
     """
     APScheduler により1時間おきに実行されるスクレイピングジョブ
-    ・StoreURLテーブルの各店舗URLに対してスクレイピングを実施し、結果をStoreStatusテーブルに保存
-    ・同一店舗・エリア・分単位の重複は更新する
-    ・失敗時はStoreURLのerror_flag, last_errorに記録
-    ・古いデータ（2年以上前）は削除し、キャッシュクリア・Socket.IOで更新通知
+    ・StoreURLテーブルの各店舗URLに対してスクレイピングを実施し、
+      結果をStoreStatusテーブルに保存する。
+    ・同一店舗・エリア・分単位の重複は更新する形にする。
+    ・スクレイピング失敗時は、StoreURLのerror_flagとlast_errorに記録する。
+    ・古いデータ（2年以上前）は削除し、キャッシュをクリア後、Socket.IOで更新通知する。
     """
     with app.app_context():
         scrape_time = datetime.now()
@@ -108,14 +108,12 @@ def scheduled_scrape():
         if not store_urls:
             app.logger.info("店舗URLが1件も登録されていません。")
             return
-
         app.logger.info("【スクレイピング開始】対象店舗数: %d", len(store_urls))
         try:
             results = scrape_store_data(store_urls)
         except Exception as e:
             app.logger.error("スクレイピング中のエラー: %s", e)
             return
-
         for url_obj, record in zip(store_url_objs, results):
             if record:
                 url_obj.error_flag = 0
@@ -319,7 +317,7 @@ def manual_scrape():
     """
     管理画面から手動でスクレイピングを実行し、次回定期スクレイピング実行時刻を現在時刻＋1時間に更新する
     """
-    scheduled_scrape()  # 手動実行
+    scheduled_scrape()
     next_time = datetime.now() + timedelta(hours=1)
     try:
         scheduler.modify_job('scrape_job', next_run_time=next_time)
