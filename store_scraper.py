@@ -11,7 +11,7 @@ import os
 # -------------------------------
 # 定数設定（環境変数で動的に設定可能）
 # -------------------------------
-MAX_CONCURRENT_TASKS = int(os.environ.get('MAX_CONCURRENT_TASKS', 10))
+MAX_CONCURRENT_TASKS = int(os.environ.get('MAX_CONCURRENT_TASKS', 20))
 MAX_RETRIES_FOR_INFO = 3
 
 # -------------------------------
