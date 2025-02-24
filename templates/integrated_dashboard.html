@@ -502,7 +502,7 @@
         async function updateDashboard() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
+            const data = await response.json(); // /api/dataは配列を返す
             document.getElementById("totalStores").innerText = data.length;
             const avgRate = data.reduce((sum, store) => {
               if (store.working_staff > 0) {
@@ -596,7 +596,8 @@
         async function updateHistoryChart() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data; // ページネーション対応の data プロパティ
             const storeSelect = document.getElementById("storeSelectHistory");
             if(storeSelect) { storeSelect.value = savedHistoryStore; }
             const selectedStore = storeSelect ? storeSelect.value : "";
@@ -681,7 +682,8 @@
         async function fillHistoryStoreDropdown() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const storeSelect = document.getElementById("storeSelectHistory");
             if (!storeSelect) return;
             const stores = new Set();
@@ -701,7 +703,8 @@
         async function updateHourlyAnalysis() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if(hourlyStoreSelect) {
               hourlyStoreSelect.value = savedHourlyStore;
@@ -769,7 +772,8 @@
         async function fillHourlyStoreDropdown() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if (!hourlyStoreSelect) return;
             const stores = new Set();
@@ -798,7 +802,8 @@
               areaStoreCount[area]++;
             });
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await responseHistory.json();
+            const json = await responseHistory.json();
+            const dataHistory = json.data;
             const areaRateData = {};
             dataHistory.forEach(record => {
               const area = record.area || "不明";
@@ -859,7 +864,7 @@
         async function fillIndustryDropdown() {
           try {
             const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await responseLatest.json();
+            const dataLatest = await responseLatest.json();  // /api/data は配列を返すのでそのままでOK
             const industries = new Set();
             dataLatest.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
             const industrySelect = document.getElementById("industrySelectType");
@@ -884,7 +889,8 @@
             const dataLatest = await responseLatest.json();
             const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await responseHistory.json();
+            const json = await responseHistory.json();
+            const dataHistory = json.data;
             const filtered = dataHistory.filter(record => latestStoreNames.has(record.store_name) &&
               (selectedIndustry ? record.biz_type === selectedIndustry : true));
             const genreData = {};
@@ -944,7 +950,8 @@
         async function fillIndustryDropdownForRanking() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const industries = new Set();
             data.forEach(record => { if (record.biz_type) industries.add(record.biz_type); });
             const industrySelect = document.getElementById("industrySelectRanking");
@@ -971,7 +978,8 @@
         async function updateDetailHistoryChart(storeName) {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const filtered = data.filter(record => record.store_name === storeName)
                                  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             const labels = filtered.map(record => {
@@ -1021,7 +1029,8 @@
         async function updateDetailHourlyChart(storeName) {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const filtered = data.filter(record => record.store_name === storeName);
             const hourly = {};
             filtered.forEach(record => {
@@ -1082,7 +1091,8 @@
         async function updateAverageRanking() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const storeStats = {};
             data.forEach(record => {
               if (record.working_staff > 0) {
@@ -1138,7 +1148,8 @@
         async function fillIndustryDropdownForRanking() {
           try {
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data;
             const industries = new Set();
             data.forEach(record => { if (record.biz_type) industries.add(record.biz_type); });
             const industrySelect = document.getElementById("industrySelectRanking");
