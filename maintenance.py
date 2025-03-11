@@ -85,7 +85,7 @@ def clear_app_cache():
 def main():
     """メイン処理"""
     args = sys.argv[1:]
-    retention_days = 180  # デフォルト: 6ヶ月に短縮
+    retention_days = 730  # デフォルト: 2年(730日)に設定
     
     if args and args[0].isdigit():
         retention_days = int(args[0])

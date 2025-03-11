@@ -125,7 +125,7 @@ def scheduled_scrape():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
         # 古いデータ削除：過去2年以上前
-        retention_date = datetime.now() - timedelta(days=730)
+        retention_date = datetime.now() - timedelta(days=730) # 730日 = 2年
 
         store_url_objs = StoreURL.query.all()
         store_urls = [s.store_url for s in store_url_objs]
