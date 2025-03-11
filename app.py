@@ -163,9 +163,11 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
+@cache.cached(timeout=300)  # キャッシュ：5分間有効
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
+    集計値（全体平均など）も含める。
     """
     # 各店舗の最新タイムスタンプをサブクエリで取得
     subq = db.session.query(
@@ -182,6 +184,13 @@ def api_data():
     results = query.all()
     data = []
     jst = pytz.timezone('Asia/Tokyo')
+    
+    # 集計値の計算
+    total_store_count = len(results)
+    total_working_staff = 0
+    total_active_staff = 0
+    valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+    
     for r in results:
         data.append({
             "id": r.id,
@@ -196,7 +205,35 @@ def api_data():
             "url": r.url,
             "shift_time": r.shift_time
         })
-    return jsonify(data)
+        
+        # 集計用データの収集
+        if r.working_staff > 0:
+            valid_stores += 1
+            total_working_staff += r.working_staff
+            total_active_staff += r.active_staff
+    
+    # 全体平均稼働率の計算
+    avg_rate = 0
+    if valid_stores > 0 and total_working_staff > 0:
+        avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+    
+    # ページネーション用のパラメータ取得（クライアント実装時に使用）
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', len(data), type=int)
+    
+    # レスポンスの組み立て（データと集計値の両方を含む）
+    response = {
+        "data": data,
+        "meta": {
+            "total_count": total_store_count,
+            "valid_stores": valid_stores,
+            "avg_rate": round(avg_rate, 1),
+            "total_working_staff": total_working_staff,
+            "total_active_staff": total_active_staff
+        }
+    }
+    
+    return jsonify(response)
 
 
 @app.route('/api/history')
@@ -204,44 +241,8 @@ def api_data():
 def api_history():
     """
     全スクレイピング履歴を時系列昇順で返すエンドポイント（タイムゾーンは JST）。
-    クエリパラメータ:
-    - limit: 返すレコード数の制限 (デフォルト: 1000)
-    - offset: 開始位置 (デフォルト: 0)
-    - start_date: 開始日 (YYYY-MM-DD形式)
-    - end_date: 終了日 (YYYY-MM-DD形式)
-    - store: 店舗名
     """
-    limit = request.args.get('limit', 1000, type=int)
-    offset = request.args.get('offset', 0, type=int)
-    start_date = request.args.get('start_date', None)
-    end_date = request.args.get('end_date', None)
-    store = request.args.get('store', None)
-    
-    query = StoreStatus.query.order_by(StoreStatus.timestamp.asc())
-    
-    # フィルター適用
-    if start_date:
-        try:
-            start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
-            query = query.filter(StoreStatus.timestamp >= start_datetime)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
-            end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
-            # 終了日の23:59:59までを含める
-            end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
-            query = query.filter(StoreStatus.timestamp <= end_datetime)
-        except ValueError:
-            pass
-    
-    if store:
-        query = query.filter(StoreStatus.store_name == store)
-    
-    # ページネーション適用
-    results = query.limit(limit).offset(offset).all()
-    
+    results = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).all()
     data = []
     jst = pytz.timezone('Asia/Tokyo')
     for r in results:
@@ -258,115 +259,6 @@ def api_history():
             "url": r.url,
             "shift_time": r.shift_time
         })
-    return jsonify(data)
-
-@app.route('/api/aggregated')
-@cache.cached(timeout=3600)  # 1時間キャッシュ
-def api_aggregated():
-    """
-    事前集計された平均稼働率データを返すエンドポイント
-    集計単位: 日別・店舗別
-    """
-    # 以下のSQLはPostgreSQLに特化したもの
-    # 日付ごと、店舗ごとに平均稼働率を計算
-    sql = """
-    SELECT 
-        DATE(timestamp) as date,
-        store_name,
-        biz_type,
-        genre,
-        area,
-        AVG(CASE WHEN working_staff > 0 THEN 
-            ((working_staff - active_staff) * 100.0 / working_staff) 
-            ELSE 0 END) as avg_rate,
-        COUNT(*) as sample_count
-    FROM 
-        store_status
-    GROUP BY 
-        DATE(timestamp), store_name, biz_type, genre, area
-    ORDER BY 
-        date, store_name
-    """
-    
-    result = db.session.execute(sql)
-    data = []
-    
-    for row in result:
-        data.append({
-            "date": row.date.isoformat(),
-            "store_name": row.store_name,
-            "biz_type": row.biz_type if row.biz_type else "",
-            "genre": row.genre if row.genre else "",
-            "area": row.area if row.area else "",
-            "avg_rate": float(row.avg_rate),
-            "sample_count": row.sample_count
-        })
-    
-    return jsonify(data)
-
-@app.route('/api/ranking/average')
-@cache.cached(timeout=3600)  # 1時間キャッシュ
-def api_ranking_average():
-    """
-    店舗の平均稼働率ランキングを返すエンドポイント
-    クエリパラメータ:
-    - biz_type: 業種フィルター
-    - days: 集計対象日数 (デフォルト: 30日)
-    """
-    biz_type = request.args.get('biz_type', None)
-    days = request.args.get('days', 30, type=int)
-    
-    # 集計期間の開始日
-    start_date = datetime.now() - timedelta(days=days)
-    
-    # 基本クエリ
-    query = """
-    SELECT 
-        store_name,
-        biz_type,
-        genre,
-        area,
-        AVG(CASE WHEN working_staff > 0 THEN 
-            ((working_staff - active_staff) * 100.0 / working_staff) 
-            ELSE 0 END) as avg_rate,
-        COUNT(*) as sample_count
-    FROM 
-        store_status
-    WHERE 
-        timestamp >= :start_date
-    """
-    
-    # 業種フィルターがあれば追加
-    if biz_type:
-        query += " AND biz_type = :biz_type"
-    
-    # グループ化と順序
-    query += """
-    GROUP BY 
-        store_name, biz_type, genre, area
-    HAVING 
-        COUNT(*) >= 5  -- 最低5サンプル以上
-    ORDER BY 
-        avg_rate DESC
-    """
-    
-    params = {"start_date": start_date}
-    if biz_type:
-        params["biz_type"] = biz_type
-    
-    result = db.session.execute(query, params)
-    data = []
-    
-    for row in result:
-        data.append({
-            "store_name": row.store_name,
-            "biz_type": row.biz_type if row.biz_type else "",
-            "genre": row.genre if row.genre else "",
-            "area": row.area if row.area else "",
-            "avg_rate": float(row.avg_rate),
-            "sample_count": row.sample_count
-        })
-    
     return jsonify(data)
 
 
