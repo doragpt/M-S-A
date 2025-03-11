@@ -11,7 +11,8 @@ import gc
 # 定数設定
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
-MAX_CONCURRENT_TASKS = 20
+# ローカル環境の場合は負荷を下げる
+MAX_CONCURRENT_TASKS = 10
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 3
 

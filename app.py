@@ -213,6 +213,7 @@ def api_data():
     total_working_staff = 0
     total_active_staff = 0
     valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+    max_rate = 0
 
     for r in all_results:
         # 集計用データの収集
@@ -220,6 +221,8 @@ def api_data():
             valid_stores += 1
             total_working_staff += r.working_staff
             total_active_staff += r.active_staff
+            rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
+            max_rate = max(max_rate, rate)
 
     # 全体平均稼働率の計算
     avg_rate = 0
@@ -241,6 +244,7 @@ def api_data():
             "total_count": total_store_count,
             "valid_stores": valid_stores,
             "avg_rate": round(avg_rate, 1),
+            "max_rate": round(max_rate,1), # Added max_rate to meta
             "total_working_staff": total_working_staff,
             "total_active_staff": total_active_staff,
             "page": paginated_result['meta']['page'],
@@ -411,6 +415,21 @@ def manual_scrape():
         scheduler.modify_job('scrape_job', next_run_time=next_time)
         flash("手動スクレイピングを実行しました。次回は {} に実行されます。".format(next_time.strftime("%Y-%m-%d %H:%M:%S")), "success")
     except Exception as e:
+        flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
+    return redirect(url_for('manage_store_urls'))
+
+
+# ---------------------------------------------------------------------
+# 9. メイン実行部
+# ---------------------------------------------------------------------
+if __name__ == '__main__':
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
 
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
@@ -504,19 +523,3 @@ def api_aggregated_data():
     } for r in results]
 
     return jsonify(data)
-
-        flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
-    return redirect(url_for('manage_store_urls'))
-
-
-# ---------------------------------------------------------------------
-# 9. メイン実行部
-# ---------------------------------------------------------------------
-if __name__ == '__main__':
-    # ローカル環境用の設定
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    
-    # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)

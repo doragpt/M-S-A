@@ -36,42 +36,48 @@ def paginate_query_results(query, page=1, per_page=20):
     has_prev = page > 1
     has_next = page < total_pages
     
-    # メタデータ
-    meta = {
-        'page': page,
-        'per_page': per_page,
-        'total_count': total_count,
-        'total_pages': total_pages,
-        'has_prev': has_prev,
-        'has_next': has_next
-    }
-    
+    # 結果を返す
     return {
         'items': items,
-        'meta': meta
+        'meta': {
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages, 
+            'total_count': total_count,
+            'has_prev': has_prev,
+            'has_next': has_next
+        }
     }
 
-def format_store_status(store_status, jst=pytz.timezone('Asia/Tokyo')):
+def format_store_status(item, timezone=None):
     """
-    StoreStatusモデルを辞書形式にフォーマット
+    StoreStatusオブジェクトをJSONシリアライズ可能な辞書に変換する
     
     Args:
-        store_status: StoreStatusモデルのインスタンス
-        jst: 日本標準時のタイムゾーンオブジェクト
+        item: StoreStatusオブジェクト
+        timezone: 変換に使用するタイムゾーン（オプション）
         
     Returns:
-        フォーマットされた辞書
+        辞書形式のデータ
     """
-    return {
-        "id": store_status.id,
-        "timestamp": store_status.timestamp.astimezone(jst).isoformat(),
-        "store_name": store_status.store_name,
-        "biz_type": store_status.biz_type,
-        "genre": store_status.genre,
-        "area": store_status.area,
-        "total_staff": store_status.total_staff,
-        "working_staff": store_status.working_staff,
-        "active_staff": store_status.active_staff,
-        "url": store_status.url,
-        "shift_time": store_status.shift_time
+    result = {
+        'id': item.id,
+        'store_name': item.store_name,
+        'biz_type': item.biz_type,
+        'genre': item.genre,
+        'area': item.area,
+        'total_staff': item.total_staff,
+        'working_staff': item.working_staff,
+        'active_staff': item.active_staff,
+        'url': item.url,
+        'shift_time': item.shift_time
     }
+    
+    # タイムスタンプをタイムゾーン指定でフォーマット
+    if timezone and item.timestamp:
+        localized_time = item.timestamp.replace(tzinfo=pytz.utc).astimezone(timezone)
+        result['timestamp'] = localized_time.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        result['timestamp'] = item.timestamp.strftime('%Y-%m-%d %H:%M:%S') if item.timestamp else None
+    
+    return result
