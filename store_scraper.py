@@ -12,13 +12,15 @@ import gc
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
 # ローカル環境の場合は負荷を下げる
-MAX_CONCURRENT_TASKS = 5  # ローカル環境での負荷を下げるため5に変更
+MAX_CONCURRENT_TASKS = 3  # ローカル環境での負荷を下げるため3に変更
 # 店舗情報が取得できなかった場合の再試行回数
-MAX_RETRIES_FOR_INFO = 2  # 再試行回数も2回に減らして高速化
+MAX_RETRIES_FOR_INFO = 1  # 再試行回数を1回に短縮してさらに高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)
+PAGE_LOAD_TIMEOUT = 10000  # ページロードのタイムアウト(10秒)に短縮
 # メモリ管理
-FORCE_GC_AFTER_STORES = 20  # 20店舗処理後に強制GC実行
+FORCE_GC_AFTER_STORES = 10  # 10店舗処理後に強制GC実行（より頻繁に解放）
+# 一時的なエラーの最大再試行回数
+MAX_TEMP_ERROR_RETRIES = 2
 
 # -------------------------------
 # fetch_page 関数

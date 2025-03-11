@@ -22,7 +22,7 @@
     
     @media (max-width: 768px) {
       .container-fluid {
-        padding: 10px;
+        padding: 8px;
       }
       .card-header {
         font-size: 0.9rem;
@@ -34,6 +34,26 @@
       .table {
         font-size: 0.85rem;
       }
+      .chart-container {
+        height: 300px;
+      }
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      .nav-link {
+        padding: 0.5rem 0.5rem;
+        font-size: 0.9rem;
+      }
+      .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+      }
+    }
+    
+    /* スクロール対応の強化 */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .header {
       background-color: #007bff;
@@ -139,6 +159,28 @@
   </div>
 
     }
+    .modal-header {
+      background-color: #007bff;
+      color: #fff;
+      border-bottom: none;
+    }
+    /* Toast 用スタイル */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1055;
+    }
+    /* ローディングスピナー */
+    #loadingSpinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      display: none;
+    }
+  /* モーダルヘッダー */
     .modal-header {
       background-color: #007bff;
       color: #fff;
@@ -637,6 +679,9 @@
         const cacheTTL = 60000; // キャッシュの有効期間（ミリ秒）: 1分
         
         async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000, useCache = true) {
+          // アプリの起動時やネットワーク復帰後のフォールバックデータ
+          const fallbackData = localStorage.getItem(`fallback_${url}`);
+          
           // キャッシュキーの生成（URLとオプションの組み合わせ）
           const cacheKey = url + JSON.stringify(options);
           
@@ -646,6 +691,18 @@
             // キャッシュが有効期限内かチェック
             if (Date.now() - cachedData.timestamp < cacheTTL) {
               console.log(`[Cache] Using cached data for: ${url}`);
+              // 成功した取得データをフォールバック用に保存
+              try {
+                const clonedResponse = cachedData.data.clone();
+                clonedResponse.json().then(data => {
+                  localStorage.setItem(`fallback_${url}`, JSON.stringify({
+                    data: data,
+                    timestamp: Date.now()
+                  }));
+                });
+              } catch (e) {
+                console.warn("フォールバックデータの保存に失敗:", e);
+              }
               // キャッシュされたレスポンスのクローンを返す
               return new Response(cachedData.data.clone().body, cachedData.data);
             } else {
@@ -698,6 +755,32 @@
                 await new Promise((resolve) => setTimeout(resolve, backoffDelay));
               } else {
                 // 最終的なエラー、すべてのリトライが失敗した
+                
+                // フォールバックデータがあれば使用する
+                const fallbackData = localStorage.getItem(`fallback_${url}`);
+                if (fallbackData) {
+                  try {
+                    const parsedData = JSON.parse(fallbackData);
+                    // 24時間以内のフォールバックデータのみ使用
+                    if (Date.now() - parsedData.timestamp < 86400000) {
+                      console.log(`[Fallback] Using fallback data for: ${url}`);
+                      showErrorDialog(
+                        "最新データの取得に失敗しました", 
+                        "ネットワークエラーが発生しましたが、キャッシュされた以前のデータを表示しています。"
+                      );
+                      // フォールバックデータをレスポンス形式に変換
+                      const fallbackResponse = new Response(
+                        JSON.stringify(parsedData.data), 
+                        { headers: { 'Content-Type': 'application/json' } }
+                      );
+                      return fallbackResponse;
+                    }
+                  } catch (e) {
+                    console.error("フォールバックデータの解析エラー:", e);
+                  }
+                }
+                
+                // フォールバックなしの場合は通常のエラー表示
                 showErrorDialog("データ取得に失敗しました", err.message || "ネットワークエラーが発生しました。再度試してください。");
                 throw err;
               }

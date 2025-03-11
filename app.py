@@ -48,15 +48,15 @@ if os.environ.get('REDIS_URL'):
     # 本番環境: Redis利用
     app.config['CACHE_TYPE'] = 'RedisCache'
     app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')
-    app.config['CACHE_OPTIONS'] = {'socket_timeout': 3, 'socket_connect_timeout': 3}
+    app.config['CACHE_OPTIONS'] = {'socket_timeout': 5, 'socket_connect_timeout': 5}
 else:
     # 開発環境: SimpleCache利用（Redis不要）
     app.config['CACHE_TYPE'] = 'SimpleCache'
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 600  # キャッシュ有効期間を10分に延長
 
 # キャッシュ設定の追加
-app.config['CACHE_KEY_PREFIX'] = 'm_s_a_v1_'  # キャッシュキーのプレフィックス
-app.config['CACHE_THRESHOLD'] = 1000  # SimpleCache使用時の最大アイテム数
+app.config['CACHE_KEY_PREFIX'] = 'm_s_a_v2_'  # キャッシュキーのプレフィックス
+app.config['CACHE_THRESHOLD'] = 2000  # SimpleCache使用時の最大アイテム数（2倍に増加）
 
 cache = Cache(app)
 
@@ -197,12 +197,18 @@ def maintenance_task():
         collected = gc.collect()
         app.logger.info(f"ガベージコレクション完了: {collected}オブジェクト解放")
 
-# APScheduler の設定：1時間ごとに scheduled_scrape を実行
-# ジョブIDを 'scrape_job' として登録
+# APScheduler の設定：1時間ごとに scheduled_scrape を実行（ジョブキューを制限）
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
-scheduler = BackgroundScheduler(executors=executors)
-scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
-# 毎日午前3時にメンテナンスタスクを実行
+scheduler = BackgroundScheduler(
+    executors=executors,
+    job_defaults={
+        'coalesce': True,  # 遅延ジョブを集約
+        'max_instances': 1,  # 同じジョブの同時実行を防止
+        'misfire_grace_time': 300  # 5分のミスファイア猶予時間
+    }
+)
+# スケジュール設定：午前3時にメンテナンス、その他の時間はスクレイピング
+scheduler.add_job(scheduled_scrape, 'interval', hours=2, id='scrape_job')  # 2時間に1回に変更
 scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
 
@@ -210,7 +216,7 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効
+@cache.cached(timeout=600)  # キャッシュ：10分間有効に延長
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
