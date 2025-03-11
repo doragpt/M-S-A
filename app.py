@@ -168,7 +168,13 @@ def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
     集計値（全体平均など）も含める。
+    
+    クエリパラメータ:
+        page: ページ番号（1から始まる）
+        per_page: 1ページあたりの項目数（最大100）
     """
+    from page_helper import paginate_query_results, format_store_status
+    
     # 各店舗の最新タイムスタンプをサブクエリで取得
     subq = db.session.query(
         StoreStatus.store_name,
@@ -181,31 +187,20 @@ def api_data():
         (StoreStatus.timestamp == subq.c.max_time)
     ).order_by(StoreStatus.timestamp.desc())
 
-    results = query.all()
-    data = []
-    jst = pytz.timezone('Asia/Tokyo')
+    # ページネーションのパラメータを取得
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    # クエリの全結果を取得（集計値の計算用）
+    all_results = query.all()
     
     # 集計値の計算
-    total_store_count = len(results)
+    total_store_count = len(all_results)
     total_working_staff = 0
     total_active_staff = 0
     valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
     
-    for r in results:
-        data.append({
-            "id": r.id,
-            "timestamp": r.timestamp.astimezone(jst).isoformat(),
-            "store_name": r.store_name,
-            "biz_type": r.biz_type,
-            "genre": r.genre,
-            "area": r.area,
-            "total_staff": r.total_staff,
-            "working_staff": r.working_staff,
-            "active_staff": r.active_staff,
-            "url": r.url,
-            "shift_time": r.shift_time
-        })
-        
+    for r in all_results:
         # 集計用データの収集
         if r.working_staff > 0:
             valid_stores += 1
@@ -217,11 +212,15 @@ def api_data():
     if valid_stores > 0 and total_working_staff > 0:
         avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
     
-    # ページネーション用のパラメータ取得（クライアント実装時に使用）
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', len(data), type=int)
+    # ページネーション適用
+    paginated_result = paginate_query_results(query, page, per_page)
+    items = paginated_result['items']
     
-    # レスポンスの組み立て（データと集計値の両方を含む）
+    # データのフォーマット
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [format_store_status(item, jst) for item in items]
+    
+    # レスポンスの組み立て（データ、集計値、ページネーション情報を含む）
     response = {
         "data": data,
         "meta": {
@@ -229,7 +228,12 @@ def api_data():
             "valid_stores": valid_stores,
             "avg_rate": round(avg_rate, 1),
             "total_working_staff": total_working_staff,
-            "total_active_staff": total_active_staff
+            "total_active_staff": total_active_staff,
+            "page": paginated_result['meta']['page'],
+            "per_page": paginated_result['meta']['per_page'],
+            "total_pages": paginated_result['meta']['total_pages'],
+            "has_prev": paginated_result['meta']['has_prev'],
+            "has_next": paginated_result['meta']['has_next']
         }
     }
     
@@ -240,26 +244,63 @@ def api_data():
 @cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷軽減）
 def api_history():
     """
-    全スクレイピング履歴を時系列昇順で返すエンドポイント（タイムゾーンは JST）。
+    スクレイピング履歴を検索・フィルタリングして返すエンドポイント（タイムゾーンは JST）。
+    
+    クエリパラメータ:
+        store: 店舗名で絞り込み
+        start_date: 指定日以降のデータ (YYYY-MM-DD形式)
+        end_date: 指定日以前のデータ (YYYY-MM-DD形式)
+        limit: 返す最大レコード数
+        page: ページ番号（1から始まる）
+        per_page: 1ページあたりの項目数（最大100）
     """
-    results = StoreStatus.query.order_by(StoreStatus.timestamp.asc()).all()
-    data = []
-    jst = pytz.timezone('Asia/Tokyo')
-    for r in results:
-        data.append({
-            "id": r.id,
-            "timestamp": r.timestamp.astimezone(jst).isoformat(),
-            "store_name": r.store_name,
-            "biz_type": r.biz_type,
-            "genre": r.genre,
-            "area": r.area,
-            "total_staff": r.total_staff,
-            "working_staff": r.working_staff,
-            "active_staff": r.active_staff,
-            "url": r.url,
-            "shift_time": r.shift_time
-        })
-    return jsonify(data)
+    from page_helper import paginate_query_results, format_store_status
+    
+    # ベースクエリ
+    query = StoreStatus.query
+    
+    # フィルタリング条件適用
+    if store := request.args.get('store'):
+        query = query.filter(StoreStatus.store_name == store)
+    
+    if start_date := request.args.get('start_date'):
+        query = query.filter(StoreStatus.timestamp >= f"{start_date} 00:00:00")
+    
+    if end_date := request.args.get('end_date'):
+        query = query.filter(StoreStatus.timestamp <= f"{end_date} 23:59:59")
+    
+    # データ制限（オプション）
+    if limit := request.args.get('limit', type=int):
+        query = query.limit(limit)
+    
+    # 常に時系列順にソート
+    query = query.order_by(StoreStatus.timestamp.asc())
+    
+    # ページネーションのパラメータを取得
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
+    
+    # ページネーション適用（limitより優先）
+    if 'page' in request.args or 'per_page' in request.args:
+        paginated_result = paginate_query_results(query, page, per_page)
+        items = paginated_result['items']
+        
+        # データのフォーマット
+        jst = pytz.timezone('Asia/Tokyo')
+        data = [format_store_status(item, jst) for item in items]
+        
+        # メタデータを含むレスポンス
+        response = {
+            "items": data,
+            "meta": paginated_result['meta']
+        }
+        return jsonify(response)
+    else:
+        # 従来通りすべての結果を返す場合
+        results = query.all()
+        jst = pytz.timezone('Asia/Tokyo')
+        data = [format_store_status(r, jst) for r in results]
+        return jsonify(data)
 
 
 # ---------------------------------------------------------------------
@@ -356,6 +397,100 @@ def manual_scrape():
         scheduler.modify_job('scrape_job', next_run_time=next_time)
         flash("手動スクレイピングを実行しました。次回は {} に実行されます。".format(next_time.strftime("%Y-%m-%d %H:%M:%S")), "success")
     except Exception as e:
+
+# 新規エンドポイント: 平均稼働ランキング
+@app.route('/api/ranking/average')
+@cache.cached(timeout=600)  # キャッシュ：10分間有効
+def api_average_ranking():
+    """
+    店舗の平均稼働率ランキングを返すエンドポイント
+    
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング
+        limit: 上位何件を返すか（デフォルト20件）
+    """
+    # フィルタリング条件
+    biz_type = request.args.get('biz_type')
+    limit = request.args.get('limit', 20, type=int)
+    
+    # サブクエリ: 店舗ごとのグループ化
+    subq = db.session.query(
+        StoreStatus.store_name,
+        func.avg(
+            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+            func.nullif(StoreStatus.working_staff, 0)
+        ).label('avg_rate'),
+        func.count().label('sample_count'),
+        func.max(StoreStatus.biz_type).label('biz_type'),
+        func.max(StoreStatus.genre).label('genre'),
+        func.max(StoreStatus.area).label('area')
+    ).filter(StoreStatus.working_staff > 0)
+    
+    # 業種でフィルタリング（指定があれば）
+    if biz_type:
+        subq = subq.filter(StoreStatus.biz_type == biz_type)
+    
+    # グループ化と最小サンプル数フィルタ
+    subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 10).subquery()
+    
+    # メインクエリ: ランキング取得
+    query = db.session.query(
+        subq.c.store_name,
+        subq.c.avg_rate,
+        subq.c.sample_count,
+        subq.c.biz_type,
+        subq.c.genre,
+        subq.c.area
+    ).order_by(subq.c.avg_rate.desc()).limit(limit)
+    
+    results = query.all()
+    
+    # 結果を整形
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
+    
+    return jsonify(data)
+
+# 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
+@app.route('/api/aggregated')
+@cache.cached(timeout=3600)  # キャッシュ：1時間有効
+def api_aggregated_data():
+    """
+    日付ごとに集計された平均稼働率データを返すエンドポイント
+    """
+    # 日付ごとの集計クエリ
+    query = db.session.query(
+        func.date(StoreStatus.timestamp).label('date'),
+        func.avg(
+            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+            func.nullif(StoreStatus.working_staff, 0)
+        ).label('avg_rate'),
+        func.count().label('sample_count')
+    ).filter(
+        StoreStatus.working_staff > 0
+    ).group_by(
+        func.date(StoreStatus.timestamp)
+    ).order_by(
+        func.date(StoreStatus.timestamp)
+    )
+    
+    results = query.all()
+    
+    # 結果を整形
+    data = [{
+        'date': r.date.isoformat(),
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count
+    } for r in results]
+    
+    return jsonify(data)
+
         flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
     return redirect(url_for('manage_store_urls'))
 
