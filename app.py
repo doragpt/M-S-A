@@ -44,7 +44,7 @@ else:
 cache = Cache(app)
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')
 
 # ---------------------------------------------------------------------
 # 2. モデル定義
