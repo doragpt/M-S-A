@@ -91,6 +91,53 @@
     }
     body.dark table.dataTable tbody tr {
       color: #fff;
+
+  <!-- 更新履歴モーダル -->
+  <div class="modal fade" id="updateHistoryModal" tabindex="-1" aria-labelledby="updateHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="updateHistoryModalLabel">更新履歴</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="update-item mb-3">
+            <h6>2023年8月最新版 (v1.3.0)</h6>
+            <ul>
+              <li>平均稼働ランキング機能を追加</li>
+              <li>パフォーマンス最適化: データ読み込み速度が向上</li>
+              <li>UIの改善: ダークモード対応とレスポンシブデザイン強化</li>
+            </ul>
+          </div>
+          <div class="update-item mb-3">
+            <h6>2023年7月更新 (v1.2.0)</h6>
+            <ul>
+              <li>エリア統計とジャンルランキング機能を追加</li>
+              <li>データ集計API最適化による表示速度向上</li>
+              <li>自動更新設定の追加</li>
+            </ul>
+          </div>
+          <div class="update-item mb-3">
+            <h6>2023年6月更新 (v1.1.0)</h6>
+            <ul>
+              <li>時間帯別分析機能を追加</li>
+              <li>店舗詳細表示の強化</li>
+              <li>CSV出力機能の追加</li>
+            </ul>
+          </div>
+          <div class="update-item">
+            <h6>2023年5月初版 (v1.0.0)</h6>
+            <ul>
+              <li>初回リリース</li>
+              <li>基本的な店舗稼働状況表示</li>
+              <li>お気に入り機能</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
     }
     .modal-header {
       background-color: #007bff;
@@ -138,6 +185,9 @@
       <button id="favoritesToggle" class="btn btn-light btn-sm">お気に入りのみ表示</button>
       <button id="settingsBtn" class="btn btn-outline-light btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#settingsModal">
         <i class="bi bi-gear"></i> 設定
+      </button>
+      <button id="updateHistoryBtn" class="btn btn-outline-light btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#updateHistoryModal">
+        <i class="bi bi-journal-text"></i> 更新履歴
       </button>
     </div>
   </div>
@@ -604,11 +654,30 @@
             }
           }
           
+          // ネットワーク接続確認
+          if (!navigator.onLine) {
+            // オフライン時はエラーダイアログ表示
+            showErrorDialog("ネットワーク接続がありません", "インターネット接続を確認して再試行してください");
+            throw new Error("Network offline");
+          }
+          
+          window.lastFetchUrl = url; // 現在実行中のURLを保存
+          let lastError = null;
+          
           // キャッシュがない場合やキャッシュが無効な場合は通常のフェッチ
           for (let i = 0; i < retries; i++) {
             try {
               const response = await fetch(url, options);
-              if (!response.ok) throw new Error("HTTP error " + response.status);
+              if (!response.ok) {
+                const statusText = response.statusText || "";
+                if (response.status === 503 || response.status === 504) {
+                  throw new Error(`サーバー一時的に利用できません (${response.status})`);
+                } else if (response.status === 429) {
+                  throw new Error("リクエスト回数制限に達しました。しばらく待ってから再試行してください");
+                } else {
+                  throw new Error(`HTTP error ${response.status}: ${statusText}`);
+                }
+              }
               
               // レスポンスをキャッシュに保存（キャッシュが有効な場合のみ）
               if (useCache) {
@@ -622,10 +691,73 @@
               return response;
             } catch (err) {
               console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
-              if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
-              else throw err;
+              lastError = err;
+              if (i < retries - 1) {
+                // リトライ間隔を指数関数的に増加（バックオフ）
+                const backoffDelay = delay * Math.pow(1.5, i);
+                await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+              } else {
+                // 最終的なエラー、すべてのリトライが失敗した
+                showErrorDialog("データ取得に失敗しました", err.message || "ネットワークエラーが発生しました。再度試してください。");
+                throw err;
+              }
             }
           }
+        }
+        
+        // エラーダイアログを表示する関数
+        function showErrorDialog(title, message) {
+          // 既存のエラーダイアログがあれば削除
+          const existingDialog = document.getElementById('errorDialog');
+          if (existingDialog) {
+            existingDialog.remove();
+          }
+          
+          // 新しいダイアログを作成
+          const errorHtml = `
+            <div class="modal fade" id="errorDialog" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">${title}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p>${message}</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <button type="button" class="btn btn-primary" id="retryErrorBtn">再試行</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          document.body.insertAdjacentHTML('beforeend', errorHtml);
+          const modal = new bootstrap.Modal(document.getElementById('errorDialog'));
+          modal.show();
+          
+          // 再試行ボタンのイベントリスナー
+          document.getElementById('retryErrorBtn').addEventListener('click', () => {
+            modal.hide();
+            // 最後に失敗したURLを再試行
+            if (window.lastFetchUrl) {
+              const lastUrl = window.lastFetchUrl;
+              window.lastFetchUrl = '';
+              // 失敗した機能に応じて適切な更新関数を呼び出す
+              if (lastUrl.includes('/api/data')) {
+                updateDashboard();
+                updateTop10Chart();
+              } else if (lastUrl.includes('/api/history')) {
+                updateHistoryChart();
+              } else if (lastUrl.includes('/api/aggregated')) {
+                updateAreaStatistics();
+              } else if (lastUrl.includes('/api/ranking')) {
+                updateAverageRanking();
+              }
+            }
+          });
         }
 
         /***********************************************
