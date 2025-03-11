@@ -22,11 +22,25 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@localhost:5432/store_data')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # 接続が生きているか確認
+    'pool_recycle': 300,    # 5分ごとに接続をリサイクル
+    'pool_timeout': 30,     # 接続タイムアウト30秒
+    'pool_size': 10,        # コネクションプールサイズ
+    'max_overflow': 20      # 最大オーバーフロー接続数
+}
 
-# 追加：キャッシュ設定（Redisを利用）
-app.config['CACHE_TYPE'] = 'RedisCache'
-# 環境変数 REDIS_URL が設定されていなければローカルの Redis を使用
-app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+# キャッシュ設定（環境に応じて自動選択）
+if os.environ.get('REDIS_URL'):
+    # 本番環境: Redis利用
+    app.config['CACHE_TYPE'] = 'RedisCache'
+    app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')
+    app.config['CACHE_OPTIONS'] = {'socket_timeout': 3, 'socket_connect_timeout': 3}
+else:
+    # 開発環境: SimpleCache利用（Redis不要）
+    app.config['CACHE_TYPE'] = 'SimpleCache'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+
 cache = Cache(app)
 
 db = SQLAlchemy(app)

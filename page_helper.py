@@ -16,17 +16,19 @@ def paginate_query_results(query, page=1, per_page=20):
     Returns:
         ページネーションされたアイテムと、メタデータを含む辞書
     """
+    from sqlalchemy import func
+    
     # ページネーションパラメータ
     page = max(1, page)  # ページは最低1
     per_page = min(100, max(1, per_page))  # 1〜100の範囲に制限
     
-    # 総アイテム数を取得
-    total_count = query.count()
+    # 総アイテム数を取得（パフォーマンス最適化: サブクエリカウント）
+    total_count = query.with_entities(func.count().label('count')).scalar()
     
     # ページの総数を計算
     total_pages = (total_count + per_page - 1) // per_page
     
-    # クエリの実行とスライシング
+    # クエリの実行とスライシング（パフォーマンス最適化: LIMIT/OFFSETを明示的に適用）
     offset = (page - 1) * per_page
     items = query.limit(per_page).offset(offset).all()
     
