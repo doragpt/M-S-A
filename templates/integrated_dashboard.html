@@ -17,6 +17,23 @@
     body {
       background-color: #f7f7f7;
       font-family: 'Roboto', Arial, sans-serif;
+      transition: background-color 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+      .container-fluid {
+        padding: 10px;
+      }
+      .card-header {
+        font-size: 0.9rem;
+      }
+      .card-body {
+        font-size: 1rem;
+        padding: 0.75rem;
+      }
+      .table {
+        font-size: 0.85rem;
+      }
     }
     .header {
       background-color: #007bff;
@@ -106,9 +123,10 @@
         <span class="visually-hidden">Loading...</span>
       </div>
       <p class="mb-0" id="loadingMessage">データを読み込み中です...</p>
-      <div class="progress mt-2 w-100" style="display: none;" id="loadingProgress">
+      <div class="progress mt-2 w-100" id="loadingProgress">
         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
       </div>
+      <small class="text-muted mt-2" id="loadingTimeRemaining"></small>
     </div>
   </div>
 
@@ -118,6 +136,55 @@
     <div class="btn-group">
       <button id="darkModeToggle" class="btn btn-light btn-sm">ダークモード切替</button>
       <button id="favoritesToggle" class="btn btn-light btn-sm">お気に入りのみ表示</button>
+      <button id="settingsBtn" class="btn btn-outline-light btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="bi bi-gear"></i> 設定
+      </button>
+    </div>
+  </div>
+  
+  <!-- 設定モーダル -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="settingsModalLabel">ダッシュボード設定</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">自動更新</label>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="autoRefreshSwitch">
+              <label class="form-check-label" for="autoRefreshSwitch">自動更新を有効にする</label>
+            </div>
+            <select id="refreshInterval" class="form-select mt-2">
+              <option value="60000">1分ごと</option>
+              <option value="300000" selected>5分ごと</option>
+              <option value="600000">10分ごと</option>
+              <option value="1800000">30分ごと</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">テーブル表示設定</label>
+            <div class="form-check">
+              <input class="form-check-input table-column-toggle" type="checkbox" id="colBizType" checked>
+              <label class="form-check-label" for="colBizType">業種を表示</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input table-column-toggle" type="checkbox" id="colGenre" checked>
+              <label class="form-check-label" for="colGenre">ジャンルを表示</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input table-column-toggle" type="checkbox" id="colArea" checked>
+              <label class="form-check-label" for="colArea">エリアを表示</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+          <button type="button" class="btn btn-primary" id="saveSettings">保存</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -441,8 +508,55 @@
       document.addEventListener("DOMContentLoaded", async () => {
 
         // ローディングスピナー操作関数
-        function showSpinner() { document.getElementById("loadingSpinner").style.display = "block"; }
-        function hideSpinner() { document.getElementById("loadingSpinner").style.display = "none"; }
+        // ローディング関連のUI機能拡張
+        let loadingStartTime;
+        let loadingTimer;
+        
+        function showSpinner(message = "データを読み込み中です...") { 
+          document.getElementById("loadingSpinner").style.display = "block"; 
+          document.getElementById("loadingMessage").textContent = message;
+          document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = "0%";
+          
+          // ローディング開始時間を記録
+          loadingStartTime = new Date();
+          
+          // 進行状況を更新するタイマー
+          clearInterval(loadingTimer);
+          loadingTimer = setInterval(() => {
+            const elapsed = (new Date() - loadingStartTime) / 1000;
+            let progress = 0;
+            
+            // 最初の3秒は0-50%まで、次の7秒で50-90%まで進む（完全には到達しない）
+            if (elapsed < 3) {
+              progress = (elapsed / 3) * 50;
+            } else {
+              progress = 50 + ((elapsed - 3) / 7) * 40;
+            }
+            
+            // 最大90%まで（100%は処理完了時のみ）
+            progress = Math.min(progress, 90);
+            
+            document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = `${progress}%`;
+            
+            // 残り時間の表示（10秒以上経ったらタイムアウト扱い）
+            if (elapsed > 10) {
+              document.getElementById("loadingTimeRemaining").textContent = "データ取得に時間がかかっています...";
+            }
+          }, 100);
+        }
+        
+        function hideSpinner() { 
+          // 完了時に100%にする
+          document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = "100%";
+          
+          // タイマーをクリア
+          clearInterval(loadingTimer);
+          
+          // 少し遅延させて閉じる（完了の100%を見せるため）
+          setTimeout(() => {
+            document.getElementById("loadingSpinner").style.display = "none";
+          }, 300);
+        }
 
         /***********************************************
          * fetchWithRetry: API呼び出しのリトライ処理
@@ -486,7 +600,21 @@
         document.getElementById("darkModeToggle")?.addEventListener("click", () => {
           document.body.classList.toggle("dark");
           document.getElementById("pageHeader")?.classList.toggle("dark");
+          
+          // ダークモード設定を保存
+          const isDarkMode = document.body.classList.contains("dark");
+          localStorage.setItem("darkMode", isDarkMode ? "true" : "false");
+          
+          // ボタンテキストを更新
+          document.getElementById("darkModeToggle").innerText = isDarkMode ? "ライトモードに切替" : "ダークモードに切替";
         });
+        
+        // ページ読み込み時に保存されたダークモード設定を適用
+        if (localStorage.getItem("darkMode") === "true") {
+          document.body.classList.add("dark");
+          document.getElementById("pageHeader")?.classList.add("dark");
+          document.getElementById("darkModeToggle").innerText = "ライトモードに切替";
+        }
         document.getElementById("favoritesToggle")?.addEventListener("click", () => {
           const rows = document.querySelectorAll("#storeTable tbody tr");
           favoritesFilterActive = !favoritesFilterActive;
@@ -1419,8 +1547,74 @@
         });
 
         /***********************************************
+         * 設定関連処理
+         ***********************************************/
+        // 設定の保存と読み込み
+        let autoRefreshTimer;
+        
+        function saveUserSettings() {
+          const settings = {
+            autoRefresh: document.getElementById("autoRefreshSwitch").checked,
+            refreshInterval: document.getElementById("refreshInterval").value,
+            columnDisplay: {
+              bizType: document.getElementById("colBizType").checked,
+              genre: document.getElementById("colGenre").checked,
+              area: document.getElementById("colArea").checked
+            }
+          };
+          localStorage.setItem("dashboardSettings", JSON.stringify(settings));
+          applySettings(settings);
+        }
+        
+        function loadUserSettings() {
+          const savedSettings = localStorage.getItem("dashboardSettings");
+          if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            
+            // 設定フォームに値を反映
+            document.getElementById("autoRefreshSwitch").checked = settings.autoRefresh;
+            document.getElementById("refreshInterval").value = settings.refreshInterval;
+            document.getElementById("colBizType").checked = settings.columnDisplay?.bizType ?? true;
+            document.getElementById("colGenre").checked = settings.columnDisplay?.genre ?? true;
+            document.getElementById("colArea").checked = settings.columnDisplay?.area ?? true;
+            
+            // 設定を適用
+            applySettings(settings);
+          }
+        }
+        
+        function applySettings(settings) {
+          // 自動更新の設定
+          clearInterval(autoRefreshTimer);
+          if (settings.autoRefresh) {
+            autoRefreshTimer = setInterval(() => {
+              updateDashboard();
+              updateTop10Chart();
+            }, parseInt(settings.refreshInterval));
+          }
+          
+          // カラム表示設定の適用
+          const dataTable = $('#storeTable').DataTable();
+          dataTable.column(2).visible(settings.columnDisplay?.bizType ?? true); // 業種
+          dataTable.column(3).visible(settings.columnDisplay?.genre ?? true);   // ジャンル
+          dataTable.column(4).visible(settings.columnDisplay?.area ?? true);    // エリア
+        }
+        
+        // 設定保存ボタンのイベントリスナー
+        document.getElementById("saveSettings").addEventListener("click", () => {
+          saveUserSettings();
+          $('#settingsModal').modal('hide');
+        });
+        
+        /***********************************************
          * 初期ロード処理
          ***********************************************/
+        // Bootstrap アイコンの読み込み
+        const iconLink = document.createElement('link');
+        iconLink.rel = 'stylesheet';
+        iconLink.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css';
+        document.head.appendChild(iconLink);
+        
         updateDashboard();
         updateTop10Chart();
         updateAreaStatistics();
@@ -1430,6 +1624,9 @@
         updateHistoryChart();
         await fillHourlyStoreDropdown();
         updateHourlyAnalysis();
+        
+        // 設定の読み込みと適用（テーブル初期化後に実行）
+        setTimeout(loadUserSettings, 1000);
       });
     })();
   </script>
