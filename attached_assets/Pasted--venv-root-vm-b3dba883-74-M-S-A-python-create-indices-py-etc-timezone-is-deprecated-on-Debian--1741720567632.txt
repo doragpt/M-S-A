@@ -1,0 +1,42 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python create_indices.py
+/etc/timezone is deprecated on Debian, and no longer reliable. Ignoring.
+データベースにインデックスを追加中...
+インデックス追加完了
+(venv) root@vm-b3dba883-74:~/M-S-A# python app.py
+/etc/timezone is deprecated on Debian, and no longer reliable. Ignoring.
+ * Restarting with stat
+/etc/timezone is deprecated on Debian, and no longer reliable. Ignoring.
+ * Debugger is active!
+ * Debugger PIN: 121-999-806
+(543499) wsgi starting up on http://0.0.0.0:5000
+(543499) accepted ('182.171.40.172', 60017)
+182.171.40.172 - - [12/Mar/2025 04:07:10] "GET /api/data HTTP/1.1" 200 315642 0.687632
+182.171.40.172 - - [12/Mar/2025 04:07:10] "GET /favicon.ico HTTP/1.1" 404 355 0.003059
+182.171.40.172 - - [12/Mar/2025 04:07:19] "GET /admin/manage HTTP/1.1" 200 439572 0.099231
+^Z
+[3]+  Stopped                 python app.py
+(venv) root@vm-b3dba883-74:~/M-S-A# git fetch origin main
+remote: Enumerating objects: 14, done.
+remote: Counting objects: 100% (14/14), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 10 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (10/10), 4.74 KiB | 210.00 KiB/s, done.
+From https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+   d30b872..e012057  main       -> origin/main
+(venv) root@vm-b3dba883-74:~/M-S-A# git fetch origin main
+From https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+(venv) root@vm-b3dba883-74:~/M-S-A# git checkout origin/main -- templates/integrated_dashboard.html
+(venv) root@vm-b3dba883-74:~/M-S-A# git checkout origin/main -- app.py
+(venv) root@vm-b3dba883-74:~/M-S-A# git checkout origin/main -- page_helper.py
+(venv) root@vm-b3dba883-74:~/M-S-A# python app.py
+/etc/timezone is deprecated on Debian, and no longer reliable. Ignoring.
+ * Restarting with stat
+/etc/timezone is deprecated on Debian, and no longer reliable. Ignoring.
+ * Debugger is active!
+ * Debugger PIN: 121-999-806
+(543589) wsgi starting up on http://0.0.0.0:5000
+(543589) accepted ('182.171.40.172', 60346)
+182.171.40.172 - - [12/Mar/2025 04:15:20] code 400, message Bad request version ('Øt')
+182.171.40.172 - - [12/Mar/2025 04:15:20] "\x16\x03\x01\x07\x00\x01\x00\x06ü\x03\x03°#EA²C\x8b$ª¹©Öì\x8díH?Nõõ$Jctf¡Ò SÌD\\ WÃ1ï\x19J[äâ_\x8a\x9dÁó\x81M\x00\x9e\x1aÎxé&â[\x1f³Àª\x89\x18%\x00 ºº\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06\x93ÚÚ\x00\x00\x00+\x00\x07\x06êê\x03\x04\x03\x03DÍ\x00\x05\x00\x03\x02h2\x00\x10\x00\x0e\x00\x0c\x02h2\x08http/1.1\x003\x04ï\x04í\x9a\x9a\x00\x01\x00\x11ì\x04À×,]\x83Á6\x9e°\x9c%À\x0dº\x1b\x12\x02bÌÅ\x87ZÖ\x18VË,'º\x84Í\x10«F\x87GÎ¶6Ï6Ü{Xá\x9dÏÐ4Gòwn\x13E\x91\x92aõ(i±ÆQ\x15310G\x8a\x87\x92Ê#ê\x87òè*3\x13\x8d¤\x01\x8eÿ¥#S±\x0bk¡\\ì9\x8b|*$äj\x8b£Q7¾Â\x07\x04\x01Ç!\x00¢\x98à\x10ýx=\x89\x00sd\x93¦¥ú\\xR\x9f\x87»nÜár\x17ÀCc4\x8dUµ)9F(òPs\x94ö-\x1d8\x9d¤ü\x95wz\x1diwO( \x1aÍø\x1c]\x97 \x8dÀ\x1b1µ=\x8fc(\x0b7{0\x84Êé³§\x12\x95X\x8f8\x85\x05¥1Å\x89\x8aAô'Ýs¢ú \x99æ\x94dvçG9æ0\x89ð\x81Ö\x87¸\x09\x02\x8eØÔJTt|ò3\x7fÔàÍ¨\x13Ê¿\x95\x16\x13xÄqB~|WpÏZN8 @fv¶X\x19Ãr\x8bQÂæ~\x1d\x00>îD6BÆ\x1b|ê<G$g\x99,©büA*L\x0c"é¼o\x14~þàp\x9c\x94©5úC6h\x85Øt" 400 -
