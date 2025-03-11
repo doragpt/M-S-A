@@ -512,6 +512,26 @@
         async function updateDashboard() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const responseJson = await response.json();
+            const data = responseJson.data || responseJson; // 新旧APIの両方に対応
+            
+            // APIからメタデータを取得（バックエンドで計算された集計値）
+            const meta = responseJson.meta || {}; 
+            
+            // 店舗数の表示（APIのメタデータか、データ長から）
+            document.getElementById("totalStores").innerText = meta.total_count || data.length;
+            
+            // 平均稼働率の表示（APIのメタデータか、クライアント計算から）
+            const avgRate = meta.avg_rate !== undefined ? meta.avg_rate : 
+              data.reduce((sum, store) => {
+                if (store.working_staff > 0) {
+                  return sum + ((store.working_staff - store.active_staff) / store.working_staff * 100);
+                }
+                return sum;
+              }, 0) / (data.length || 1);
+            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
+            
+            // 最高稼働率の計算（常にクライアント側で計算）
             const data = await response.json();
             document.getElementById("totalStores").innerText = data.length;
             const avgRate = data.reduce((sum, store) => {
