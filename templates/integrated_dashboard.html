@@ -101,8 +101,11 @@
 <body>
   <!-- ローディングスピナー -->
   <div id="loadingSpinner">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+    <div class="d-flex flex-column align-items-center bg-white p-4 rounded shadow">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mb-0">データを読み込み中です...</p>
     </div>
   </div>
 
@@ -678,6 +681,8 @@
         /***********************************************
          * updateHistoryChart: 店舗履歴グラフ更新 (/api/history or /api/aggregated)
          ***********************************************/
+        let historyChartCache = {}; // キャッシュ用オブジェクト
+        
         async function updateHistoryChart() {
           try {
             showSpinner();
@@ -686,6 +691,17 @@
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
+            
+            // キャッシュキーを作成
+            const cacheKey = `${selectedStore}_${startDate}_${endDate}`;
+            
+            // キャッシュがあれば使用
+            if (historyChartCache[cacheKey]) {
+              const cachedData = historyChartCache[cacheKey];
+              updateHistoryChartDisplay(cachedData.labels, cachedData.effectiveRates);
+              hideSpinner();
+              return;
+            }
             
             let labels = [];
             let effectiveRates = [];
@@ -836,11 +852,77 @@
             } else {
               historyStats.textContent = "該当データなし";
             }
+            // キャッシュに保存
+            historyChartCache[cacheKey] = { labels, effectiveRates };
+            
+            // チャート更新処理
+            updateHistoryChartDisplay(labels, effectiveRates);
+            
             hideSpinner();
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             hideSpinner();
           }
+        }
+        
+        // チャート表示処理を別関数に分離
+        function updateHistoryChartDisplay(labels, effectiveRates) {
+            const ctx = document.getElementById("historyChart").getContext("2d");
+            if (charts.history) charts.history.destroy();
+            
+            charts.history = new Chart(ctx, {
+              type: "line",
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: "実働率 (%)",
+                  data: effectiveRates,
+                  borderColor: "rgba(255, 99, 132, 1)",
+                  backgroundColor: "rgba(255, 99, 132, 0.2)",
+                  fill: false,
+                  tension: 0.3,
+                  pointRadius: labels.length > 100 ? 0 : 3, // データ点が多い場合は非表示に
+                  pointHoverRadius: 5
+                }]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: (document.getElementById("storeSelectHistory")?.value === "") 
+                          ? "全店舗の平均稼働率（期間指定）"
+                          : `店舗(${document.getElementById("storeSelectHistory")?.value})の履歴グラフ`,
+                    font: { size: 20 }
+                  },
+                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
+                  zoom: {
+                    pan: { enabled: true, mode: 'xy' },
+                    zoom: { enabled: true, mode: 'xy' }
+                  }
+                },
+                scales: {
+                  y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
+                  x: { 
+                    title: { display: true, text: "日時" },
+                    // データが多い場合に表示を間引く
+                    ticks: {
+                      maxTicksLimit: Math.min(labels.length, 20)  // 最大20目盛りに制限
+                    }
+                  }
+                },
+                animation: { duration: 500 } // アニメーション時間短縮
+              }
+            });
+            
+            const historyStats = document.getElementById("historyStats");
+            if (effectiveRates.length > 0) {
+              const numericRates = effectiveRates.map(Number);
+              const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
+              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
+            } else {
+              historyStats.textContent = "該当データなし";
+            }
         }
         document.getElementById("updateHistoryBtn")?.addEventListener("click", updateHistoryChart);
 
