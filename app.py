@@ -1,16 +1,29 @@
 import os
+import logging
 from datetime import datetime, timedelta
 import pytz  # タイムゾーン変換用
+import traceback
+import gc  # ガベージコレクション
 
-from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
-from sqlalchemy import func
+from sqlalchemy import func, exc
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
 # 追加：Flask-Caching のインポート
 from flask_caching import Cache
+
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------
 # 1. Flaskアプリ & DB接続設定
@@ -41,7 +54,14 @@ else:
     app.config['CACHE_TYPE'] = 'SimpleCache'
     app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 
+# キャッシュ設定の追加
+app.config['CACHE_KEY_PREFIX'] = 'm_s_a_v1_'  # キャッシュキーのプレフィックス
+app.config['CACHE_THRESHOLD'] = 1000  # SimpleCache使用時の最大アイテム数
+
 cache = Cache(app)
+
+# リクエスト制限の設定 (簡易版)
+request_limits = {}  # IPアドレスごとのリクエスト回数記録用
 
 db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode='threading')
@@ -166,11 +186,24 @@ def scheduled_scrape():
         # Socket.IO でクライアントへ更新通知
         socketio.emit('update', {'data': 'Dashboard updated'})
 
+# 深夜にメモリ解放とキャッシュクリアを行う関数
+def maintenance_task():
+    """深夜のメンテナンス処理: キャッシュクリア、メモリ解放など"""
+    with app.app_context():
+        app.logger.info("メンテナンスタスク実行中: キャッシュクリア、メモリ解放")
+        # キャッシュ完全クリア
+        cache.clear()
+        # 明示的にガベージコレクションを実行
+        collected = gc.collect()
+        app.logger.info(f"ガベージコレクション完了: {collected}オブジェクト解放")
+
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
 # ジョブIDを 'scrape_job' として登録
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
 scheduler = BackgroundScheduler(executors=executors)
 scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
+# 毎日午前3時にメンテナンスタスクを実行
+scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
 
 # ---------------------------------------------------------------------
@@ -179,6 +212,17 @@ scheduler.start()
 @app.route('/api/data')
 @cache.cached(timeout=300)  # キャッシュ：5分間有効
 def api_data():
+    """
+    各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
+    集計値（全体平均など）も含める。
+
+    クエリパラメータ:
+        page: ページ番号（1から始まる）
+        per_page: 1ページあたりの項目数（最大100）
+        biz_type: 業種でフィルタリング
+        area: エリアでフィルタリング
+        format: 'compact'を指定すると必要最小限のフィールドだけを返す
+    """
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
     集計値（全体平均など）も含める。

@@ -105,7 +105,10 @@
       <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <p class="mb-0">データを読み込み中です...</p>
+      <p class="mb-0" id="loadingMessage">データを読み込み中です...</p>
+      <div class="progress mt-2 w-100" style="display: none;" id="loadingProgress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+      </div>
     </div>
   </div>
 
