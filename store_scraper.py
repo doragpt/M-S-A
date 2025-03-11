@@ -280,5 +280,11 @@ async def _scrape_all(store_urls: list) -> list:
 def scrape_store_data(store_urls: list) -> list:
     """
     非同期スクレイピング処理を同期的に実行するラッパー関数
+    パフォーマンスモニタリング機能付き
     """
-    return asyncio.run(_scrape_all(store_urls))
+    import time
+    start_time = time.time()
+    results = asyncio.run(_scrape_all(store_urls))
+    elapsed_time = time.time() - start_time
+    print(f"スクレイピング実行時間: {elapsed_time:.2f}秒 (平均: {elapsed_time/len(store_urls):.2f}秒/店舗)")
+    return results

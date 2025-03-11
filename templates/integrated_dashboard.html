@@ -603,6 +603,8 @@
         window.lastFetchUrl = ''; // 最後にフェッチしたURL
         window.pendingRequests = new Set(); // 処理中のリクエスト
         window.lastFetchTime = {}; // URL別の最終フェッチ時刻
+        window.dataProcessingChunkSize = 50; // 大量データ処理時のチャンクサイズ
+        window.isLargeDataset = false; // 大規模データセットフラグ（700店舗以上）
 
         // ローディングスピナー操作関数
         // ローディング関連のUI機能拡張
