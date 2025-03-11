@@ -507,12 +507,17 @@
     (function () {
       document.addEventListener("DOMContentLoaded", async () => {
 
+        // グローバル変数の追加
+        window.lastFetchUrl = ''; // 最後にフェッチしたURL
+        window.pendingRequests = new Set(); // 処理中のリクエスト
+        window.lastFetchTime = {}; // URL別の最終フェッチ時刻
+
         // ローディングスピナー操作関数
         // ローディング関連のUI機能拡張
         let loadingStartTime;
         let loadingTimer;
         
-        function showSpinner(message = "データを読み込み中です...") { 
+        function showSpinner(message = "データを読み込み中です...", expectedDuration = 5000) { 
           document.getElementById("loadingSpinner").style.display = "block"; 
           document.getElementById("loadingMessage").textContent = message;
           document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = "0%";
@@ -520,27 +525,43 @@
           // ローディング開始時間を記録
           loadingStartTime = new Date();
           
+          // 実際のデータからURLごとの予想ロード時間をマップ
+          const urlDurationMap = {
+            '/api/data': 2000,       // 標準的なデータ取得は2秒
+            '/api/history': 5000,    // 履歴データは比較的大きいので5秒
+            '/api/aggregated': 3000  // 集計データは中間サイズで3秒
+          };
+          
+          // URLベースの推定時間または引数の時間を使用
+          const currentUrl = window.lastFetchUrl || '';
+          const estimatedDuration = urlDurationMap[currentUrl] || expectedDuration;
+          
           // 進行状況を更新するタイマー
           clearInterval(loadingTimer);
           loadingTimer = setInterval(() => {
             const elapsed = (new Date() - loadingStartTime) / 1000;
             let progress = 0;
+            const estimatedSec = estimatedDuration / 1000;
             
-            // 最初の3秒は0-50%まで、次の7秒で50-90%まで進む（完全には到達しない）
-            if (elapsed < 3) {
-              progress = (elapsed / 3) * 50;
-            } else {
-              progress = 50 + ((elapsed - 3) / 7) * 40;
-            }
-            
-            // 最大90%まで（100%は処理完了時のみ）
-            progress = Math.min(progress, 90);
+            // S字曲線でプログレスを計算（よりスムーズな印象）
+            progress = Math.min(90, 100 * (1 / (1 + Math.exp(-5 * (elapsed / estimatedSec - 0.5)))));
             
             document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = `${progress}%`;
             
-            // 残り時間の表示（10秒以上経ったらタイムアウト扱い）
-            if (elapsed > 10) {
-              document.getElementById("loadingTimeRemaining").textContent = "データ取得に時間がかかっています...";
+            // 残り時間の計算と表示
+            if (elapsed < estimatedSec * 0.8) {
+              // 推定完了時間を表示
+              const remainingSec = Math.max(0, Math.ceil(estimatedSec - elapsed));
+              document.getElementById("loadingTimeRemaining").textContent = 
+                `推定残り時間: 約${remainingSec}秒`;
+            } else if (elapsed > estimatedSec * 1.5) {
+              // タイムアウト扱い
+              document.getElementById("loadingTimeRemaining").textContent = 
+                "データ取得に時間がかかっています...";
+            } else {
+              // 終盤は「もう少しです」と表示
+              document.getElementById("loadingTimeRemaining").textContent = 
+                "もう少しで完了します...";
             }
           }, 100);
         }
@@ -559,13 +580,45 @@
         }
 
         /***********************************************
-         * fetchWithRetry: API呼び出しのリトライ処理
+         * fetchWithRetry: API呼び出しのリトライ処理とメモリキャッシュ
          ***********************************************/
-        async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000) {
+        // クライアントサイドメモリキャッシュの追加
+        const memoryCache = new Map();
+        const cacheTTL = 60000; // キャッシュの有効期間（ミリ秒）: 1分
+        
+        async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000, useCache = true) {
+          // キャッシュキーの生成（URLとオプションの組み合わせ）
+          const cacheKey = url + JSON.stringify(options);
+          
+          // キャッシュチェック（キャッシュが有効な場合のみ）
+          if (useCache && memoryCache.has(cacheKey)) {
+            const cachedData = memoryCache.get(cacheKey);
+            // キャッシュが有効期限内かチェック
+            if (Date.now() - cachedData.timestamp < cacheTTL) {
+              console.log(`[Cache] Using cached data for: ${url}`);
+              // キャッシュされたレスポンスのクローンを返す
+              return new Response(cachedData.data.clone().body, cachedData.data);
+            } else {
+              // 期限切れのキャッシュを削除
+              memoryCache.delete(cacheKey);
+            }
+          }
+          
+          // キャッシュがない場合やキャッシュが無効な場合は通常のフェッチ
           for (let i = 0; i < retries; i++) {
             try {
               const response = await fetch(url, options);
               if (!response.ok) throw new Error("HTTP error " + response.status);
+              
+              // レスポンスをキャッシュに保存（キャッシュが有効な場合のみ）
+              if (useCache) {
+                const responseClone = response.clone();
+                memoryCache.set(cacheKey, {
+                  data: responseClone,
+                  timestamp: Date.now()
+                });
+              }
+              
               return response;
             } catch (err) {
               console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
@@ -1587,17 +1640,30 @@
           // 自動更新の設定
           clearInterval(autoRefreshTimer);
           if (settings.autoRefresh) {
+            console.log(`自動更新を設定: ${settings.refreshInterval}ms間隔`);
             autoRefreshTimer = setInterval(() => {
               updateDashboard();
               updateTop10Chart();
             }, parseInt(settings.refreshInterval));
           }
           
-          // カラム表示設定の適用
-          const dataTable = $('#storeTable').DataTable();
-          dataTable.column(2).visible(settings.columnDisplay?.bizType ?? true); // 業種
-          dataTable.column(3).visible(settings.columnDisplay?.genre ?? true);   // ジャンル
-          dataTable.column(4).visible(settings.columnDisplay?.area ?? true);    // エリア
+          // カラム表示設定の適用（テーブルが初期化済みかチェック）
+          try {
+            if ($.fn.dataTable.isDataTable('#storeTable')) {
+              const dataTable = $('#storeTable').DataTable();
+              // 業種、ジャンル、エリアの表示/非表示を設定
+              dataTable.column(2).visible(settings.columnDisplay?.bizType ?? true); // 業種
+              dataTable.column(3).visible(settings.columnDisplay?.genre ?? true);   // ジャンル
+              dataTable.column(4).visible(settings.columnDisplay?.area ?? true);    // エリア
+              console.log('テーブル表示設定を適用しました');
+            } else {
+              console.log('テーブルがまだ初期化されていないため、設定の適用を延期します');
+              // テーブル初期化後に設定を適用するためのフラグを設定
+              window.pendingTableSettings = settings.columnDisplay;
+            }
+          } catch (e) {
+            console.error('テーブル設定の適用中にエラーが発生しました:', e);
+          }
         }
         
         // 設定保存ボタンのイベントリスナー
