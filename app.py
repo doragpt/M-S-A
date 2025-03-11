@@ -132,7 +132,8 @@ def scheduled_scrape():
             app.logger.info("店舗URLが1件も登録されていません。")
             return
 
-        app.logger.info("【スクレイピング開始】対象店舗数: %d", len(store_urls))
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        app.logger.info("【スクレイピング開始】%s 対象店舗数: %d", current_time, len(store_urls))
         try:
             results = scrape_store_data(store_urls)
         except Exception as e:
@@ -207,8 +208,8 @@ scheduler = BackgroundScheduler(
         'misfire_grace_time': 300  # 5分のミスファイア猶予時間
     }
 )
-# スケジュール設定：午前3時にメンテナンス、その他の時間はスクレイピング
-scheduler.add_job(scheduled_scrape, 'interval', hours=2, id='scrape_job')  # 2時間に1回に変更
+# スケジュール設定：午前3時にメンテナンス、1時間ごとにスクレイピング
+scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')  # 1時間に1回に変更
 scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
 
