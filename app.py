@@ -18,8 +18,8 @@ from flask_caching import Cache
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 
-# DATABASE_URL: 環境変数が設定されていない場合はローカルの設定を使用
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:saru1111@localhost:5432/store_data')
+# ローカル環境専用：SQLiteデータベースを使用
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -513,5 +513,10 @@ def api_aggregated_data():
 # 9. メイン実行部
 # ---------------------------------------------------------------------
 if __name__ == '__main__':
-    # 開発用デバッグモード (本番環境では不要)
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
