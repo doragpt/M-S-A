@@ -439,6 +439,55 @@ def edit_store_url(id):
     return render_template('edit_store_url.html', url_data=url_obj)
 
 
+@app.route('/admin/bulk_add', methods=['POST'])
+def bulk_add_urls():
+    """
+    複数の店舗URLを一括で追加するエンドポイント
+    """
+    bulk_urls = request.form.get('bulk_urls', '').strip()
+    skip_duplicates = bool(request.form.get('skip_duplicates', False))
+    
+    if not bulk_urls:
+        flash("URLを入力してください。", "warning")
+        return redirect(url_for('manage_store_urls'))
+    
+    # 改行で区切ってURLリストを取得
+    url_list = [url.strip() for url in bulk_urls.split('\n') if url.strip()]
+    
+    added_count = 0
+    skipped_count = 0
+    error_count = 0
+    
+    for url in url_list:
+        # URLの形式チェック（基本的な検証）
+        if not (url.startswith('http://') or url.startswith('https://')):
+            error_count += 1
+            continue
+            
+        # 重複チェック
+        existing = StoreURL.query.filter_by(store_url=url).first()
+        if existing:
+            skipped_count += 1
+            continue
+        
+        try:
+            new_url = StoreURL(store_url=url)
+            db.session.add(new_url)
+            added_count += 1
+        except Exception as e:
+            error_count += 1
+            app.logger.error(f"URL追加エラー: {url} - {e}")
+    
+    try:
+        db.session.commit()
+        flash(f"一括登録完了: {added_count}件追加, {skipped_count}件スキップ, {error_count}件エラー", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"データベースエラー: {e}", "danger")
+    
+    return redirect(url_for('manage_store_urls'))
+
+
 # ---------------------------------------------------------------------
 # 7. 統合ダッシュボードルート
 # ---------------------------------------------------------------------
