@@ -351,8 +351,9 @@ def api_data():
         }
     }
 
-    # フロントエンドとの互換性のため、フラットな配列形式でも返す
-    if 'flat' in request.args or not data:
+    # レスポンス形式を常に一貫させる（メタデータ付きの形式を標準にする）
+    # 'flat'パラメータが明示的に指定された場合のみフラット配列を返す
+    if 'flat' in request.args:
         return jsonify(data)
     else:
         return jsonify(response)

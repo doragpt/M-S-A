@@ -947,30 +947,62 @@
         /***********************************************
          * updateDashboard: 店舗稼働状況更新 (/api/data)
          ***********************************************/
-        async function updateDashboard(data) {
+        async function updateDashboard() {
           try {
             showSpinner("店舗データを読み込み中です...");
+            
+            // APIからデータを取得
+            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const result = await response.json();
+            
+            // APIレスポンスの形式をチェック
+            let data = [];
+            let metaData = {};
+            
+            if (Array.isArray(result)) {
+              // 配列形式の場合
+              data = result;
+              console.log("APIから配列形式のデータを取得:", data.length + "件");
+            } else if (result.data && Array.isArray(result.data)) {
+              // オブジェクト形式で、data配列を含む場合
+              data = result.data;
+              metaData = result.meta || {};
+              console.log("APIからオブジェクト形式のデータを取得:", data.length + "件");
+            } else {
+              console.error("不明なデータ形式:", result);
+              throw new Error("APIから不正な形式のデータを受信しました");
+            }
 
             // 店舗数の表示
-            document.getElementById("totalStores").innerText = data.length;
+            document.getElementById("totalStores").innerText = metaData.total_count || data.length;
 
-            // 平均稼働率の計算と表示
-            let totalRate = 0;
-            let validStores = 0;
-            let maxRate = 0;
+            // メタデータから平均稼働率を表示（存在する場合）
+            if (metaData.avg_rate) {
+              document.getElementById("avgRate").innerText = metaData.avg_rate + "%";
+            } else {
+              // メタデータがない場合は手動計算
+              let totalRate = 0;
+              let validStores = 0;
+              let maxRate = 0;
 
-            data.forEach(store => {
-              if (store.working_staff > 0) {
-                const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
-                totalRate += rate;
-                validStores++;
-                maxRate = Math.max(maxRate, rate);
+              data.forEach(store => {
+                if (store.working_staff > 0) {
+                  const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
+                  totalRate += rate;
+                  validStores++;
+                  maxRate = Math.max(maxRate, rate);
+                }
+              });
+
+              const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
+              document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
+              
+              // maxRate要素があれば更新
+              const maxRateElement = document.getElementById("maxRate");
+              if (maxRateElement) {
+                maxRateElement.innerText = maxRate.toFixed(1) + "%";
               }
-            });
-
-            const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
-            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-            document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
+            }
 
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
@@ -2154,7 +2186,22 @@
 
         // 初期データロード
         try {
+          console.log("初期データロード開始");
           showSpinner("初期データを読み込み中です...", 10000);
+
+          // データチェック用の検証ログ
+          try {
+            const testResponse = await fetch("/api/data");
+            const testData = await testResponse.json();
+            console.log("APIデータ検証:", testData);
+            if (Array.isArray(testData)) {
+              console.log("配列形式のデータ", testData.length + "件");
+            } else if (testData.data) {
+              console.log("オブジェクト形式のデータ", testData.data.length + "件");
+            }
+          } catch (e) {
+            console.warn("データ検証エラー:", e);
+          }
 
           // すべてのデータロード処理を順次実行
           await updateDashboard();
