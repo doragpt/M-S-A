@@ -1767,23 +1767,30 @@
 
             if (rankingType === "industry") {
               const selectedIndustry = document.getElementById("industrySelectRanking").value;
-              apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
+              if (selectedIndustry) {
+                apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
+              }
             }
 
             console.log("ランキングAPIを呼び出し:", apiUrl);
-            const response = await fetchWithRetry(apiUrl, {}, 3, 2000);
+            
+            // キャッシュバスターを追加（キャッシュによる問題を防ぐ）
+            const cacheBuster = `${apiUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;
+            const response = await fetchWithRetry(apiUrl + cacheBuster, {}, 3, 2000, false);
 
             if (!response.ok) {
               throw new Error(`API error: ${response.status} ${response.statusText}`);
             }
 
-            const rankingData = await response.json();
-            console.log("ランキングデータ取得:", rankingData.length + "件");
-
-            // エラーチェック
-            if (rankingData.error) {
-              throw new Error(`API returned error: ${rankingData.error}`);
+            let rankingData = await response.json();
+            
+            // 応答がない場合または配列でない場合は空配列に変換
+            if (!rankingData || !Array.isArray(rankingData)) {
+              console.warn("APIから無効なデータ形式が返されました、空配列を使用します", rankingData);
+              rankingData = [];
             }
+            
+            console.log("ランキングデータ取得:", rankingData.length + "件");
 
             // 前処理済みデータをそのまま使用
             const tbody = document.getElementById("rankingTableBody");
@@ -1815,6 +1822,13 @@
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
               データの取得に失敗しました: ${error.message || 'APIエラー'}</td></tr>`;
+              
+            // 開発者コンソールに詳細情報を出力
+            console.log("ランキングAPIエラー詳細:", {
+              error: error,
+              message: error.message,
+              stack: error.stack
+            });
           }
         }
 

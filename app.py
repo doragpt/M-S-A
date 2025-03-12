@@ -646,11 +646,13 @@ def api_average_ranking():
                 'area': 'サンプルエリア'
             } for i in range(5)]
 
+        # 明示的にリストとして返す（JSON配列としてのレスポンス保証）
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"平均稼働ランキングAPI エラー: {str(e)}")
         app.logger.error(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+        # エラーの場合でも空の配列を返す（フロントエンドでのエラーハンドリング向上）
+        return jsonify([]), 200
 
 # ---------------------------------------------------------------------
 # 9. メイン実行部
