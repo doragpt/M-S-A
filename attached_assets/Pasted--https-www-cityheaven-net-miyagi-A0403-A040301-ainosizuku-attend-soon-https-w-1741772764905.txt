@@ -1,0 +1,142 @@
+初回アクセス中: https://www.cityheaven.net/miyagi/A0403/A040301/ainosizuku/attend/soon/
+初回アクセス中: https://www.cityheaven.net/oita/A4401/A440101/matenrow/attend/soon/
+初回アクセス中: https://www.cityheaven.net/miyazaki/A4501/A450101/matenrow_m/attend/soon/
+初回アクセス中: https://www.cityheaven.net/saitama/A1103/A110303/pochafuzoku/attend/soon/
+初回アクセス中: https://www.cityheaven.net/kagoshima/A4601/A460102/matenrow_kagoshima/attend/soon/
+シフト件数: 123
+シフト件数: 21
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/miyazaki/A4501/A450101/matenrow_m/
+シフト件数: 21
+シフト件数: 14
+2025-03-12 18:36:36,172 - asyncio - ERROR - Future exception was never retrieved
+future: <Future finished exception=NetworkError('Protocol error (Target.detachFromTarget): No session with given id')>
+pyppeteer.errors.NetworkError: Protocol error (Target.detachFromTarget): No session with given id
+シフト件数: 152
+シフト件数: 123
+シフト件数: 117
+シフト件数: 152
+再取得に失敗:  https://www.cityheaven.net/miyazaki/A4501/A450101/matenrow_m/
+2025-03-12 18:36:42,960 - pyppeteer.launcher - INFO - terminate chrome process...
+スクレイピング実行時間: 2027.23秒 (平均: 3.14秒/店舗)
+2025-03-12 18:36:44,846 - apscheduler.executors.default - ERROR - Job "scheduled_scrape (trigger: interval[1:00:00], next run at: 2025-03-12 19:02:57 JST)" raised an exception
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 748, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such function: date_trunc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/apscheduler/executors/base.py", line 125, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/app.py", line 152, in scheduled_scrape
+    ).first()
+      ^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2752, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2855, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2229, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2124, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 253, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1414, in execute
+    return meth(
+           ^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 486, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2326, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 748, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such function: date_trunc
+[SQL: SELECT store_status.id AS store_status_id, store_status.timestamp AS store_status_timestamp, store_status.store_name AS store_status_store_name, store_status.biz_type AS store_status_biz_type, store_status.genre AS store_status_genre, store_status.area AS store_status_area, store_status.total_staff AS store_status_total_staff, store_status.working_staff AS store_status_working_staff, store_status.active_staff AS store_status_active_staff, store_status.url AS store_status_url, store_status.shift_time AS store_status_shift_time
+FROM store_status
+WHERE store_status.store_name = ? AND store_status.area = ? AND date_trunc(?, store_status.timestamp) = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('静岡FINAL STAGE～選ばれし者の最後のステージ～', '静岡', 'minute', '2025-03-12 18:02:00.000000', 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-03-12 18:36:45,130 - pyppeteer.launcher - INFO - terminate chrome process...
+スクレイピング実行時間: 2030.55秒 (平均: 3.15秒/店舗)
+2025-03-12 18:36:47,003 - apscheduler.executors.default - ERROR - Job "scheduled_scrape (trigger: interval[1:00:00], next run at: 2025-03-12 19:02:56 JST)" raised an exception
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 748, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such function: date_trunc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/apscheduler/executors/base.py", line 125, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/app.py", line 152, in scheduled_scrape
+    ).first()
+      ^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2752, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2855, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2229, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2124, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 253, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1414, in execute
+    return meth(
+           ^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 486, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2326, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 748, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such function: date_trunc
+[SQL: SELECT store_status.id AS store_status_id, store_status.timestamp AS store_status_timestamp, store_status.store_name AS store_status_store_name, store_status.biz_type AS store_status_biz_type, store_status.genre AS store_status_genre, store_status.area AS store_status_area, store_status.total_staff AS store_status_total_staff, store_status.working_staff AS store_status_working_staff, store_status.active_staff AS store_status_active_staff, store_status.url AS store_status_url, store_status.shift_time AS store_status_shift_time
+FROM store_status
+WHERE store_status.store_name = ? AND store_status.area = ? AND date_trunc(?, store_status.timestamp) = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('静岡FINAL STAGE～選ばれし者の最後のステージ～', '静岡', 'minute', '2025-03-12 18:02:00.000000', 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-03-12 18:44:42,286 - werkzeug - INFO - 182.171.40.172 - - [12/Mar/2025 18:44:42] "GET / HTTP/1.1" 200 -
+2025-03-12 18:44:43,277 - werkzeug - INFO - 182.171.40.172 - - [12/Mar/2025 18:44:43] "GET / HTTP/1.1" 200 -
