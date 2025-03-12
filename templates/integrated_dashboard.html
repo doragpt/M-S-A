@@ -947,35 +947,9 @@
         /***********************************************
          * updateDashboard: 店舗稼働状況更新 (/api/data)
          ***********************************************/
-        async function updateDashboard() {
+        async function updateDashboard(data) {
           try {
             showSpinner("店舗データを読み込み中です...");
-
-            // キャッシュバスターを追加してAPIからデータを取得（flat=trueで全件取得、per_page=10000で件数制限を大きく）
-            const cacheBuster = new Date().getTime();
-            console.log("データ取得開始: /api/data");
-            const response = await fetchWithRetry(`/api/data?flat=true&per_page=10000&_=${cacheBuster}`, {}, 3, 2000, false);
-
-            if (!response.ok) {
-              throw new Error(`HTTP error ${response.status}: ${response.statusText || "Unknown Error"}`);
-            }
-
-            const data = await response.json();
-
-            // データが配列であることを確認
-            if (!Array.isArray(data)) {
-              console.error("APIから期待したデータ形式が返されませんでした", data);
-              hideSpinner();
-              alert("データ形式エラー: サーバーから不正なデータ形式が返されました。リロードしてみてください。");
-              return;
-            }
-
-            console.log("API取得データ:", data.length + "件");
-
-            // 件数が極端に少ない場合は警告
-            if (data.length < 100) {
-              console.warn(`取得データ件数が少なすぎます: ${data.length}件`);
-            }
 
             // 店舗数の表示
             document.getElementById("totalStores").innerText = data.length;
@@ -1009,11 +983,11 @@
                   ? '<span class="badge bg-danger">高稼働</span>'
                   : '<span class="badge bg-secondary">低稼働</span>';
                 const isFav = favorites.includes(store.store_name);
-                
+
                 // 平均稼働率データから店舗の週間・月間データを取得
                 const weeklyRate = averageRates.weekly[store.store_name] ? averageRates.weekly[store.store_name].toFixed(1) : "--";
                 const monthlyRate = averageRates.monthly[store.store_name] ? averageRates.monthly[store.store_name].toFixed(1) : "--";
-                
+
                 const rowHtml = `
                   <tr>
                     <td>
@@ -1034,7 +1008,7 @@
                   </tr>`;
                 tableBody.insertAdjacentHTML("beforeend", rowHtml);
               });
-              
+
               // DataTableの初期化
               initializeDataTable();
             }).catch(error => {
@@ -1067,7 +1041,7 @@
                   </tr>`;
                 tableBody.insertAdjacentHTML("beforeend", rowHtml);
               });
-              
+
               // DataTableの初期化
               initializeDataTable();
             });
@@ -1104,6 +1078,8 @@
             });
           } catch (error) {
             console.error("APIデータ取得エラー:", error);
+          } finally {
+            hideSpinner();
           }
         }
 
@@ -1527,7 +1503,7 @@
         async function updateAreaStatistics() {
           try {
             // /api/data から最新データを取得し、各エリアの店舗数をカウント
-            const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const responseData = await fetchWithRetry("/api/data", {},3, 2000);
             const dataLatest = await responseData.json();
             const areaStoreCount = {};
             dataLatest.forEach(store => {
@@ -1990,7 +1966,7 @@
             language: { search: "検索:" }
           });
         }
-        
+
         // 平均稼働率データ取得関数
         async function fetchAverageRates() {
           try {
@@ -1998,31 +1974,31 @@
             if (window.cachedAverageRates) {
               return window.cachedAverageRates;
             }
-            
+
             // 7日間の平均稼働率データを取得
             const weeklyResponse = await fetchWithRetry("/api/average_rates?days=7", {}, 3, 2000);
             const weeklyData = await weeklyResponse.json();
-            
+
             // 30日間の平均稼働率データを取得
             const monthlyResponse = await fetchWithRetry("/api/average_rates?days=30", {}, 3, 2000);
             const monthlyData = await monthlyResponse.json();
-            
+
             // 店舗ごとのデータを整形
             const weeklyRates = {};
             const monthlyRates = {};
-            
+
             if (weeklyData && weeklyData.store_averages) {
               Object.entries(weeklyData.store_averages).forEach(([storeName, data]) => {
                 weeklyRates[storeName] = data.avg_rate;
               });
             }
-            
+
             if (monthlyData && monthlyData.store_averages) {
               Object.entries(monthlyData.store_averages).forEach(([storeName, data]) => {
                 monthlyRates[storeName] = data.avg_rate;
               });
             }
-            
+
             // 全体データを結合
             const result = {
               weekly: weeklyRates,
@@ -2030,22 +2006,22 @@
               weeklyOverall: weeklyData ? weeklyData.overall_avg : 0,
               monthlyOverall: monthlyData ? monthlyData.overall_avg : 0
             };
-            
+
             // 後続の呼び出しのためにキャッシュ
             window.cachedAverageRates = result;
-            
+
             // 月間平均稼働率の表示を更新
             document.getElementById("monthlyAvgRate").innerText = result.monthlyOverall.toFixed(1) + "%";
             document.getElementById("monthlySampleCount").innerText = 
               monthlyData && monthlyData.sample_count ? monthlyData.sample_count : "--";
-            
+
             return result;
           } catch (error) {
             console.error("平均稼働率データ取得エラー:", error);
             return { weekly: {}, monthly: {}, weeklyOverall: 0, monthlyOverall: 0 };
           }
         }
-        
+
         // ページロード時にランキングの初期化も行う
         try {
           fillIndustryDropdownForRanking().catch(err => {
