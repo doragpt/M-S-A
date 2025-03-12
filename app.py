@@ -145,10 +145,14 @@ def scheduled_scrape():
         for record in results:
             if record:  # 空の結果はスキップ
                 # 重複チェック：店舗名とエリアと実行時刻（分単位）でチェック
+                # SQLiteではdate_trunc関数が使えないので、タイムスタンプの範囲で比較
+                minute_start = scrape_time.replace(second=0, microsecond=0)
+                minute_end = minute_start + timedelta(minutes=1)
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
                     StoreStatus.area == record.get('area'),
-                    func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
+                    StoreStatus.timestamp >= minute_start,
+                    StoreStatus.timestamp < minute_end
                 ).first()
                 if existing:
                     # 既存レコードがあれば更新
