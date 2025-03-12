@@ -521,18 +521,6 @@ def manual_scrape():
     return redirect(url_for('manage_store_urls'))
 
 
-# ---------------------------------------------------------------------
-# 9. メイン実行部
-# ---------------------------------------------------------------------
-if __name__ == '__main__':
-    # ローカル環境用の設定
-    import os
-    port = int(os.environ.get("PORT", 5000))
-
-    # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
-
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
 @cache.cached(timeout=600)  # キャッシュ：10分間有効
@@ -590,6 +578,26 @@ def api_average_ranking():
         'area': r.area
     } for r in results]
 
+    return jsonify(data)
+
+# ---------------------------------------------------------------------
+# 9. メイン実行部
+# ---------------------------------------------------------------------
+if __name__ == '__main__':
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+
+# 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
+@app.route('/api/aggregated')
+@cache.cached(timeout=3600)  # キャッシュ：1時間有効
+def api_aggregated_data():
+</old_str>
+<new_str>
     return jsonify(data)
 
 # 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
