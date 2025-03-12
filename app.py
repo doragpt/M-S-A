@@ -68,7 +68,7 @@ cache = Cache(app)
 request_limits = {}  # IPアドレスごとのリクエスト回数記録用
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, async_mode='threading')
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 
 # ---------------------------------------------------------------------
 # 2. モデル定義
@@ -270,7 +270,7 @@ def api_data():
 
     # ページネーションのパラメータを取得
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 1000, type=int)  # 最大件数を増やす
+    per_page = request.args.get('per_page', 10000, type=int)  # 最大件数をさらに増やす（店舗全件取得用）
 
     # クエリの全結果を取得（集計値の計算用）
     all_results = query.all()

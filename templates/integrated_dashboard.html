@@ -19,7 +19,7 @@
       font-family: 'Roboto', Arial, sans-serif;
       transition: background-color 0.3s ease;
     }
-    
+
     @media (max-width: 768px) {
       .container-fluid {
         padding: 8px;
@@ -49,7 +49,7 @@
         font-size: 0.875rem;
       }
     }
-    
+
     /* スクロール対応の強化 */
     .table-responsive {
       overflow-x: auto;
@@ -233,7 +233,7 @@
       </button>
     </div>
   </div>
-  
+
   <!-- 設定モーダル -->
   <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -374,7 +374,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ2: 店舗履歴グラフ（期間指定） -->
       <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
         <div class="my-4">
@@ -411,7 +411,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ3: 時間帯別分析 -->
       <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
         <div class="my-4">
@@ -432,7 +432,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ4: エリア統計 -->
       <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
         <div class="my-4">
@@ -456,7 +456,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ5: 業種内ジャンルランキング -->
       <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
         <div class="my-4">
@@ -486,7 +486,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ6: 平均稼働ランキング -->
       <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
         <div class="my-4">
@@ -598,7 +598,7 @@
   <script>
     (function () {
       document.addEventListener("DOMContentLoaded", async () => {
-        
+
         // 手動更新ボタンの追加
         const headerControls = document.querySelector('.header .btn-group');
         if (headerControls && !document.getElementById('manualRefreshBtn')) {
@@ -615,7 +615,7 @@
               await updateIndustryRanking();
               await updateAverageRanking();
               hideSpinner();
-              
+
               // トースト通知の表示
               const toastEl = document.getElementById("updateToast");
               const toast = new bootstrap.Toast(toastEl);
@@ -640,38 +640,38 @@
         // ローディング関連のUI機能拡張
         let loadingStartTime;
         let loadingTimer;
-        
+
         function showSpinner(message = "データを読み込み中です...", expectedDuration = 5000) { 
           document.getElementById("loadingSpinner").style.display = "block"; 
           document.getElementById("loadingMessage").textContent = message;
           document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = "0%";
-          
+
           // ローディング開始時間を記録
           loadingStartTime = new Date();
-          
+
           // 実際のデータからURLごとの予想ロード時間をマップ
           const urlDurationMap = {
             '/api/data': 2000,       // 標準的なデータ取得は2秒
             '/api/history': 5000,    // 履歴データは比較的大きいので5秒
             '/api/aggregated': 3000  // 集計データは中間サイズで3秒
           };
-          
+
           // URLベースの推定時間または引数の時間を使用
           const currentUrl = window.lastFetchUrl || '';
           const estimatedDuration = urlDurationMap[currentUrl] || expectedDuration;
-          
+
           // 進行状況を更新するタイマー
           clearInterval(loadingTimer);
           loadingTimer = setInterval(() => {
             const elapsed = (new Date() - loadingStartTime) / 1000;
             let progress = 0;
             const estimatedSec = estimatedDuration / 1000;
-            
+
             // S字曲線でプログレスを計算（よりスムーズな印象）
             progress = Math.min(90, 100 * (1 / (1 + Math.exp(-5 * (elapsed / estimatedSec - 0.5)))));
-            
+
             document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = `${progress}%`;
-            
+
             // 残り時間の計算と表示
             if (elapsed < estimatedSec * 0.8) {
               // 推定完了時間を表示
@@ -689,14 +689,14 @@
             }
           }, 100);
         }
-        
+
         function hideSpinner() { 
           // 完了時に100%にする
           document.getElementById("loadingProgress").querySelector(".progress-bar").style.width = "100%";
-          
+
           // タイマーをクリア
           clearInterval(loadingTimer);
-          
+
           // 少し遅延させて閉じる（完了の100%を見せるため）
           setTimeout(() => {
             document.getElementById("loadingSpinner").style.display = "none";
@@ -709,18 +709,18 @@
         // クライアントサイドメモリキャッシュの追加
         const memoryCache = new Map();
         const cacheTTL = 60000; // キャッシュの有効期間（ミリ秒）: 1分
-        
+
         async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000, useCache = true) {
           // キャッシュバスターを追加（キャッシュを無視するため）
           const cacheBuster = `${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
           const fullUrl = url + (useCache ? '' : cacheBuster);
-          
+
           // アプリの起動時やネットワーク復帰後のフォールバックデータ
           const fallbackData = localStorage.getItem(`fallback_${url}`);
-          
+
           // キャッシュキーの生成（URLとオプションの組み合わせ）
           const cacheKey = url + JSON.stringify(options);
-          
+
           // キャッシュチェック（キャッシュが有効な場合のみ）
           if (useCache && memoryCache.has(cacheKey)) {
             const cachedData = memoryCache.get(cacheKey);
@@ -746,17 +746,17 @@
               memoryCache.delete(cacheKey);
             }
           }
-          
+
           // ネットワーク接続確認
           if (!navigator.onLine) {
             // オフライン時はエラーダイアログ表示
             showErrorDialog("ネットワーク接続がありません", "インターネット接続を確認して再試行してください");
             throw new Error("Network offline");
           }
-          
+
           window.lastFetchUrl = url; // 現在実行中のURLを保存
           let lastError = null;
-          
+
           // キャッシュがない場合やキャッシュが無効な場合は通常のフェッチ
           for (let i = 0; i < retries; i++) {
             try {
@@ -771,7 +771,7 @@
                   throw new Error(`HTTP error ${response.status}: ${statusText}`);
                 }
               }
-              
+
               // レスポンスをキャッシュに保存（キャッシュが有効な場合のみ）
               if (useCache) {
                 const responseClone = response.clone();
@@ -780,7 +780,7 @@
                   timestamp: Date.now()
                 });
               }
-              
+
               return response;
             } catch (err) {
               console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
@@ -791,7 +791,7 @@
                 await new Promise((resolve) => setTimeout(resolve, backoffDelay));
               } else {
                 // 最終的なエラー、すべてのリトライが失敗した
-                
+
                 // フォールバックデータがあれば使用する
                 const fallbackData = localStorage.getItem(`fallback_${url}`);
                 if (fallbackData) {
@@ -815,7 +815,7 @@
                     console.error("フォールバックデータの解析エラー:", e);
                   }
                 }
-                
+
                 // フォールバックなしの場合は通常のエラー表示
                 showErrorDialog("データ取得に失敗しました", err.message || "ネットワークエラーが発生しました。再度試してください。");
                 throw err;
@@ -823,7 +823,7 @@
             }
           }
         }
-        
+
         // エラーダイアログを表示する関数
         function showErrorDialog(title, message) {
           // 既存のエラーダイアログがあれば削除
@@ -831,7 +831,7 @@
           if (existingDialog) {
             existingDialog.remove();
           }
-          
+
           // 新しいダイアログを作成
           const errorHtml = `
             <div class="modal fade" id="errorDialog" tabindex="-1" aria-hidden="true">
@@ -852,11 +852,11 @@
               </div>
             </div>
           `;
-          
+
           document.body.insertAdjacentHTML('beforeend', errorHtml);
           const modal = new bootstrap.Modal(document.getElementById('errorDialog'));
           modal.show();
-          
+
           // 再試行ボタンのイベントリスナー
           document.getElementById('retryErrorBtn').addEventListener('click', () => {
             modal.hide();
@@ -904,15 +904,15 @@
         document.getElementById("darkModeToggle")?.addEventListener("click", () => {
           document.body.classList.toggle("dark");
           document.getElementById("pageHeader")?.classList.toggle("dark");
-          
+
           // ダークモード設定を保存
           const isDarkMode = document.body.classList.contains("dark");
           localStorage.setItem("darkMode", isDarkMode ? "true" : "false");
-          
+
           // ボタンテキストを更新
           document.getElementById("darkModeToggle").innerText = isDarkMode ? "ライトモードに切替" : "ダークモードに切替";
         });
-        
+
         // ページ読み込み時に保存されたダークモード設定を適用
         if (localStorage.getItem("darkMode") === "true") {
           document.body.classList.add("dark");
@@ -950,29 +950,29 @@
         async function updateDashboard() {
           try {
             showSpinner("店舗データを読み込み中です...");
-            
-            // キャッシュバスターを追加してAPIからデータを取得
+
+            // キャッシュバスターを追加してAPIからデータを取得（flat=trueで全件取得）
             const cacheBuster = new Date().getTime();
             const response = await fetchWithRetry(`/api/data?flat=true&_=${cacheBuster}`, {}, 3, 2000, false);
             const data = await response.json();
-            
+
             // データが配列であることを確認
             if (!Array.isArray(data)) {
               console.error("APIから期待したデータ形式が返されませんでした", data);
               hideSpinner();
               return;
             }
-            
+
             console.log("API取得データ:", data.length + "件");
-            
+
             // 店舗数の表示
             document.getElementById("totalStores").innerText = data.length;
-            
+
             // 平均稼働率の計算と表示
             let totalRate = 0;
             let validStores = 0;
             let maxRate = 0;
-            
+
             data.forEach(store => {
               if (store.working_staff > 0) {
                 const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
@@ -981,7 +981,7 @@
                 maxRate = Math.max(maxRate, rate);
               }
             });
-            
+
             const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
             document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
@@ -1116,7 +1116,7 @@
          * updateHistoryChart: 店舗履歴グラフ更新 (/api/history or /api/aggregated)
          ***********************************************/
         let historyChartCache = {}; // キャッシュ用オブジェクト
-        
+
         async function updateHistoryChart() {
           try {
             showSpinner();
@@ -1125,10 +1125,10 @@
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
-            
+
             // キャッシュキーを作成
             const cacheKey = `${selectedStore}_${startDate}_${endDate}`;
-            
+
             // キャッシュがあれば使用
             if (historyChartCache[cacheKey]) {
               const cachedData = historyChartCache[cacheKey];
@@ -1136,25 +1136,25 @@
               hideSpinner();
               return;
             }
-            
+
             let labels = [];
             let effectiveRates = [];
-            
+
             // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
             if (selectedStore || (startDate && endDate)) {
               // 個別店舗指定、または期間指定の場合: フィルター付きでhistoryAPIを呼び出し
               let url = "/api/history?";
               const params = new URLSearchParams();
-              
+
               if (selectedStore) params.append("store", selectedStore);
               if (startDate) params.append("start_date", startDate);
               if (endDate) params.append("end_date", endDate);
               // サンプル数を制限してパフォーマンス改善
               params.append("limit", "2000");
-              
+
               const response = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
               const data = await response.json();
-              
+
               if (selectedStore) {
                 // 単一店舗の場合は時間まで表示
                 labels = data.map(record => {
@@ -1168,25 +1168,25 @@
               } else {
                 // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
-                
+
                 data.forEach(record => {
                   const d = new Date(record.timestamp);
                   const dateKey = d.toLocaleDateString();
-                  
+
                   if (!dateMap.has(dateKey)) {
                     dateMap.set(dateKey, { sum: 0, count: 0 });
                   }
-                  
+
                   if (record.working_staff > 0) {
                     const rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
                     dateMap.get(dateKey).sum += rate;
                     dateMap.get(dateKey).count += 1;
                   }
                 });
-                
+
                 // 日付でソート
                 const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
-                
+
                 labels = sortedDates;
                 effectiveRates = sortedDates.map(date => {
                   const entry = dateMap.get(date);
@@ -1197,42 +1197,42 @@
               // 期間指定がなく全店舗の場合: 事前集計データを使用
               const response = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
               const data = await response.json();
-              
+
               // 日付ごとに集計
               const dateMap = new Map();
-              
+
               data.forEach(entry => {
                 const dateKey = entry.date;
-                
+
                 if (!dateMap.has(dateKey)) {
                   dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
                 }
-                
+
                 const mapEntry = dateMap.get(dateKey);
                 mapEntry.sum += entry.avg_rate * entry.sample_count; // 加重平均のため
                 mapEntry.count += entry.sample_count;
                 mapEntry.rateSum += entry.avg_rate;
                 mapEntry.rateSamples += 1;
               });
-              
+
               // 日付でソート
               const sortedDates = Array.from(dateMap.keys()).sort();
-              
+
               labels = sortedDates.map(date => {
                 const d = new Date(date);
                 return d.toLocaleDateString();
               });
-              
+
               effectiveRates = sortedDates.map(date => {
                 const entry = dateMap.get(date);
                 // 加重平均を使用（サンプル数で重み付け）
                 return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
               });
             }
-            
+
             const ctx = document.getElementById("historyChart").getContext("2d");
             if (charts.history) charts.history.destroy();
-            
+
             charts.history = new Chart(ctx, {
               type: "line",
               data: {
@@ -1277,7 +1277,7 @@
                 animation: { duration: 500 } // アニメーション時間短縮
               }
             });
-            
+
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
@@ -1288,22 +1288,22 @@
             }
             // キャッシュに保存
             historyChartCache[cacheKey] = { labels, effectiveRates };
-            
+
             // チャート更新処理
             updateHistoryChartDisplay(labels, effectiveRates);
-            
+
             hideSpinner();
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             hideSpinner();
           }
         }
-        
+
         // チャート表示処理を別関数に分離
         function updateHistoryChartDisplay(labels, effectiveRates) {
             const ctx = document.getElementById("historyChart").getContext("2d");
             if (charts.history) charts.history.destroy();
-            
+
             charts.history = new Chart(ctx, {
               type: "line",
               data: {
@@ -1348,7 +1348,7 @@
                 animation: { duration: 500 } // アニメーション時間短縮
               }
             });
-            
+
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
@@ -1752,19 +1752,19 @@
             showSpinner();
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let apiUrl = "/api/ranking/average";
-            
+
             if (rankingType === "industry") {
               const selectedIndustry = document.getElementById("industrySelectRanking").value;
               apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
             }
-            
+
             const response = await fetchWithRetry(apiUrl, {}, 3, 2000);
             const rankingData = await response.json();
-            
+
             // 前処理済みデータをそのまま使用
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
-            
+
             rankingData.forEach((store, index) => {
               const rowHtml = `
                 <tr>
@@ -1794,26 +1794,26 @@
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
             const industries = new Set();
-            
+
             data.forEach(record => { 
               if (record.biz_type) industries.add(record.biz_type); 
             });
-            
+
             const industrySelect = document.getElementById("industrySelectRanking");
             industrySelect.innerHTML = "";
-            
+
             // 業種でソート
             const sortedIndustries = Array.from(industries).sort();
             sortedIndustries.forEach(ind => { 
               industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`; 
             });
-            
+
             // ローカルストレージから前回の選択を復元
             const savedIndustryRanking = localStorage.getItem("industryRankingFilter");
             if (savedIndustryRanking && sortedIndustries.includes(savedIndustryRanking)) {
               industrySelect.value = savedIndustryRanking;
             }
-            
+
             // 選択変更時の保存処理
             industrySelect.addEventListener("change", () => {
               localStorage.setItem("industryRankingFilter", industrySelect.value);
@@ -1839,18 +1839,18 @@
          ***********************************************/
         try {
           const socket = io();
-          
+
           socket.on("connect", () => {
             console.log("Socket.IO接続確立 - ID:", socket.id);
           });
-          
+
           socket.on("connect_error", (error) => {
             console.warn("Socket.IO接続エラー:", error);
           });
-          
+
           socket.on("update", (msg) => {
             console.log("Socket update received:", msg.data);
-            
+
             // データの自動更新
             showSpinner("リアルタイム更新中...");
             Promise.all([
@@ -1878,7 +1878,7 @@
          ***********************************************/
         // 設定の保存と読み込み
         let autoRefreshTimer;
-        
+
         function saveUserSettings() {
           const settings = {
             autoRefresh: document.getElementById("autoRefreshSwitch").checked,
@@ -1892,24 +1892,24 @@
           localStorage.setItem("dashboardSettings", JSON.stringify(settings));
           applySettings(settings);
         }
-        
+
         function loadUserSettings() {
           const savedSettings = localStorage.getItem("dashboardSettings");
           if (savedSettings) {
             const settings = JSON.parse(savedSettings);
-            
+
             // 設定フォームに値を反映
             document.getElementById("autoRefreshSwitch").checked = settings.autoRefresh;
             document.getElementById("refreshInterval").value = settings.refreshInterval;
             document.getElementById("colBizType").checked = settings.columnDisplay?.bizType ?? true;
             document.getElementById("colGenre").checked = settings.columnDisplay?.genre ?? true;
             document.getElementById("colArea").checked = settings.columnDisplay?.area ?? true;
-            
+
             // 設定を適用
             applySettings(settings);
           }
         }
-        
+
         function applySettings(settings) {
           // 自動更新の設定
           clearInterval(autoRefreshTimer);
@@ -1920,7 +1920,7 @@
               updateTop10Chart();
             }, parseInt(settings.refreshInterval));
           }
-          
+
           // カラム表示設定の適用（テーブルが初期化済みかチェック）
           try {
             if ($.fn.dataTable.isDataTable('#storeTable')) {
@@ -1939,13 +1939,13 @@
             console.error('テーブル設定の適用中にエラーが発生しました:', e);
           }
         }
-        
+
         // 設定保存ボタンのイベントリスナー
         document.getElementById("saveSettings").addEventListener("click", () => {
           saveUserSettings();
           $('#settingsModal').modal('hide');
         });
-        
+
         /***********************************************
          * 初期ロード処理
          ***********************************************/
@@ -1954,11 +1954,11 @@
         iconLink.rel = 'stylesheet';
         iconLink.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css';
         document.head.appendChild(iconLink);
-        
+
         // 初期データロード
         try {
           showSpinner("初期データを読み込み中です...", 10000);
-          
+
           // すべてのデータロード処理を順次実行
           await updateDashboard();
           await updateTop10Chart();
@@ -1970,10 +1970,10 @@
           await fillHourlyStoreDropdown();
           await updateHourlyAnalysis();
           await updateAverageRanking();
-          
+
           // 設定の読み込みと適用（テーブル初期化後に実行）
           setTimeout(loadUserSettings, 1000);
-          
+
           hideSpinner();
           console.log("初期データのロードが完了しました");
         } catch (error) {
