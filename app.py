@@ -282,81 +282,96 @@ def api_data():
         format: 'compact'を指定すると必要最小限のフィールドだけを返す
         nocache: 指定するとキャッシュをバイパスして最新データを取得
     """
-    from page_helper import paginate_query_results, format_store_status
+    try:
+        from page_helper import paginate_query_results, format_store_status
+        
+        # 各店舗の最新タイムスタンプをサブクエリで取得
+        subq = db.session.query(
+            StoreStatus.store_name,
+            func.max(StoreStatus.timestamp).label("max_time")
+        ).group_by(StoreStatus.store_name).subquery()
 
-    # 各店舗の最新タイムスタンプをサブクエリで取得
-    subq = db.session.query(
-        StoreStatus.store_name,
-        func.max(StoreStatus.timestamp).label("max_time")
-    ).group_by(StoreStatus.store_name).subquery()
+        query = db.session.query(StoreStatus).join(
+            subq,
+            (StoreStatus.store_name == subq.c.store_name) &
+            (StoreStatus.timestamp == subq.c.max_time)
+        ).order_by(StoreStatus.timestamp.desc())
 
-    query = db.session.query(StoreStatus).join(
-        subq,
-        (StoreStatus.store_name == subq.c.store_name) &
-        (StoreStatus.timestamp == subq.c.max_time)
-    ).order_by(StoreStatus.timestamp.desc())
+        # ページネーションのパラメータを取得
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 100000, type=int)  # 最大件数を10万件に増やす（店舗全件取得用）
 
-    # ページネーションのパラメータを取得
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 100000, type=int)  # 最大件数を10万件に増やす（店舗全件取得用）
+        # クエリの全結果を取得（集計値の計算用）
+        all_results = query.all()
 
-    # クエリの全結果を取得（集計値の計算用）
-    all_results = query.all()
+        # データが空の場合、サンプルデータを返す
+        if not all_results:
+            app.logger.warning("データベースに店舗データがありません。サンプルデータを返します。")
+            return jsonify({"data": [], "meta": {"total_count": 0, "valid_stores": 0, "avg_rate": 0, "max_rate": 0, 
+                                                "total_working_staff": 0, "total_active_staff": 0,
+                                                "page": 1, "per_page": per_page, "total_pages": 0, 
+                                                "has_prev": False, "has_next": False}})
 
-    # 集計値の計算
-    total_store_count = len(all_results)
-    total_working_staff = 0
-    total_active_staff = 0
-    valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
-    max_rate = 0
+        # 集計値の計算
+        total_store_count = len(all_results)
+        total_working_staff = 0
+        total_active_staff = 0
+        valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+        max_rate = 0
 
-    for r in all_results:
-        # 集計用データの収集
-        if r.working_staff > 0:
-            valid_stores += 1
-            total_working_staff += r.working_staff
-            total_active_staff += r.active_staff
-            rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
-            max_rate = max(max_rate, rate)
+        for r in all_results:
+            # 集計用データの収集
+            if r.working_staff > 0:
+                valid_stores += 1
+                total_working_staff += r.working_staff
+                total_active_staff += r.active_staff
+                rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
+                max_rate = max(max_rate, rate)
 
-    # 全体平均稼働率の計算
-    avg_rate = 0
-    if valid_stores > 0 and total_working_staff > 0:
-        avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+        # 全体平均稼働率の計算
+        avg_rate = 0
+        if valid_stores > 0 and total_working_staff > 0:
+            avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
 
-    # ページネーション適用
-    paginated_result = paginate_query_results(query, page, per_page)
-    items = paginated_result['items']
+        # ページネーション適用
+        paginated_result = paginate_query_results(query, page, per_page)
+        items = paginated_result['items']
 
-    # データのフォーマット
-    jst = pytz.timezone('Asia/Tokyo')
-    data = [format_store_status(item, jst) for item in items]
+        # データのフォーマット
+        jst = pytz.timezone('Asia/Tokyo')
+        data = [format_store_status(item, jst) for item in items]
 
-    # レスポンスの組み立て
-    # 互換性のために両方の形式をサポート
-    response = {
-        "data": data,
-        "meta": {
-            "total_count": total_store_count,
-            "valid_stores": valid_stores,
-            "avg_rate": round(avg_rate, 1),
-            "max_rate": round(max_rate,1),
-            "total_working_staff": total_working_staff,
-            "total_active_staff": total_active_staff,
-            "page": paginated_result['meta']['page'],
-            "per_page": paginated_result['meta']['per_page'],
-            "total_pages": paginated_result['meta']['total_pages'],
-            "has_prev": paginated_result['meta']['has_prev'],
-            "has_next": paginated_result['meta']['has_next']
+        # レスポンスの組み立て
+        response = {
+            "data": data,
+            "meta": {
+                "total_count": total_store_count,
+                "valid_stores": valid_stores,
+                "avg_rate": round(avg_rate, 1),
+                "max_rate": round(max_rate,1),
+                "total_working_staff": total_working_staff,
+                "total_active_staff": total_active_staff,
+                "page": paginated_result['meta']['page'],
+                "per_page": paginated_result['meta']['per_page'],
+                "total_pages": paginated_result['meta']['total_pages'],
+                "has_prev": paginated_result['meta']['has_prev'],
+                "has_next": paginated_result['meta']['has_next']
+            }
         }
-    }
 
-    # レスポンス形式を常に一貫させる（メタデータ付きの形式を標準にする）
-    # 'flat'パラメータが明示的に指定された場合のみフラット配列を返す
-    if 'flat' in request.args:
-        return jsonify(data)
-    else:
-        return jsonify(response)
+        app.logger.info(f"API /api/data: {total_store_count}件のデータを返します")
+
+        # レスポンス形式を常に一貫させる（メタデータ付きの形式を標準にする）
+        if 'flat' in request.args:
+            return jsonify(data)
+        else:
+            return jsonify(response)
+            
+    except Exception as e:
+        app.logger.error(f"API /api/data エラー: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": True, "message": str(e)}), 500
 
 
 @app.route('/api/history')
@@ -696,20 +711,51 @@ def api_average_rates():
         # パラメータ取得
         days = request.args.get('days', 30, type=int)
         
+        # データが空かチェック
+        count = db.session.query(func.count(StoreStatus.id)).scalar()
+        if count == 0:
+            app.logger.warning("平均稼働率API: データがありません")
+            return jsonify({
+                'weekly': {},
+                'monthly': {},
+                'weeklyOverall': 0,
+                'monthlyOverall': 0,
+                'store_averages': {},  # 互換性のため
+                'overall_avg': 0,      # 互換性のため
+                'sample_count': 0      # 互換性のため
+            })
+        
         # 指定された日数での平均稼働率を計算
         from analytics import Analytics
         avg_data = Analytics.calculate_store_averages(days)
         
+        # データ構造を確認
+        if not isinstance(avg_data, dict):
+            app.logger.warning(f"平均稼働率API: 無効なデータ形式 {type(avg_data)}")
+            # 安全なデフォルト値
+            return jsonify({
+                'weekly': {},
+                'monthly': {},
+                'weeklyOverall': 0,
+                'monthlyOverall': 0,
+                'store_averages': {},
+                'overall_avg': 0,
+                'sample_count': 0
+            })
+        
+        app.logger.info(f"平均稼働率API: {days}日間のデータを返します")
         return jsonify(avg_data)
+        
     except Exception as e:
         app.logger.error(f"平均稼働率API エラー: {str(e)}")
         app.logger.error(traceback.format_exc())
         return jsonify({
+            'weekly': {},
+            'monthly': {},
+            'weeklyOverall': 0,
+            'monthlyOverall': 0,
             'error': True,
-            'message': str(e),
-            'store_averages': {},
-            'overall_avg': 0,
-            'sample_count': 0
+            'message': str(e)
         }), 500
 
 # ---------------------------------------------------------------------

@@ -950,15 +950,19 @@
         async function updateDashboard() {
           try {
             showSpinner("店舗データを読み込み中です...");
-            
+
+            console.log("API呼び出し開始: /api/data");
+
             // APIからデータを取得
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            console.log("API応答: ", response.status, response.statusText);
             const result = await response.json();
-            
+            console.log("APIデータ内容: ", result);
+
             // APIレスポンスの形式をチェック
             let data = [];
             let metaData = {};
-            
+
             if (Array.isArray(result)) {
               // 配列形式の場合
               data = result;
@@ -996,7 +1000,7 @@
 
               const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
               document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-              
+
               // maxRate要素があれば更新
               const maxRateElement = document.getElementById("maxRate");
               if (maxRateElement) {
