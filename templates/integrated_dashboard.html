@@ -1011,7 +1011,13 @@
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
             // 店舗の平均稼働率データを取得
-            fetchAverageRates().then(averageRates => {
+            Promise.all([
+              fetchAverageRates().catch(error => {
+                console.error("平均稼働率データ取得エラー:", error);
+                return { weekly: {}, monthly: {}, weeklyOverall: 0, monthlyOverall: 0 };
+              })
+            ]).then(([averageRates]) => {
+              // 全てのデータを一度に処理
               data.forEach((store) => {
                 const rate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100) : 0;
                 const rateStr = rate.toFixed(1);
@@ -1044,45 +1050,16 @@
                   </tr>`;
                 tableBody.insertAdjacentHTML("beforeend", rowHtml);
               });
-
-              // DataTableの初期化
-              initializeDataTable();
-            }).catch(error => {
-              console.error("平均稼働率データ取得エラー:", error);
-              // エラーが発生しても基本データは表示
-              data.forEach((store) => {
-                const rate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100) : 0;
-                const rateStr = rate.toFixed(1);
-                const tagHtml = rate >= 50
-                  ? '<span class="badge bg-danger">高稼働</span>'
-                  : '<span class="badge bg-secondary">低稼働</span>';
-                const isFav = favorites.includes(store.store_name);
-                const rowHtml = `
-                  <tr>
-                    <td>
-                      <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}" data-store-name="${store.store_name}">★</button>
-                      <input type="checkbox" class="compare-checkbox" data-store-name="${store.store_name}">
-                    </td>
-                    <td class="store-name clickable" data-store='${encodeURIComponent(JSON.stringify(store))}'>${store.store_name}</td>
-                    <td>${store.biz_type || ""}</td>
-                    <td>${store.genre || ""}</td>
-                    <td>${store.area || ""}</td>
-                    <td>${store.total_staff}</td>
-                    <td>${store.working_staff}</td>
-                    <td>${store.active_staff}</td>
-                    <td>${rateStr}</td>
-                    <td>${tagHtml}</td>
-                    <td>--</td>
-                    <td>--</td>
-                  </tr>`;
-                tableBody.insertAdjacentHTML("beforeend", rowHtml);
-              });
-
-              // DataTableの初期化
-              initializeDataTable();
+              
+              // 全てのデータ挿入が完了してから1度だけDataTableを初期化
+              console.log("全データの挿入が完了、DataTableを初期化します");
+              
+              // 非同期処理のタイミングの問題を解決するため、少し遅延してから初期化
+              setTimeout(() => {
+                initializeDataTable();
+                console.log("DataTable初期化完了");
+              }, 100);
             });
-            // DataTable初期化関数を呼び出し（別関数に分離）
-            initializeDataTable();
             $("#storeTable tbody").off("click", ".favorite-btn").on("click", ".favorite-btn", function (e) {
               e.stopPropagation();
               const storeName = $(this).data("store-name");
