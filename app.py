@@ -113,6 +113,17 @@ with app.app_context():
 # ※スクレイピング処理は外部ファイル (store_scraper.py) に定義してあると想定
 from store_scraper import scrape_store_data
 
+# ポート情報を一時ファイルに保存
+def save_port_info(port):
+    """使用中のポート情報を一時ファイルに保存"""
+    try:
+        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
+        with open(temp_file, 'w') as f:
+            f.write(str(port))
+        print(f"ポート情報を保存しました: {port}")
+    except Exception as e:
+        print(f"ポート情報保存中のエラー: {e}")
+
 def scheduled_scrape():
     """
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
@@ -757,18 +768,7 @@ def api_force_scrape():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ポート情報を一時ファイルに保存
-def save_port_info(port):
-    """使用中のポート情報を一時ファイルに保存"""
-    try:
-        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
-        with open(temp_file, 'w') as f:
-            f.write(str(port))
-        print(f"ポート情報を保存しました: {port}")
-    except Exception as e:
-        print(f"ポート情報保存中のエラー: {e}")
 
-# 終了時のクリーンアップ処理
 def cleanup_resources():
     """アプリケーション終了時のリソース解放処理"""
     print("アプリケーションをシャットダウンしています...")
