@@ -218,7 +218,7 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-@cache.cached(timeout=600)  # キャッシュ：10分間有効に延長
+@cache.cached(timeout=600, unless=lambda: request.args.get('nocache') is not None)  # キャッシュ：10分間有効、nocacheパラメータがある場合はキャッシュをスキップ
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
@@ -230,6 +230,7 @@ def api_data():
         biz_type: 業種でフィルタリング
         area: エリアでフィルタリング
         format: 'compact'を指定すると必要最小限のフィールドだけを返す
+        nocache: 指定するとキャッシュをバイパスして最新データを取得
     """
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。

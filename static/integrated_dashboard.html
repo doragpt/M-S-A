@@ -86,6 +86,7 @@
     <div class="btn-group">
       <button id="darkModeToggle" class="btn btn-light btn-sm">ダークモード切替</button>
       <button id="favoritesToggle" class="btn btn-light btn-sm">お気に入りのみ表示</button>
+      <button id="refreshDataBtn" class="btn btn-primary btn-sm">最新データに更新</button>
     </div>
   </div>
 
@@ -396,6 +397,28 @@
             row.style.display = favoritesFilterActive && !favorites.includes(storeName) ? "none" : "";
           });
           document.getElementById("favoritesToggle").innerText = favoritesFilterActive ? "すべて表示" : "お気に入りのみ表示";
+        });
+        
+        // 最新データ取得ボタンのイベントリスナーを追加
+        document.getElementById("refreshDataBtn")?.addEventListener("click", async () => {
+          try {
+            // キャッシュを無視するためにタイムスタンプパラメータを追加
+            const timestamp = new Date().getTime();
+            const response = await fetch(`/api/data?nocache=${timestamp}`);
+            if (!response.ok) throw new Error("API error " + response.status);
+            
+            const data = await response.json();
+            console.log("最新データ取得成功:", data);
+            
+            // ダッシュボードを更新
+            updateDashboard();
+            updateTop10Chart();
+            
+            alert(`最新データの取得に成功しました！\n${data.meta.total_count}件の店舗データが取得されました。`);
+          } catch (error) {
+            console.error("データ更新エラー:", error);
+            alert("データの更新に失敗しました。詳細はコンソールを確認してください。");
+          }
         });
 
         async function updateDashboard() {
