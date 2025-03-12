@@ -447,30 +447,30 @@ def bulk_add_urls():
     """
     bulk_urls = request.form.get('bulk_urls', '').strip()
     skip_duplicates = bool(request.form.get('skip_duplicates', False))
-    
+
     if not bulk_urls:
         flash("URLを入力してください。", "warning")
         return redirect(url_for('manage_store_urls'))
-    
+
     # 改行で区切ってURLリストを取得
     url_list = [url.strip() for url in bulk_urls.split('\n') if url.strip()]
-    
+
     added_count = 0
     skipped_count = 0
     error_count = 0
-    
+
     for url in url_list:
         # URLの形式チェック（基本的な検証）
         if not (url.startswith('http://') or url.startswith('https://')):
             error_count += 1
             continue
-            
+
         # 重複チェック
         existing = StoreURL.query.filter_by(store_url=url).first()
         if existing:
             skipped_count += 1
             continue
-        
+
         try:
             new_url = StoreURL(store_url=url)
             db.session.add(new_url)
@@ -478,14 +478,14 @@ def bulk_add_urls():
         except Exception as e:
             error_count += 1
             app.logger.error(f"URL追加エラー: {url} - {e}")
-    
+
     try:
         db.session.commit()
         flash(f"一括登録完了: {added_count}件追加, {skipped_count}件スキップ, {error_count}件エラー", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"データベースエラー: {e}", "danger")
-    
+
     return redirect(url_for('manage_store_urls'))
 
 
@@ -596,14 +596,6 @@ if __name__ == '__main__':
 @app.route('/api/aggregated')
 @cache.cached(timeout=3600)  # キャッシュ：1時間有効
 def api_aggregated_data():
-</old_str>
-<new_str>
-    return jsonify(data)
-
-# 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
-@app.route('/api/aggregated')
-@cache.cached(timeout=3600)  # キャッシュ：1時間有効
-def api_aggregated_data():
     """
     日付ごとに集計された平均稼働率データを返すエンドポイント
     """
@@ -649,11 +641,11 @@ def api_scraping_status():
     try:
         # DB接続
         store_data = {}
-        
+
         # 全店舗数のカウント
         total_urls = db.session.query(func.count(StoreURL.id)).scalar()
         store_data["total_store_count"] = total_urls
-        
+
         # 最終スクレイピング実行時刻
         latest_scrape = db.session.query(func.max(StoreStatus.timestamp)).scalar()
         if latest_scrape:
@@ -663,30 +655,30 @@ def api_scraping_status():
         else:
             store_data["last_scrape_time"] = None
             store_data["hours_since_last_scrape"] = None
-        
+
         # 24時間以内にスクレイピングされた店舗数
         day_ago = datetime.now() - timedelta(hours=24)
         recent_stores = db.session.query(func.count(func.distinct(StoreStatus.store_name)))\
             .filter(StoreStatus.timestamp > day_ago).scalar()
         store_data["recent_scraped_stores"] = recent_stores
-        
+
         # エラーフラグのある店舗数
         error_stores = db.session.query(func.count(StoreURL.id))\
             .filter(StoreURL.error_flag > 0).scalar()
         store_data["error_flagged_stores"] = error_stores
-        
+
         # カバレッジ計算
         if total_urls > 0:
             coverage = (recent_stores / total_urls) * 100
             store_data["coverage_percentage"] = round(coverage, 1)
         else:
             store_data["coverage_percentage"] = 0
-        
+
         # 最近追加された店舗（最新10件）
         recent_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
             .order_by(StoreURL.id.desc()).limit(10).all()
         store_data["recent_added_urls"] = [{"id": id, "url": url} for id, url in recent_urls]
-        
+
         # エラーのある店舗（最大10件）
         if error_stores > 0:
             error_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
@@ -694,7 +686,7 @@ def api_scraping_status():
             store_data["error_urls"] = [{"id": id, "url": url} for id, url in error_urls]
         else:
             store_data["error_urls"] = []
-        
+
         return jsonify(store_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -705,7 +697,7 @@ def api_scraping_status():
 def api_force_scrape():
     """
     特定のURLを強制的にスクレイピングするAPIエンドポイント。
-    
+
     リクエストボディ:
         url: スクレイピングするURL
         または
@@ -715,7 +707,7 @@ def api_force_scrape():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         # URLまたはIDで店舗を特定
         store_url = None
         if 'url' in data:
@@ -724,10 +716,10 @@ def api_force_scrape():
             store_url_obj = StoreURL.query.get(data['id'])
             if store_url_obj:
                 store_url = store_url_obj.store_url
-        
+
         if not store_url:
             return jsonify({"error": "No valid URL or ID provided"}), 400
-        
+
         # スクレイピング実行（同期処理なので注意）
         result = scrape_store_data([store_url])
         if result and len(result) > 0:
@@ -748,7 +740,7 @@ def api_force_scrape():
                 db.session.add(store_status)
                 db.session.commit()
                 return jsonify({"success": True, "data": record})
-        
+
         return jsonify({"success": False, "error": "スクレイピングに失敗しました"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
