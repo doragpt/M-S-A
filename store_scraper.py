@@ -75,12 +75,14 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             url += "/"
         attend_url = url + "attend/soon/"
 
-        # 新規ページを作成
-        page = await browser.newPage()
+        # エラー処理を包括的に行う
         try:
-            await stealth(page)  # 検出回避のため stealth を適用
-        except Exception:
-            pass  # エラーを表示せず静かに続行
+            # 新規ページを作成
+            page = await browser.newPage()
+            try:
+                await stealth(page)  # 検出回避のため stealth を適用
+            except Exception:
+                pass  # エラーを表示せず静かに続行
         # ユーザーエージェントを設定
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -220,7 +222,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                             status_text = ""
                         if ("待機中" in status_text) or (status_text == ""):
                             active_staff += 1
-        await page.close()
+        # クリーンアップと結果返却
+        try:
+            await page.close()
+        except Exception:
+            # ページクローズ時のエラーは無視（既に切断されている可能性あり）
+            pass
+        
         return {
             "store_name": store_name,
             "biz_type": biz_type,
@@ -232,6 +240,21 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             "url": url,
             "shift_time": ""
         }
+        
+        # 大きな例外ブロックの終了
+        except Exception as e:
+            # セッション切断エラー以外のエラーはログに出力
+            if "Target.detachFromTarget" not in str(e):
+                print(f"店舗スクレイピングエラー ({url}): {str(e)}")
+            
+            # エラーが発生しても常に空の結果を返す（スキップされた店舗として処理）
+            try:
+                if 'page' in locals() and page:
+                    await page.close()
+            except:
+                pass
+                
+            return {}
 
 # -------------------------------
 # _scrape_all 関数
@@ -239,39 +262,86 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
 async def _scrape_all(store_urls: list) -> list:
     """
     複数店舗のスクレイピングを並列実行数制限付きで実行する関数
-    - バッチ処理間の待機時間を3秒から2秒に短縮
+    - バッチ処理間の待機時間を3秒に設定（安定性向上）
+    - エラーハンドリングを強化
     """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = '/usr/bin/google-chrome'
-    browser = await launch(
-        headless=True,
-        executablePath=executable_path,
-        ignoreHTTPSErrors=True,
-        defaultViewport=None,
-        args=[
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-gpu",
-            "--disable-dev-shm-usage",
-            "--single-process",
-            "--headless=new",
-            "--disable-background-timer-throttling",
-            "--disable-backgrounding-occluded-windows",
-            "--disable-renderer-backgrounding",
-            "--disable-infobars"
-        ]
-    )
-    # 各店舗URLに対するスクレイピングタスクを作成
-    tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
+    browser = None
     results = []
-    # タスクをバッチ単位で実行し、各バッチの間は3秒待機に延長
-    for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
-        batch = tasks[i:i+MAX_CONCURRENT_TASKS]
-        batch_results = await asyncio.gather(*batch, return_exceptions=True)
-        results.extend(batch_results)
-        await asyncio.sleep(3)  # 待機時間を3秒に延長（サーバー負荷軽減と安定性向上）
-    gc.collect()
-    await browser.close()
+    
+    try:
+        executable_path = '/usr/bin/google-chrome'
+        browser = await launch(
+            headless=True,
+            executablePath=executable_path,
+            ignoreHTTPSErrors=True,
+            defaultViewport=None,
+            handleSIGINT=False,  # SIGINTシグナルハンドラを無効化（競合防止）
+            handleSIGTERM=False, # SIGTERMシグナルハンドラを無効化（競合防止）
+            handleSIGHUP=False,  # SIGHUPシグナルハンドラを無効化（競合防止）
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
+                "--single-process",
+                "--headless=new",
+                "--disable-background-timer-throttling",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--disable-infobars"
+            ]
+        )
+        
+        # メモリ使用量を減らすため、バッチサイズを調整
+        batch_size = MAX_CONCURRENT_TASKS
+        total_stores = len(store_urls)
+        processed = 0
+        
+        # バッチ処理
+        for i in range(0, total_stores, batch_size):
+            if i > 0 and i % FORCE_GC_AFTER_STORES == 0:
+                gc.collect()  # 強制的にガベージコレクションを実行
+                
+            # 現在のバッチを取得
+            current_batch = store_urls[i:i+batch_size]
+            batch_tasks = [scrape_store(browser, url, semaphore) for url in current_batch]
+            
+            # エラーもキャッチして処理を続行
+            try:
+                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                # 例外オブジェクトを空の辞書に置き換え
+                processed_results = []
+                for res in batch_results:
+                    if isinstance(res, Exception):
+                        print(f"バッチ処理中のエラー: {type(res).__name__}: {str(res)}")
+                        processed_results.append({})
+                    else:
+                        processed_results.append(res)
+                        
+                results.extend(processed_results)
+            except Exception as e:
+                print(f"バッチ全体の処理中にエラーが発生: {e}")
+                # エラーが発生した場合も、このバッチ分の空結果を追加
+                results.extend([{} for _ in range(len(current_batch))])
+            
+            # バッチ間で待機（サーバー負荷軽減）
+            processed += len(current_batch)
+            print(f"進捗: {processed}/{total_stores} 店舗処理完了")
+            await asyncio.sleep(3)  # 3秒待機
+            
+    except Exception as e:
+        print(f"スクレイピング全体でエラーが発生: {e}")
+    finally:
+        # ブラウザのクリーンアップを必ず実行
+        if browser:
+            try:
+                await browser.close()
+            except Exception as e:
+                print(f"ブラウザクローズ時にエラー: {e}")
+        
+        gc.collect()  # 最終的なメモリクリーンアップ
+        
     return results
 
 # -------------------------------
@@ -280,11 +350,50 @@ async def _scrape_all(store_urls: list) -> list:
 def scrape_store_data(store_urls: list) -> list:
     """
     非同期スクレイピング処理を同期的に実行するラッパー関数
-    パフォーマンスモニタリング機能付き
+    - パフォーマンスモニタリング機能付き
+    - エラーハンドリング強化
     """
     import time
-    start_time = time.time()
-    results = asyncio.run(_scrape_all(store_urls))
-    elapsed_time = time.time() - start_time
-    print(f"スクレイピング実行時間: {elapsed_time:.2f}秒 (平均: {elapsed_time/len(store_urls):.2f}秒/店舗)")
-    return results
+    import signal
+    
+    # タイムアウトハンドラ（長時間実行防止）
+    def timeout_handler(signum, frame):
+        print("スクレイピング処理がタイムアウトしました")
+        raise TimeoutError("スクレイピング処理がタイムアウトしました")
+    
+    # スクレイピング実行（タイムアウト付き）
+    try:
+        start_time = time.time()
+        
+        # 店舗数が多い場合は長めのタイムアウトを設定
+        timeout_seconds = max(3600, len(store_urls) * 10)  # 最低1時間または店舗数×10秒
+        
+        # Unix系OSの場合のみシグナルタイマーを設定
+        old_handler = None
+        try:
+            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout_seconds)
+        except (AttributeError, ValueError):
+            # Windowsなど、SIGALRMがサポートされていない環境では無視
+            pass
+            
+        # スクレイピング実行
+        results = asyncio.run(_scrape_all(store_urls))
+        
+        # タイマーをリセット
+        if old_handler:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+            
+        # 結果の集計と統計
+        elapsed_time = time.time() - start_time
+        successful = sum(1 for r in results if r and "store_name" in r and r["store_name"] != "不明")
+        print(f"スクレイピング実行時間: {elapsed_time:.2f}秒 (平均: {elapsed_time/len(store_urls):.2f}秒/店舗)")
+        print(f"成功率: {successful}/{len(store_urls)} ({successful/len(store_urls)*100:.1f}%)")
+        
+        return results
+        
+    except Exception as e:
+        print(f"スクレイピング処理中に重大なエラーが発生: {e}")
+        # エラー発生時は空のリストを返す
+        return [{} for _ in range(len(store_urls))]
