@@ -915,42 +915,38 @@
          ***********************************************/
         async function updateDashboard() {
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await response.json();
-            const data = responseJson.data || responseJson; // 新旧APIの両方に対応
-            
-            // APIからメタデータを取得（バックエンドで計算された集計値）
-            const meta = responseJson.meta || {}; 
-            
-            // 店舗数の表示（APIのメタデータか、データ長から）
-            document.getElementById("totalStores").innerText = meta.total_count || data.length;
-            
-            // 平均稼働率の表示（APIのメタデータか、クライアント計算から）
-            const avgRate = meta.avg_rate !== undefined ? meta.avg_rate : 
-              data.reduce((sum, store) => {
-                if (store.working_staff > 0) {
-                  return sum + ((store.working_staff - store.active_staff) / store.working_staff * 100);
-                }
-                return sum;
-              }, 0) / (data.length || 1);
-            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-            
-            // 最高稼働率の計算（常にクライアント側で計算）
+            // キャッシュバスターを追加してAPIからデータを取得
+            const cacheBuster = new Date().getTime();
+            const response = await fetchWithRetry(`/api/data?flat=true&_=${cacheBuster}`, {}, 3, 2000);
             const data = await response.json();
+            
+            // データが配列であることを確認
+            if (!Array.isArray(data)) {
+              console.error("APIから期待したデータ形式が返されませんでした", data);
+              return;
+            }
+            
+            console.log("API取得データ:", data);
+            
+            // 店舗数の表示
             document.getElementById("totalStores").innerText = data.length;
-            const avgRate = data.reduce((sum, store) => {
+            
+            // 平均稼働率の計算と表示
+            let totalRate = 0;
+            let validStores = 0;
+            let maxRate = 0;
+            
+            data.forEach(store => {
               if (store.working_staff > 0) {
-                return sum + ((store.working_staff - store.active_staff) / store.working_staff * 100);
+                const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
+                totalRate += rate;
+                validStores++;
+                maxRate = Math.max(maxRate, rate);
               }
-              return sum;
-            }, 0) / (data.length || 1);
+            });
+            
+            const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
             document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-            const maxRate = data.reduce((max, store) => {
-              if (store.working_staff > 0) {
-                return Math.max(max, ((store.working_staff - store.active_staff) / store.working_staff * 100));
-              }
-              return max;
-            }, 0);
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
 
             const tableBody = document.getElementById("dataTable");

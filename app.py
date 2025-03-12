@@ -254,14 +254,6 @@ def api_data():
         format: 'compact'を指定すると必要最小限のフィールドだけを返す
         nocache: 指定するとキャッシュをバイパスして最新データを取得
     """
-    """
-    各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
-    集計値（全体平均など）も含める。
-
-    クエリパラメータ:
-        page: ページ番号（1から始まる）
-        per_page: 1ページあたりの項目数（最大100）
-    """
     from page_helper import paginate_query_results, format_store_status
 
     # 各店舗の最新タイムスタンプをサブクエリで取得
@@ -278,7 +270,7 @@ def api_data():
 
     # ページネーションのパラメータを取得
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = request.args.get('per_page', 1000, type=int)  # 最大件数を増やす
 
     # クエリの全結果を取得（集計値の計算用）
     all_results = query.all()
@@ -312,14 +304,15 @@ def api_data():
     jst = pytz.timezone('Asia/Tokyo')
     data = [format_store_status(item, jst) for item in items]
 
-    # レスポンスの組み立て（データ、集計値、ページネーション情報を含む）
+    # レスポンスの組み立て
+    # 互換性のために両方の形式をサポート
     response = {
         "data": data,
         "meta": {
             "total_count": total_store_count,
             "valid_stores": valid_stores,
             "avg_rate": round(avg_rate, 1),
-            "max_rate": round(max_rate,1), # Added max_rate to meta
+            "max_rate": round(max_rate,1),
             "total_working_staff": total_working_staff,
             "total_active_staff": total_active_staff,
             "page": paginated_result['meta']['page'],
@@ -329,8 +322,12 @@ def api_data():
             "has_next": paginated_result['meta']['has_next']
         }
     }
-
-    return jsonify(response)
+    
+    # フロントエンドとの互換性のため、フラットな配列形式でも返す
+    if 'flat' in request.args or not data:
+        return jsonify(data)
+    else:
+        return jsonify(response)
 
 
 @app.route('/api/history')
@@ -520,6 +517,42 @@ def index():
     統合ダッシュボードの HTML を返すルート
     """
     return render_template('integrated_dashboard.html')
+
+# 静的HTMLファイルへのアクセス用ルート
+@app.route('/dashboard')
+def dashboard():
+    """
+    統合ダッシュボードの HTML を返す代替ルート
+    """
+    return render_template('integrated_dashboard.html')
+
+# デバッグ用：APIデータ確認ページ
+@app.route('/debug/data')
+def debug_data():
+    """
+    APIデータ確認用ページ
+    """
+    subq = db.session.query(
+        StoreStatus.store_name,
+        func.max(StoreStatus.timestamp).label("max_time")
+    ).group_by(StoreStatus.store_name).subquery()
+
+    results = db.session.query(StoreStatus).join(
+        subq,
+        (StoreStatus.store_name == subq.c.store_name) &
+        (StoreStatus.timestamp == subq.c.max_time)
+    ).order_by(StoreStatus.timestamp.desc()).limit(20).all()
+    
+    records = []
+    for r in results:
+        records.append({
+            'store_name': r.store_name,
+            'timestamp': r.timestamp,
+            'working_staff': r.working_staff,
+            'active_staff': r.active_staff
+        })
+    
+    return jsonify(records)
 
 
 # ---------------------------------------------------------------------
