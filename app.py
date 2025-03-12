@@ -209,10 +209,10 @@ def scheduled_scrape():
         elapsed_time = end_time - start_time
         minutes = int(elapsed_time // 60)
         seconds = int(elapsed_time % 60)
-        
+
         app.logger.info(f"スクレイピング完了＆古いデータ削除完了。処理時間: {minutes}分{seconds}秒")
         app.logger.info(f"処理開始時刻: {datetime.fromtimestamp(start_time).strftime('%H:%M:%S')}, 終了時刻: {datetime.fromtimestamp(end_time).strftime('%H:%M:%S')}")
-        
+
         # キャッシュクリア：特に/api/historyのキャッシュを削除
         cache.clear()
 

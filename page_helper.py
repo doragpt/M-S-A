@@ -9,8 +9,8 @@ def paginate_query_results(query, page, per_page):
     結果とメタデータを辞書形式で返す関数。
     パフォーマンス最適化版
     """
-    # 1ページあたりの項目数を制限（最大100）
-    per_page = min(per_page, 100)
+    # 1ページあたりの項目数を制限（最大100000 - 制限を大幅に緩和）
+    per_page = min(per_page, 100000)
 
     # ページ番号の妥当性検証
     if page < 1:
