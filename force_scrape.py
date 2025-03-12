@@ -1,41 +1,46 @@
 
+import os
 import sys
-from app import scheduled_scrape, cache
+import importlib.util
+import time
+from datetime import datetime
 
-def force_scrape_and_clear_cache():
-    print("スクレイピングを手動で実行します...")
-    scheduled_scrape()
-    print("スクレイピング完了！")
+def load_module_from_file(file_path, module_name):
+    """ファイルからモジュールを動的にロードする関数"""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+def force_scrape():
+    """
+    app.pyのscheduled_scrape関数を直接呼び出して強制的にスクレイピングを実行
+    """
+    start_time = time.time()
+    print(f"強制スクレイピングを開始します: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    print("アプリケーションキャッシュをクリアします...")
     try:
-        cache.clear()
-        print("キャッシュクリア完了！")
-    except Exception as e:
-        print(f"キャッシュクリアでエラーが発生しました: {e}")
-    
-    print("スクレイピング結果の反映確認:")
-    # 簡易的な確認として最新レコードのタイムスタンプを表示
-    import sqlite3
-    from datetime import datetime
-    import pytz
-    
-    conn = sqlite3.connect('store_data.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT MAX(timestamp) FROM store_status")
-    last_scrape = cursor.fetchone()[0]
-    
-    if last_scrape:
-        jst = pytz.timezone('Asia/Tokyo')
-        utc_time = datetime.strptime(last_scrape, '%Y-%m-%d %H:%M:%S')
-        utc_time = utc_time.replace(tzinfo=pytz.utc)
-        jst_time = utc_time.astimezone(jst)
+        # app.pyをモジュールとしてロード
+        app_module = load_module_from_file("app.py", "app_module")
         
-        print(f"最新データのタイムスタンプ: {jst_time.strftime('%Y-%m-%d %H:%M:%S')} (JST)")
-    else:
-        print("スクレイピング結果が見つかりません")
-    
-    conn.close()
+        # Flaskアプリケーションコンテキストを作成
+        with app_module.app.app_context():
+            # scheduled_scrape関数を実行
+            app_module.scheduled_scrape()
+        
+        elapsed_time = time.time() - start_time
+        print(f"スクレイピングが完了しました: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"処理時間: {elapsed_time:.2f}秒")
+        
+        # 結果を確認
+        check_module = load_module_from_file("check_scraping.py", "check_module")
+        check_module.check_scraping_status()
+        
+    except Exception as e:
+        print(f"スクレイピング実行中にエラーが発生しました: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    force_scrape_and_clear_cache()
+    force_scrape()

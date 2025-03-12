@@ -1,85 +1,93 @@
 
+import os
 import sqlite3
-import datetime
-import pytz
-import sys
+from datetime import datetime, timedelta
 
-def check_database_status():
-    """データベース内のスクレイピング状況を確認する関数"""
-    conn = sqlite3.connect('store_data.db')
-    cursor = conn.cursor()
-    
-    # 登録されている店舗URL数を取得
-    cursor.execute("SELECT COUNT(*) FROM store_urls")
-    url_count = cursor.fetchone()[0]
-    print(f"登録されている店舗URL数: {url_count}")
-    
-    # 最新のスクレイピング結果数を取得
-    cursor.execute("""
-        SELECT COUNT(DISTINCT store_name) 
-        FROM store_status 
-        WHERE timestamp >= datetime('now', '-24 hours')
-    """)
-    recent_stores = cursor.fetchone()[0]
-    print(f"過去24時間以内にスクレイピングされた店舗数: {recent_stores}")
-    
-    # 最新のスクレイピング時刻を取得
-    cursor.execute("SELECT MAX(timestamp) FROM store_status")
-    last_scrape = cursor.fetchone()[0]
-    
-    if last_scrape:
-        # タイムゾーン変換
-        jst = pytz.timezone('Asia/Tokyo')
-        utc_time = datetime.datetime.strptime(last_scrape, '%Y-%m-%d %H:%M:%S')
-        utc_time = utc_time.replace(tzinfo=pytz.utc)
-        jst_time = utc_time.astimezone(jst)
+# データベースへの接続
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
+# SQLiteの場合はパスだけ取得
+if DATABASE_URL.startswith('sqlite:///'):
+    db_path = DATABASE_URL.replace('sqlite:///', '')
+else:
+    print("サポートされていないデータベースタイプです。SQLiteのみ対応しています。")
+    exit(1)
+
+def check_scraping_status():
+    """スクレイピングの実行状況を確認する関数"""
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
         
-        print(f"最終スクレイピング時刻: {jst_time.strftime('%Y-%m-%d %H:%M:%S')} (JST)")
-    else:
-        print("スクレイピング結果が見つかりません")
+        # 店舗URLの総数を取得
+        cursor.execute("SELECT COUNT(*) FROM store_urls")
+        total_urls = cursor.fetchone()[0]
+        
+        # 最新のスクレイピング時間を取得
+        cursor.execute("SELECT MAX(timestamp) FROM store_status")
+        latest_scrape = cursor.fetchone()[0]
+        
+        # 最新スクレイピングでのユニーク店舗数
+        if latest_scrape:
+            # 最新の日付から24時間以内のデータ
+            cursor.execute("""
+                SELECT COUNT(DISTINCT store_name) 
+                FROM store_status 
+                WHERE timestamp >= ?
+            """, (datetime.strptime(latest_scrape, '%Y-%m-%d %H:%M:%S.%f') - timedelta(hours=24),))
+            recent_stores = cursor.fetchone()[0]
+        else:
+            recent_stores = 0
+        
+        # エラーフラグがついている店舗数
+        cursor.execute("SELECT COUNT(*) FROM store_urls WHERE error_flag > 0")
+        error_stores = cursor.fetchone()[0]
+        
+        # 結果出力
+        print("\n===== スクレイピング状況レポート =====")
+        print(f"登録済み店舗URL総数: {total_urls}")
+        print(f"最新スクレイピング時間: {latest_scrape or '未実行'}")
+        
+        if latest_scrape:
+            latest_time = datetime.strptime(latest_scrape, '%Y-%m-%d %H:%M:%S.%f')
+            time_diff = datetime.now() - latest_time
+            hours_ago = time_diff.total_seconds() / 3600
+            print(f"最終実行からの経過時間: {hours_ago:.1f}時間前")
+        
+        print(f"直近24時間内のスクレイプ店舗数: {recent_stores}")
+        print(f"エラーフラグのある店舗数: {error_stores}")
+        
+        # カバレッジ計算
+        if total_urls > 0:
+            coverage = (recent_stores / total_urls) * 100
+            print(f"スクレイピングカバレッジ: {coverage:.1f}%")
+        
+        # 最近追加された店舗（最新10件）
+        print("\n----- 最近追加された店舗 -----")
+        cursor.execute("SELECT id, store_url FROM store_urls ORDER BY id DESC LIMIT 10")
+        recent_urls = cursor.fetchall()
+        for id, url in recent_urls:
+            print(f"ID: {id}, URL: {url}")
+        
+        # エラーのある店舗
+        if error_stores > 0:
+            print("\n----- エラーのある店舗 -----")
+            cursor.execute("SELECT id, store_url FROM store_urls WHERE error_flag > 0 LIMIT 10")
+            error_urls = cursor.fetchall()
+            for id, url in error_urls:
+                print(f"ID: {id}, URL: {url}")
+        
+        conn.close()
+        return {
+            "total_urls": total_urls,
+            "latest_scrape": latest_scrape,
+            "recent_stores": recent_stores,
+            "error_stores": error_stores,
+            "coverage": (recent_stores / total_urls * 100) if total_urls > 0 else 0
+        }
     
-    # レコード総数を確認
-    cursor.execute("SELECT COUNT(*) FROM store_status")
-    total_records = cursor.fetchone()[0]
-    print(f"総レコード数: {total_records}")
-    
-    # 店舗ごとのレコード件数を表示
-    if len(sys.argv) > 1 and sys.argv[1] == "--detail":
-        cursor.execute("""
-            SELECT store_name, COUNT(*) as count
-            FROM store_status
-            GROUP BY store_name
-            ORDER BY count DESC
-            LIMIT 20
-        """)
-        print("\n店舗別レコード数（上位20件）:")
-        for name, count in cursor.fetchall():
-            print(f"  {name}: {count}件")
-    
-    # 日付別のレコード数を表示
-    cursor.execute("""
-        SELECT date(timestamp) as date, COUNT(*) as count
-        FROM store_status
-        GROUP BY date(timestamp)
-        ORDER BY date DESC
-        LIMIT 10
-    """)
-    print("\n日付別レコード数（最新10日）:")
-    for date, count in cursor.fetchall():
-        print(f"  {date}: {count}件")
-    
-    # 最新データのチェック - 古いデータが表示されていないか確認
-    cursor.execute("""
-        SELECT store_name, timestamp, working_staff, active_staff 
-        FROM store_status 
-        ORDER BY timestamp DESC 
-        LIMIT 5
-    """)
-    print("\n最新のレコード（5件）:")
-    for store, time, working, active in cursor.fetchall():
-        print(f"  {store} - {time} - 稼働中:{working}人, 待機中:{active}人")
-    
-    conn.close()
+    except Exception as e:
+        print(f"エラーが発生しました: {e}")
+        return None
 
 if __name__ == "__main__":
-    check_database_status()
+    check_scraping_status()
