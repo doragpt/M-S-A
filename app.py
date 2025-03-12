@@ -681,6 +681,36 @@ def api_average_ranking():
         # エラーの場合でも空の配列を返す（フロントエンドでのエラーハンドリング向上）
         return jsonify([]), 200
 
+# 平均稼働率データを提供するAPI
+@app.route('/api/average_rates')
+@cache.cached(timeout=1800)  # 30分キャッシュ
+def api_average_rates():
+    """
+    店舗ごとの指定期間の平均稼働率を計算して返すAPI
+    
+    クエリパラメータ:
+        days: 過去何日間のデータを使用するか (デフォルト: 30)
+    """
+    try:
+        # パラメータ取得
+        days = request.args.get('days', 30, type=int)
+        
+        # 指定された日数での平均稼働率を計算
+        from analytics import Analytics
+        avg_data = Analytics.calculate_store_averages(days)
+        
+        return jsonify(avg_data)
+    except Exception as e:
+        app.logger.error(f"平均稼働率API エラー: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({
+            'error': True,
+            'message': str(e),
+            'store_averages': {},
+            'overall_avg': 0,
+            'sample_count': 0
+        }), 500
+
 # ---------------------------------------------------------------------
 # 9. メイン実行部
 # ---------------------------------------------------------------------

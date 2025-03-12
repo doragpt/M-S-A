@@ -323,7 +323,7 @@
             <div class="card text-white bg-success">
               <div class="card-header">現在稼働率</div>
               <div class="card-body">
-                <h5 id="avgActiveRate" class="card-title">--</h5>
+                <h5 id="avgRate" class="card-title">--</h5>
                 <p class="card-text">勤務中キャストに対する実働率</p>
               </div>
             </div>
@@ -1000,41 +1000,79 @@
 
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
-            data.forEach((store) => {
-              const rate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100) : 0;
-              const rateStr = rate.toFixed(1);
-              const tagHtml = rate >= 50
-                ? '<span class="badge bg-danger">高稼働</span>'
-                : '<span class="badge bg-secondary">低稼働</span>';
-              const isFav = favorites.includes(store.store_name);
-              const rowHtml = `
-                <tr>
-                  <td>
-                    <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}" data-store-name="${store.store_name}">★</button>
-                    <input type="checkbox" class="compare-checkbox" data-store-name="${store.store_name}">
-                  </td>
-                  <td class="store-name clickable" data-store='${encodeURIComponent(JSON.stringify(store))}'>${store.store_name}</td>
-                  <td>${store.biz_type || ""}</td>
-                  <td>${store.genre || ""}</td>
-                  <td>${store.area || ""}</td>
-                  <td>${store.total_staff}</td>
-                  <td>${store.working_staff}</td>
-                  <td>${store.active_staff}</td>
-                  <td>${rateStr}</td>
-                  <td>${tagHtml}</td>
-                  <td>--</td>
-                  <td>--</td>
-                </tr>`;
-              tableBody.insertAdjacentHTML("beforeend", rowHtml);
+            // 店舗の平均稼働率データを取得
+            fetchAverageRates().then(averageRates => {
+              data.forEach((store) => {
+                const rate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100) : 0;
+                const rateStr = rate.toFixed(1);
+                const tagHtml = rate >= 50
+                  ? '<span class="badge bg-danger">高稼働</span>'
+                  : '<span class="badge bg-secondary">低稼働</span>';
+                const isFav = favorites.includes(store.store_name);
+                
+                // 平均稼働率データから店舗の週間・月間データを取得
+                const weeklyRate = averageRates.weekly[store.store_name] ? averageRates.weekly[store.store_name].toFixed(1) : "--";
+                const monthlyRate = averageRates.monthly[store.store_name] ? averageRates.monthly[store.store_name].toFixed(1) : "--";
+                
+                const rowHtml = `
+                  <tr>
+                    <td>
+                      <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}" data-store-name="${store.store_name}">★</button>
+                      <input type="checkbox" class="compare-checkbox" data-store-name="${store.store_name}">
+                    </td>
+                    <td class="store-name clickable" data-store='${encodeURIComponent(JSON.stringify(store))}'>${store.store_name}</td>
+                    <td>${store.biz_type || ""}</td>
+                    <td>${store.genre || ""}</td>
+                    <td>${store.area || ""}</td>
+                    <td>${store.total_staff}</td>
+                    <td>${store.working_staff}</td>
+                    <td>${store.active_staff}</td>
+                    <td>${rateStr}</td>
+                    <td>${tagHtml}</td>
+                    <td>${weeklyRate}</td>
+                    <td>${monthlyRate}</td>
+                  </tr>`;
+                tableBody.insertAdjacentHTML("beforeend", rowHtml);
+              });
+              
+              // DataTableの初期化
+              initializeDataTable();
+            }).catch(error => {
+              console.error("平均稼働率データ取得エラー:", error);
+              // エラーが発生しても基本データは表示
+              data.forEach((store) => {
+                const rate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100) : 0;
+                const rateStr = rate.toFixed(1);
+                const tagHtml = rate >= 50
+                  ? '<span class="badge bg-danger">高稼働</span>'
+                  : '<span class="badge bg-secondary">低稼働</span>';
+                const isFav = favorites.includes(store.store_name);
+                const rowHtml = `
+                  <tr>
+                    <td>
+                      <button class="favorite-btn btn btn-sm ${isFav ? "btn-warning" : "btn-outline-warning"}" data-store-name="${store.store_name}">★</button>
+                      <input type="checkbox" class="compare-checkbox" data-store-name="${store.store_name}">
+                    </td>
+                    <td class="store-name clickable" data-store='${encodeURIComponent(JSON.stringify(store))}'>${store.store_name}</td>
+                    <td>${store.biz_type || ""}</td>
+                    <td>${store.genre || ""}</td>
+                    <td>${store.area || ""}</td>
+                    <td>${store.total_staff}</td>
+                    <td>${store.working_staff}</td>
+                    <td>${store.active_staff}</td>
+                    <td>${rateStr}</td>
+                    <td>${tagHtml}</td>
+                    <td>--</td>
+                    <td>--</td>
+                  </tr>`;
+                tableBody.insertAdjacentHTML("beforeend", rowHtml);
+              });
+              
+              // DataTableの初期化
+              initializeDataTable();
             });
-            if ($.fn.dataTable.isDataTable("#storeTable")) {
-              $("#storeTable").DataTable().destroy();
-            }
-            $("#storeTable").DataTable({
-              responsive: true,
-              order: [[8, "desc"]],
-              language: { search: "検索:" }
-            });
+            // DataTable初期化関数を呼び出し（別関数に分離）
+            initializeDataTable();
             $("#storeTable tbody").off("click", ".favorite-btn").on("click", ".favorite-btn", function (e) {
               e.stopPropagation();
               const storeName = $(this).data("store-name");
@@ -1941,6 +1979,73 @@
           });
         });
 
+        // DataTableの初期化関数
+        function initializeDataTable() {
+          if ($.fn.dataTable.isDataTable("#storeTable")) {
+            $("#storeTable").DataTable().destroy();
+          }
+          $("#storeTable").DataTable({
+            responsive: true,
+            order: [[8, "desc"]],
+            language: { search: "検索:" }
+          });
+        }
+        
+        // 平均稼働率データ取得関数
+        async function fetchAverageRates() {
+          try {
+            // キャッシュされたデータがあればそれを使用
+            if (window.cachedAverageRates) {
+              return window.cachedAverageRates;
+            }
+            
+            // 7日間の平均稼働率データを取得
+            const weeklyResponse = await fetchWithRetry("/api/average_rates?days=7", {}, 3, 2000);
+            const weeklyData = await weeklyResponse.json();
+            
+            // 30日間の平均稼働率データを取得
+            const monthlyResponse = await fetchWithRetry("/api/average_rates?days=30", {}, 3, 2000);
+            const monthlyData = await monthlyResponse.json();
+            
+            // 店舗ごとのデータを整形
+            const weeklyRates = {};
+            const monthlyRates = {};
+            
+            if (weeklyData && weeklyData.store_averages) {
+              Object.entries(weeklyData.store_averages).forEach(([storeName, data]) => {
+                weeklyRates[storeName] = data.avg_rate;
+              });
+            }
+            
+            if (monthlyData && monthlyData.store_averages) {
+              Object.entries(monthlyData.store_averages).forEach(([storeName, data]) => {
+                monthlyRates[storeName] = data.avg_rate;
+              });
+            }
+            
+            // 全体データを結合
+            const result = {
+              weekly: weeklyRates,
+              monthly: monthlyRates,
+              weeklyOverall: weeklyData ? weeklyData.overall_avg : 0,
+              monthlyOverall: monthlyData ? monthlyData.overall_avg : 0
+            };
+            
+            // 後続の呼び出しのためにキャッシュ
+            window.cachedAverageRates = result;
+            
+            // 月間平均稼働率の表示を更新
+            document.getElementById("monthlyAvgRate").innerText = result.monthlyOverall.toFixed(1) + "%";
+            document.getElementById("monthlySampleCount").innerText = 
+              monthlyData && monthlyData.sample_count ? monthlyData.sample_count : "--";
+            
+            return result;
+          } catch (error) {
+            console.error("平均稼働率データ取得エラー:", error);
+            return { weekly: {}, monthly: {}, weeklyOverall: 0, monthlyOverall: 0 };
+          }
+        }
+        
         // ページロード時にランキングの初期化も行う
         try {
           fillIndustryDropdownForRanking().catch(err => {
