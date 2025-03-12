@@ -1749,7 +1749,7 @@
          ***********************************************/
         async function updateAverageRanking() {
           try {
-            showSpinner();
+            showSpinner("平均稼働ランキングデータを読み込み中...");
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let apiUrl = "/api/ranking/average";
 
@@ -1758,30 +1758,51 @@
               apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
             }
 
+            console.log("ランキングAPIを呼び出し:", apiUrl);
             const response = await fetchWithRetry(apiUrl, {}, 3, 2000);
+
+            if (!response.ok) {
+              throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+
             const rankingData = await response.json();
+            console.log("ランキングデータ取得:", rankingData.length + "件");
+
+            // エラーチェック
+            if (rankingData.error) {
+              throw new Error(`API returned error: ${rankingData.error}`);
+            }
 
             // 前処理済みデータをそのまま使用
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
 
-            rankingData.forEach((store, index) => {
-              const rowHtml = `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${store.store_name}</td>
-                  <td>${store.biz_type}</td>
-                  <td>${store.genre}</td>
-                  <td>${store.area}</td>
-                  <td>${store.avg_rate.toFixed(1)}</td>
-                </tr>
-              `;
-              tbody.insertAdjacentHTML("beforeend", rowHtml);
-            });
+            if (!rankingData.length) {
+              tbody.innerHTML = `<tr><td colspan="6" class="text-center">データがありません</td></tr>`;
+            } else {
+              rankingData.forEach((store, index) => {
+                const rowHtml = `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${store.store_name || '不明'}</td>
+                    <td>${store.biz_type || '不明'}</td>
+                    <td>${store.genre || '不明'}</td>
+                    <td>${store.area || '不明'}</td>
+                    <td>${(typeof store.avg_rate === 'number' ? store.avg_rate.toFixed(1) : '0.0')}</td>
+                  </tr>
+                `;
+                tbody.insertAdjacentHTML("beforeend", rowHtml);
+              });
+            }
             hideSpinner();
           } catch (error) {
             console.error("平均稼働ランキングエラー:", error);
             hideSpinner();
+
+            // エラーメッセージ表示
+            const tbody = document.getElementById("rankingTableBody");
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
+              データの取得に失敗しました: ${error.message || 'APIエラー'}</td></tr>`;
           }
         }
 
@@ -1832,7 +1853,13 @@
             document.getElementById("industryFilterDiv").style.display = "none";
           }
         });
+        // 平均稼働ランキング更新
         document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
+
+        // ページロード時に平均稼働ランキングを初期化
+        fillIndustryDropdownForRanking().then(() => {
+          updateAverageRanking();
+        });
 
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知
