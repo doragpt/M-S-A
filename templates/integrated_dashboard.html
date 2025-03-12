@@ -733,8 +733,7 @@
                 clonedResponse.json().then(data => {
                   localStorage.setItem(`fallback_${url}`, JSON.stringify({
                     data: data,
-                    timestamp: Date.now()
-                  }));
+                    timestamp: Date.now()                  }));
                 });
               } catch (e) {
                 console.warn("フォールバックデータの保存に失敗:", e);
@@ -955,11 +954,11 @@
             const cacheBuster = new Date().getTime();
             console.log("データ取得開始: /api/data");
             const response = await fetchWithRetry(`/api/data?flat=true&per_page=10000&_=${cacheBuster}`, {}, 3, 2000, false);
-            
+
             if (!response.ok) {
               throw new Error(`HTTP error ${response.status}: ${response.statusText || "Unknown Error"}`);
             }
-            
+
             const data = await response.json();
 
             // データが配列であることを確認
@@ -971,7 +970,7 @@
             }
 
             console.log("API取得データ:", data.length + "件");
-            
+
             // 件数が極端に少ない場合は警告
             if (data.length < 100) {
               console.warn(`取得データ件数が少なすぎます: ${data.length}件`);
@@ -1773,20 +1772,20 @@
             }
 
             console.log("ランキングAPIを呼び出し:", apiUrl);
-            
+
             // キャッシュバスターを追加（キャッシュによる問題を防ぐ）
             const cacheBuster = `${apiUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;
-            
+
             // リトライ処理を強化
             let retryCount = 0;
             const maxRetries = 3;
             let response;
-            
+
             while (retryCount < maxRetries) {
               try {
                 response = await fetch(apiUrl + cacheBuster);
                 if (response.ok) break;
-                
+
                 console.warn(`API呼び出し失敗、リトライ中 (${retryCount + 1}/${maxRetries})...`);
                 retryCount++;
                 // 指数バックオフ（リトライ間隔を徐々に長くする）
@@ -1804,13 +1803,13 @@
             }
 
             let rankingData = await response.json();
-            
+
             // エラーチェック: APIからエラーオブジェクトが返された場合
             if (rankingData && rankingData.error === true) {
               console.error("APIからエラーが返されました:", rankingData.message);
               throw new Error(rankingData.message || "APIエラー");
             }
-            
+
             // データ形式チェック
             if (!rankingData) {
               console.warn("APIから無効なデータが返されました", rankingData);
@@ -1827,7 +1826,7 @@
               console.warn("APIから予期しないデータ形式が返されました", rankingData);
               rankingData = [];
             }
-            
+
             // 前処理済みデータをそのまま使用
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
@@ -1858,13 +1857,13 @@
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
               データの取得に失敗しました: ${error.message || 'APIエラー'}</td></tr>`;
-              
+
             // エラーメッセージダイアログ表示
             showErrorDialog(
               "ランキングデータ取得エラー", 
               `APIからデータを取得できませんでした。${error.message || '不明なエラー'}`
             );
-            
+
             // 開発者コンソールに詳細情報を出力
             console.log("ランキングAPIエラー詳細:", {
               error: error,

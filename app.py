@@ -288,7 +288,7 @@ def api_data():
 
     # ページネーションのパラメータを取得
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10000, type=int)  # 最大件数をさらに増やす（店舗全件取得用）
+    per_page = request.args.get('per_page', 100000, type=int)  # 最大件数を10万件に増やす（店舗全件取得用）
 
     # クエリの全結果を取得（集計値の計算用）
     all_results = query.all()
