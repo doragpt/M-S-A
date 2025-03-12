@@ -154,6 +154,23 @@ def scheduled_scrape():
         app.logger.info("【スクレイピング開始】%s 対象店舗数: %d", current_time, len(store_urls))
         try:
             results = scrape_store_data(store_urls)
+            
+            # エラーフラグのリセット（すべての店舗）
+            db.session.query(StoreURL).update({StoreURL.error_flag: 0})
+            db.session.commit()
+            
+            # 結果がない店舗のエラーフラグを設定
+            successful_urls = [r.get('url') for r in results if r and 'url' in r and r.get('store_name') != '不明']
+            failed_urls = set(store_urls) - set(successful_urls)
+            
+            if failed_urls:
+                app.logger.warning(f"{len(failed_urls)}件の店舗でスクレイピングに失敗しました")
+                for failed_url in failed_urls:
+                    store_url_obj = StoreURL.query.filter_by(store_url=failed_url).first()
+                    if store_url_obj:
+                        store_url_obj.error_flag = 1
+                db.session.commit()
+                
         except Exception as e:
             app.logger.error("スクレイピング中のエラー: %s", e)
             app.logger.error(traceback.format_exc())  # スタックトレースも記録
