@@ -969,7 +969,7 @@
             });
 
             const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
-            document.getElementById("avgActiveRate").innerText = avgRate.toFixed(1) + "%";
+            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
 
             const tableBody = document.getElementById("dataTable");
