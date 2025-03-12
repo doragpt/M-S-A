@@ -1,14 +1,9 @@
 import os
 import logging
-import signal
-import sys
-import atexit
-import socket
 from datetime import datetime, timedelta
 import pytz  # タイムゾーン変換用
 import traceback
 import gc  # ガベージコレクション
-import time
 
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -53,15 +48,15 @@ if os.environ.get('REDIS_URL'):
     # 本番環境: Redis利用
     app.config['CACHE_TYPE'] = 'RedisCache'
     app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')
-    app.config['CACHE_OPTIONS'] = {'socket_timeout': 5, 'socket_connect_timeout': 5}
+    app.config['CACHE_OPTIONS'] = {'socket_timeout': 3, 'socket_connect_timeout': 3}
 else:
     # 開発環境: SimpleCache利用（Redis不要）
     app.config['CACHE_TYPE'] = 'SimpleCache'
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 600  # キャッシュ有効期間を10分に延長
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 
 # キャッシュ設定の追加
-app.config['CACHE_KEY_PREFIX'] = 'm_s_a_v2_'  # キャッシュキーのプレフィックス
-app.config['CACHE_THRESHOLD'] = 2000  # SimpleCache使用時の最大アイテム数（2倍に増加）
+app.config['CACHE_KEY_PREFIX'] = 'm_s_a_v1_'  # キャッシュキーのプレフィックス
+app.config['CACHE_THRESHOLD'] = 1000  # SimpleCache使用時の最大アイテム数
 
 cache = Cache(app)
 
@@ -69,7 +64,7 @@ cache = Cache(app)
 request_limits = {}  # IPアドレスごとのリクエスト回数記録用
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode='threading')
 
 # ---------------------------------------------------------------------
 # 2. モデル定義
@@ -114,35 +109,22 @@ with app.app_context():
 # ※スクレイピング処理は外部ファイル (store_scraper.py) に定義してあると想定
 from store_scraper import scrape_store_data
 
-# ポート情報を一時ファイルに保存
-def save_port_info(port):
-    """使用中のポート情報を一時ファイルに保存"""
-    try:
-        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
-        with open(temp_file, 'w') as f:
-            f.write(str(port))
-        print(f"ポート情報を保存しました: {port}")
-    except Exception as e:
-        print(f"ポート情報保存中のエラー: {e}")
-
 def scheduled_scrape():
     """
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
     ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
       得られた結果を StoreStatus テーブルに保存する。
-    ・700店舗を30-40分以内に処理完了するように最適化
     ・重複チェックは「店舗名＋エリア＋スクレイピング実行時刻（分単位切り捨て）」で行い、
       既に同じ複合キーが存在する場合はそのレコードを更新する（上書き）。
     ・古いデータ（2年以上前）を削除してパフォーマンスを維持する。
     ・データ更新後にキャッシュをクリアして最新情報を反映する。
     ・処理完了後、Socket.IO を利用してクライアントへ更新通知を送信する。
     """
-    start_time = time.time()
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
         # 古いデータ削除：過去2年以上前
-        retention_date = datetime.now() - timedelta(days=730) # 730日 = 2年
+        retention_date = datetime.now() - timedelta(days=730)
 
         store_url_objs = StoreURL.query.all()
         store_urls = [s.store_url for s in store_url_objs]
@@ -150,46 +132,21 @@ def scheduled_scrape():
             app.logger.info("店舗URLが1件も登録されていません。")
             return
 
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        app.logger.info("【スクレイピング開始】%s 対象店舗数: %d", current_time, len(store_urls))
+        app.logger.info("【スクレイピング開始】対象店舗数: %d", len(store_urls))
         try:
             results = scrape_store_data(store_urls)
-            
-            # エラーフラグのリセット（すべての店舗）
-            db.session.query(StoreURL).update({StoreURL.error_flag: 0})
-            db.session.commit()
-            
-            # 結果がない店舗のエラーフラグを設定
-            successful_urls = [r.get('url') for r in results if r and 'url' in r and r.get('store_name') != '不明']
-            failed_urls = set(store_urls) - set(successful_urls)
-            
-            if failed_urls:
-                app.logger.warning(f"{len(failed_urls)}件の店舗でスクレイピングに失敗しました")
-                for failed_url in failed_urls:
-                    store_url_obj = StoreURL.query.filter_by(store_url=failed_url).first()
-                    if store_url_obj:
-                        store_url_obj.error_flag = 1
-                db.session.commit()
-                
         except Exception as e:
             app.logger.error("スクレイピング中のエラー: %s", e)
-            app.logger.error(traceback.format_exc())  # スタックトレースも記録
-            # ソケット通知でエラーを通知
-            socketio.emit('scraping_error', {'error': str(e)})
             return
 
         # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
         for record in results:
             if record:  # 空の結果はスキップ
                 # 重複チェック：店舗名とエリアと実行時刻（分単位）でチェック
-                # SQLiteではdate_trunc関数が使えないので、タイムスタンプの範囲で比較
-                minute_start = scrape_time.replace(second=0, microsecond=0)
-                minute_end = minute_start + timedelta(minutes=1)
                 existing = StoreStatus.query.filter(
                     StoreStatus.store_name == record.get('store_name'),
                     StoreStatus.area == record.get('area'),
-                    StoreStatus.timestamp >= minute_start,
-                    StoreStatus.timestamp < minute_end
+                    func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
                 ).first()
                 if existing:
                     # 既存レコードがあれば更新
@@ -222,29 +179,12 @@ def scheduled_scrape():
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        minutes = int(elapsed_time // 60)
-        seconds = int(elapsed_time % 60)
-
-        app.logger.info(f"スクレイピング完了＆古いデータ削除完了。処理時間: {minutes}分{seconds}秒")
-        app.logger.info(f"処理開始時刻: {datetime.fromtimestamp(start_time).strftime('%H:%M:%S')}, 終了時刻: {datetime.fromtimestamp(end_time).strftime('%H:%M:%S')}")
-
+        app.logger.info("スクレイピング完了＆古いデータ削除完了。")
         # キャッシュクリア：特に/api/historyのキャッシュを削除
         cache.clear()
 
-        # スクレイピング完了後に平均稼働率のキャッシュを更新（非同期で実行）
-        try:
-            from analytics import Analytics
-            app.logger.info("平均稼働率のキャッシュ更新を開始（スクレイピング完了後）")
-            # 7日間の平均稼働率を先に計算しておく（ダッシュボード表示用）
-            Analytics.calculate_store_averages(7)
-            app.logger.info("平均稼働率のキャッシュ更新完了")
-        except Exception as e:
-            app.logger.error(f"平均稼働率キャッシュ更新エラー: {str(e)}")
-
         # Socket.IO でクライアントへ更新通知
-        socketio.emit('update', {'data': 'Dashboard updated', 'elapsed_time': f"{minutes}分{seconds}秒"})
+        socketio.emit('update', {'data': 'Dashboard updated'})
 
 # 深夜にメモリ解放とキャッシュクリアを行う関数
 def maintenance_task():
@@ -257,35 +197,20 @@ def maintenance_task():
         collected = gc.collect()
         app.logger.info(f"ガベージコレクション完了: {collected}オブジェクト解放")
 
-# APScheduler の設定：1時間ごとに scheduled_scrape を実行（ジョブキューを制限）
+# APScheduler の設定：1時間ごとに scheduled_scrape を実行
+# ジョブIDを 'scrape_job' として登録
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
-scheduler = BackgroundScheduler(
-    executors=executors,
-    job_defaults={
-        'coalesce': True,  # 遅延ジョブを集約
-        'max_instances': 1,  # 同じジョブの同時実行を防止
-        'misfire_grace_time': 300  # 5分のミスファイア猶予時間
-    }
-)
-# スケジュール設定：
-# 1. アプリ起動後5分後に初回スクレイピング実行
-# 2. その後1時間ごとに定期実行
-# 3. 午前3時にメンテナンス実行
-from datetime import datetime, timedelta
-initial_run_time = datetime.now() + timedelta(minutes=5)
-scheduler.add_job(scheduled_scrape, 'date', run_date=initial_run_time, id='initial_scrape_job')
-scheduler.add_job(scheduled_scrape, 'interval', hours=1, start_date=initial_run_time + timedelta(hours=1), id='scrape_job')
+scheduler = BackgroundScheduler(executors=executors)
+scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
+# 毎日午前3時にメンテナンスタスクを実行
 scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
-
-print(f"初回スクレイピング予定時刻: {initial_run_time.strftime('%Y-%m-%d %H:%M:%S')}")
-print(f"その後1時間ごとに定期実行します")
 
 # ---------------------------------------------------------------------
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-@cache.cached(timeout=600, unless=lambda: request.args.get('nocache') is not None)  # キャッシュ：10分間有効、nocacheパラメータがある場合はキャッシュをスキップ
+@cache.cached(timeout=300)  # キャッシュ：5分間有効
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
@@ -297,106 +222,84 @@ def api_data():
         biz_type: 業種でフィルタリング
         area: エリアでフィルタリング
         format: 'compact'を指定すると必要最小限のフィールドだけを返す
-        nocache: 指定するとキャッシュをバイパスして最新データを取得
     """
-    try:
-        # ローカル環境でのデータベースアクセス確認
-        try:
-            store_count = db.session.query(func.count(StoreStatus.id)).scalar()
-            app.logger.info(f"データベース接続確認: StoreStatus テーブルには {store_count} 件のレコードがあります")
-        except Exception as db_err:
-            app.logger.error(f"データベース接続エラー: {str(db_err)}")
-            return jsonify({"error": True, "message": f"データベース接続エラー: {str(db_err)}"}), 500
-            
-        from page_helper import paginate_query_results, format_store_status
-        
-        # 各店舗の最新タイムスタンプをサブクエリで取得
-        subq = db.session.query(
-            StoreStatus.store_name,
-            func.max(StoreStatus.timestamp).label("max_time")
-        ).group_by(StoreStatus.store_name).subquery()
+    """
+    各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
+    集計値（全体平均など）も含める。
 
-        query = db.session.query(StoreStatus).join(
-            subq,
-            (StoreStatus.store_name == subq.c.store_name) &
-            (StoreStatus.timestamp == subq.c.max_time)
-        ).order_by(StoreStatus.timestamp.desc())
+    クエリパラメータ:
+        page: ページ番号（1から始まる）
+        per_page: 1ページあたりの項目数（最大100）
+    """
+    from page_helper import paginate_query_results, format_store_status
 
-        # ページネーションのパラメータを取得
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 100000, type=int)  # 最大件数を10万件に増やす（店舗全件取得用）
+    # 各店舗の最新タイムスタンプをサブクエリで取得
+    subq = db.session.query(
+        StoreStatus.store_name,
+        func.max(StoreStatus.timestamp).label("max_time")
+    ).group_by(StoreStatus.store_name).subquery()
 
-        # クエリの全結果を取得（集計値の計算用）
-        all_results = query.all()
+    query = db.session.query(StoreStatus).join(
+        subq,
+        (StoreStatus.store_name == subq.c.store_name) &
+        (StoreStatus.timestamp == subq.c.max_time)
+    ).order_by(StoreStatus.timestamp.desc())
 
-        # データが空の場合、サンプルデータを返す
-        if not all_results:
-            app.logger.warning("データベースに店舗データがありません。サンプルデータを返します。")
-            return jsonify({"data": [], "meta": {"total_count": 0, "valid_stores": 0, "avg_rate": 0, "max_rate": 0, 
-                                                "total_working_staff": 0, "total_active_staff": 0,
-                                                "page": 1, "per_page": per_page, "total_pages": 0, 
-                                                "has_prev": False, "has_next": False}})
+    # ページネーションのパラメータを取得
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
 
-        # 集計値の計算
-        total_store_count = len(all_results)
-        total_working_staff = 0
-        total_active_staff = 0
-        valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
-        max_rate = 0
+    # クエリの全結果を取得（集計値の計算用）
+    all_results = query.all()
 
-        for r in all_results:
-            # 集計用データの収集
-            if r.working_staff > 0:
-                valid_stores += 1
-                total_working_staff += r.working_staff
-                total_active_staff += r.active_staff
-                rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
-                max_rate = max(max_rate, rate)
+    # 集計値の計算
+    total_store_count = len(all_results)
+    total_working_staff = 0
+    total_active_staff = 0
+    valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+    max_rate = 0
 
-        # 全体平均稼働率の計算
-        avg_rate = 0
-        if valid_stores > 0 and total_working_staff > 0:
-            avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+    for r in all_results:
+        # 集計用データの収集
+        if r.working_staff > 0:
+            valid_stores += 1
+            total_working_staff += r.working_staff
+            total_active_staff += r.active_staff
+            rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
+            max_rate = max(max_rate, rate)
 
-        # ページネーション適用
-        paginated_result = paginate_query_results(query, page, per_page)
-        items = paginated_result['items']
+    # 全体平均稼働率の計算
+    avg_rate = 0
+    if valid_stores > 0 and total_working_staff > 0:
+        avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
 
-        # データのフォーマット
-        jst = pytz.timezone('Asia/Tokyo')
-        data = [format_store_status(item, jst) for item in items]
+    # ページネーション適用
+    paginated_result = paginate_query_results(query, page, per_page)
+    items = paginated_result['items']
 
-        # レスポンスの組み立て
-        response = {
-            "data": data,
-            "meta": {
-                "total_count": total_store_count,
-                "valid_stores": valid_stores,
-                "avg_rate": round(avg_rate, 1),
-                "max_rate": round(max_rate,1),
-                "total_working_staff": total_working_staff,
-                "total_active_staff": total_active_staff,
-                "page": paginated_result['meta']['page'],
-                "per_page": paginated_result['meta']['per_page'],
-                "total_pages": paginated_result['meta']['total_pages'],
-                "has_prev": paginated_result['meta']['has_prev'],
-                "has_next": paginated_result['meta']['has_next']
-            }
+    # データのフォーマット
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [format_store_status(item, jst) for item in items]
+
+    # レスポンスの組み立て（データ、集計値、ページネーション情報を含む）
+    response = {
+        "data": data,
+        "meta": {
+            "total_count": total_store_count,
+            "valid_stores": valid_stores,
+            "avg_rate": round(avg_rate, 1),
+            "max_rate": round(max_rate,1), # Added max_rate to meta
+            "total_working_staff": total_working_staff,
+            "total_active_staff": total_active_staff,
+            "page": paginated_result['meta']['page'],
+            "per_page": paginated_result['meta']['per_page'],
+            "total_pages": paginated_result['meta']['total_pages'],
+            "has_prev": paginated_result['meta']['has_prev'],
+            "has_next": paginated_result['meta']['has_next']
         }
+    }
 
-        app.logger.info(f"API /api/data: {total_store_count}件のデータを返します")
-
-        # レスポンス形式を常に一貫させる（メタデータ付きの形式を標準にする）
-        if 'flat' in request.args:
-            return jsonify(data)
-        else:
-            return jsonify(response)
-            
-    except Exception as e:
-        app.logger.error(f"API /api/data エラー: {str(e)}")
-        import traceback
-        app.logger.error(traceback.format_exc())
-        return jsonify({"error": True, "message": str(e)}), 500
+    return jsonify(response)
 
 
 @app.route('/api/history')
@@ -528,55 +431,6 @@ def edit_store_url(id):
     return render_template('edit_store_url.html', url_data=url_obj)
 
 
-@app.route('/admin/bulk_add', methods=['POST'])
-def bulk_add_urls():
-    """
-    複数の店舗URLを一括で追加するエンドポイント
-    """
-    bulk_urls = request.form.get('bulk_urls', '').strip()
-    skip_duplicates = bool(request.form.get('skip_duplicates', False))
-
-    if not bulk_urls:
-        flash("URLを入力してください。", "warning")
-        return redirect(url_for('manage_store_urls'))
-
-    # 改行で区切ってURLリストを取得
-    url_list = [url.strip() for url in bulk_urls.split('\n') if url.strip()]
-
-    added_count = 0
-    skipped_count = 0
-    error_count = 0
-
-    for url in url_list:
-        # URLの形式チェック（基本的な検証）
-        if not (url.startswith('http://') or url.startswith('https://')):
-            error_count += 1
-            continue
-
-        # 重複チェック
-        existing = StoreURL.query.filter_by(store_url=url).first()
-        if existing:
-            skipped_count += 1
-            continue
-
-        try:
-            new_url = StoreURL(store_url=url)
-            db.session.add(new_url)
-            added_count += 1
-        except Exception as e:
-            error_count += 1
-            app.logger.error(f"URL追加エラー: {url} - {e}")
-
-    try:
-        db.session.commit()
-        flash(f"一括登録完了: {added_count}件追加, {skipped_count}件スキップ, {error_count}件エラー", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"データベースエラー: {e}", "danger")
-
-    return redirect(url_for('manage_store_urls'))
-
-
 # ---------------------------------------------------------------------
 # 7. 統合ダッシュボードルート
 # ---------------------------------------------------------------------
@@ -586,42 +440,6 @@ def index():
     統合ダッシュボードの HTML を返すルート
     """
     return render_template('integrated_dashboard.html')
-
-# 静的HTMLファイルへのアクセス用ルート
-@app.route('/dashboard')
-def dashboard():
-    """
-    統合ダッシュボードの HTML を返す代替ルート
-    """
-    return render_template('integrated_dashboard.html')
-
-# デバッグ用：APIデータ確認ページ
-@app.route('/debug/data')
-def debug_data():
-    """
-    APIデータ確認用ページ
-    """
-    subq = db.session.query(
-        StoreStatus.store_name,
-        func.max(StoreStatus.timestamp).label("max_time")
-    ).group_by(StoreStatus.store_name).subquery()
-
-    results = db.session.query(StoreStatus).join(
-        subq,
-        (StoreStatus.store_name == subq.c.store_name) &
-        (StoreStatus.timestamp == subq.c.max_time)
-    ).order_by(StoreStatus.timestamp.desc()).limit(20).all()
-
-    records = []
-    for r in results:
-        records.append({
-            'store_name': r.store_name,
-            'timestamp': r.timestamp,
-            'working_staff': r.working_staff,
-            'active_staff': r.active_staff
-        })
-
-    return jsonify(records)
 
 
 # ---------------------------------------------------------------------
@@ -645,6 +463,18 @@ def manual_scrape():
     return redirect(url_for('manage_store_urls'))
 
 
+# ---------------------------------------------------------------------
+# 9. メイン実行部
+# ---------------------------------------------------------------------
+if __name__ == '__main__':
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
 @cache.cached(timeout=600)  # キャッシュ：10分間有効
@@ -656,145 +486,53 @@ def api_average_ranking():
         biz_type: 業種でフィルタリング
         limit: 上位何件を返すか（デフォルト20件）
     """
-    try:
-        # フィルタリング条件
-        biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 20, type=int)
+    # フィルタリング条件
+    biz_type = request.args.get('biz_type')
+    limit = request.args.get('limit', 20, type=int)
 
-        # サブクエリ: 店舗ごとのグループ化
-        subq = db.session.query(
-            StoreStatus.store_name,
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).label('avg_rate'),
-            func.count().label('sample_count'),
-            func.max(StoreStatus.biz_type).label('biz_type'),
-            func.max(StoreStatus.genre).label('genre'),
-            func.max(StoreStatus.area).label('area')
-        ).filter(StoreStatus.working_staff > 0)
+    # サブクエリ: 店舗ごとのグループ化
+    subq = db.session.query(
+        StoreStatus.store_name,
+        func.avg(
+            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+            func.nullif(StoreStatus.working_staff, 0)
+        ).label('avg_rate'),
+        func.count().label('sample_count'),
+        func.max(StoreStatus.biz_type).label('biz_type'),
+        func.max(StoreStatus.genre).label('genre'),
+        func.max(StoreStatus.area).label('area')
+    ).filter(StoreStatus.working_staff > 0)
 
-        # 業種でフィルタリング（指定があれば）
-        if biz_type:
-            subq = subq.filter(StoreStatus.biz_type == biz_type)
+    # 業種でフィルタリング（指定があれば）
+    if biz_type:
+        subq = subq.filter(StoreStatus.biz_type == biz_type)
 
-        # グループ化と最小サンプル数フィルタ - 少なくとも3サンプル以上あるものに緩和
-        subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 3).subquery()
+    # グループ化と最小サンプル数フィルタ
+    subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 10).subquery()
 
-        # メインクエリ: ランキング取得
-        query = db.session.query(
-            subq.c.store_name,
-            subq.c.avg_rate,
-            subq.c.sample_count,
-            subq.c.biz_type,
-            subq.c.genre,
-            subq.c.area
-        ).order_by(subq.c.avg_rate.desc()).limit(limit)
+    # メインクエリ: ランキング取得
+    query = db.session.query(
+        subq.c.store_name,
+        subq.c.avg_rate,
+        subq.c.sample_count,
+        subq.c.biz_type,
+        subq.c.genre,
+        subq.c.area
+    ).order_by(subq.c.avg_rate.desc()).limit(limit)
 
-        results = query.all()
+    results = query.all()
 
-        # 結果を整形
-        data = [{
-            'store_name': r.store_name,
-            'avg_rate': float(r.avg_rate) if r.avg_rate is not None else 0.0,
-            'sample_count': r.sample_count,
-            'biz_type': r.biz_type or '不明',
-            'genre': r.genre or '不明',
-            'area': r.area or '不明'
-        } for r in results]
+    # 結果を整形
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
 
-        # データがない場合はダミーデータを返す（開発用）
-        if not data:
-            data = [{
-                'store_name': 'サンプル店舗' + str(i),
-                'avg_rate': float(90 - i * 5),
-                'sample_count': 10,
-                'biz_type': 'サンプル業種',
-                'genre': 'サンプルジャンル',
-                'area': 'サンプルエリア'
-            } for i in range(5)]
-
-        # 明示的にリストとして返す（JSON配列としてのレスポンス保証）
-        return jsonify(data)
-    except Exception as e:
-        app.logger.error(f"平均稼働ランキングAPI エラー: {str(e)}")
-        app.logger.error(traceback.format_exc())
-        # エラーの場合でも空の配列を返す（フロントエンドでのエラーハンドリング向上）
-        return jsonify([]), 200
-
-# 平均稼働率データを提供するAPI
-@app.route('/api/average_rates')
-@cache.cached(timeout=1800)  # 30分キャッシュ
-def api_average_rates():
-    """
-    店舗ごとの指定期間の平均稼働率を計算して返すAPI
-    
-    クエリパラメータ:
-        days: 過去何日間のデータを使用するか (デフォルト: 30)
-    """
-    try:
-        # パラメータ取得
-        days = request.args.get('days', 30, type=int)
-        
-        # データが空かチェック
-        count = db.session.query(func.count(StoreStatus.id)).scalar()
-        if count == 0:
-            app.logger.warning("平均稼働率API: データがありません")
-            return jsonify({
-                'weekly': {},
-                'monthly': {},
-                'weeklyOverall': 0,
-                'monthlyOverall': 0,
-                'store_averages': {},  # 互換性のため
-                'overall_avg': 0,      # 互換性のため
-                'sample_count': 0      # 互換性のため
-            })
-        
-        # 指定された日数での平均稼働率を計算
-        from analytics import Analytics
-        avg_data = Analytics.calculate_store_averages(days)
-        
-        # データ構造を確認
-        if not isinstance(avg_data, dict):
-            app.logger.warning(f"平均稼働率API: 無効なデータ形式 {type(avg_data)}")
-            # 安全なデフォルト値
-            return jsonify({
-                'weekly': {},
-                'monthly': {},
-                'weeklyOverall': 0,
-                'monthlyOverall': 0,
-                'store_averages': {},
-                'overall_avg': 0,
-                'sample_count': 0
-            })
-        
-        app.logger.info(f"平均稼働率API: {days}日間のデータを返します")
-        return jsonify(avg_data)
-        
-    except Exception as e:
-        app.logger.error(f"平均稼働率API エラー: {str(e)}")
-        app.logger.error(traceback.format_exc())
-        return jsonify({
-            'weekly': {},
-            'monthly': {},
-            'weeklyOverall': 0,
-            'monthlyOverall': 0,
-            'error': True,
-            'message': str(e)
-        }), 500
-
-# ---------------------------------------------------------------------
-# 9. メイン実行部
-# ---------------------------------------------------------------------
-if __name__ == '__main__':
-    # ローカル環境用の設定
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    save_port_info(port) # ポート情報を保存
-
-    # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    return jsonify(data)
 
 # 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
 @app.route('/api/aggregated')
@@ -829,236 +567,3 @@ def api_aggregated_data():
     } for r in results]
 
     return jsonify(data)
-
-
-# スクレイピング状況を確認するAPI
-@app.route('/api/scraping/status')
-def api_scraping_status():
-    """
-    スクレイピングの状態を確認するAPIエンドポイント。
-    - 全店舗数
-    - 最終スクレイピング実行時間
-    - 24時間以内にスクレイピングされた店舗数
-    - エラーフラグのある店舗数
-    - スクレイピングカバレッジ率
-    """
-    try:
-        # DB接続
-        store_data = {}
-
-        # 全店舗数のカウント
-        total_urls = db.session.query(func.count(StoreURL.id)).scalar()
-        store_data["total_store_count"] = total_urls
-
-        # 最終スクレイピング実行時刻
-        latest_scrape = db.session.query(func.max(StoreStatus.timestamp)).scalar()
-        if latest_scrape:
-            store_data["last_scrape_time"] = latest_scrape.isoformat()
-            time_diff = datetime.now() - latest_scrape
-            store_data["hours_since_last_scrape"] = round(time_diff.total_seconds() / 3600, 1)
-        else:
-            store_data["last_scrape_time"] = None
-            store_data["hours_since_last_scrape"] = None
-
-        # 24時間以内にスクレイピングされた店舗数
-        day_ago = datetime.now() - timedelta(hours=24)
-        recent_stores = db.session.query(func.count(func.distinct(StoreStatus.store_name)))\
-            .filter(StoreStatus.timestamp > day_ago).scalar()
-        store_data["recent_scraped_stores"] = recent_stores
-
-        # エラーフラグのある店舗数
-        error_stores = db.session.query(func.count(StoreURL.id))\
-            .filter(StoreURL.error_flag > 0).scalar()
-        store_data["error_flagged_stores"] = error_stores
-
-        # カバレッジ計算
-        if total_urls > 0:
-            coverage = (recent_stores / total_urls) * 100
-            store_data["coverage_percentage"] = round(coverage, 1)
-        else:
-            store_data["coverage_percentage"] = 0
-
-        # 最近追加された店舗（最新10件）
-        recent_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
-            .order_by(StoreURL.id.desc()).limit(10).all()
-        store_data["recent_added_urls"] = [{"id": id, "url": url} for id, url in recent_urls]
-
-        # エラーのある店舗（最大10件）
-        if error_stores > 0:
-            error_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
-                .filter(StoreURL.error_flag > 0).limit(10).all()
-            store_data["error_urls"] = [{"id": id, "url": url} for id, url in error_urls]
-        else:
-            store_data["error_urls"] = []
-
-        return jsonify(store_data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# 特定の店舗URLを強制的にスクレイピングするAPI
-@app.route('/api/scraping/force', methods=['POST'])
-def api_force_scrape():
-    """
-    特定のURLを強制的にスクレイピングするAPIエンドポイント。
-
-    リクエストボディ:
-        url: スクレイピングするURL
-        または
-        id: スクレイピングする店舗ID
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-
-        # URLまたはIDで店舗を特定
-        store_url = None
-        if 'url' in data:
-            store_url = data['url']
-        elif 'id' in data:
-            store_url_obj = StoreURL.query.get(data['id'])
-            if store_url_obj:
-                store_url = store_url_obj.store_url
-
-        if not store_url:
-            return jsonify({"error": "No valid URL or ID provided"}), 400
-
-        # スクレイピング実行（同期処理なので注意）
-        result = scrape_store_data([store_url])
-        if result and len(result) > 0:
-            # 成功した場合、DBに保存
-            record = result[0]
-            if record:
-                store_status = StoreStatus(
-                    store_name=record.get('store_name'),
-                    biz_type=record.get('biz_type'),
-                    genre=record.get('genre'),
-                    area=record.get('area'),
-                    total_staff=record.get('total_staff'),
-                    working_staff=record.get('working_staff'),
-                    active_staff=record.get('active_staff'),
-                    url=record.get('url'),
-                    shift_time=record.get('shift_time')
-                )
-                db.session.add(store_status)
-                db.session.commit()
-                return jsonify({"success": True, "data": record})
-
-        return jsonify({"success": False, "error": "スクレイピングに失敗しました"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-def cleanup_resources():
-    """アプリケーション終了時のリソース解放処理"""
-    print("アプリケーションをシャットダウンしています...")
-
-    # 使用中ポートの情報を削除
-    try:
-        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-            print("ポート情報ファイルを削除しました")
-    except Exception as e:
-        print(f"ポート情報削除中のエラー: {e}")
-
-    # スケジューラーの停止
-    try:
-        scheduler.shutdown()
-        print("スケジューラーを停止しました")
-    except Exception as e:
-        print(f"スケジューラー停止中のエラー: {e}")
-
-    # DBセッションのクリーンアップ
-    try:
-        db.session.remove()
-        print("DBセッションをクリーンアップしました")
-    except Exception as e:
-        print(f"DBセッションクリーンアップ中のエラー: {e}")
-
-    print("アプリケーションを終了します")
-
-# 終了時の処理を登録
-atexit.register(cleanup_resources)
-
-# シグナルハンドラ (Ctrl+C での終了処理)
-def signal_handler(sig, frame):
-    print('Ctrl+C を検知しました。シャットダウンを開始します...')
-    cleanup_resources()
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-
-# ---------------------------------------------------------------------
-# 10. ポート解放確認処理
-# ---------------------------------------------------------------------
-def check_and_release_port(port):
-    """指定されたポートが使用中であれば解放を試みる"""
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)  # タイムアウトの設定
-        result = sock.connect_ex(('127.0.0.1', port))
-        if result == 0:
-            print(f"ポート {port} は使用中です。解放を試みます...")
-            # Linuxの場合のポート解放処理
-            try:
-                import subprocess
-                # lsofでポートを使用しているプロセスIDを取得
-                lsof_cmd = f"lsof -ti:{port}"
-                process = subprocess.run(lsof_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-                if process.returncode == 0 and process.stdout.strip():
-                    pid = process.stdout.strip()
-                    print(f"ポート {port} を使用しているプロセスID: {pid}")
-
-                    # プロセスを停止
-                    kill_cmd = f"kill -9 {pid}"
-                    subprocess.run(kill_cmd, shell=True)
-                    print(f"プロセスID {pid} を停止しました。")
-
-                    # 再度確認
-                    time.sleep(0.5)
-                    re_check = sock.connect_ex(('127.0.0.1', port))
-                    if re_check != 0:
-                        print(f"ポート {port} は正常に解放されました。")
-                    else:
-                        print(f"ポート {port} の解放に失敗しました。")
-                else:
-                    print(f"ポート {port} を使用しているプロセスが見つかりませんでした。")
-            except Exception as e:
-                print(f"ポート解放処理中のエラー: {e}")
-        else:
-            print(f"ポート {port} は使用されていません。")
-        sock.close()
-    except OSError as e:
-        print(f"ポート確認中のエラー: {e}")
-
-
-if __name__ == '__main__':
-    # ローカル環境用の設定
-    import os
-    import time  # time.sleepの追加
-
-    port = int(os.environ.get("PORT", 5000))
-
-    # ポートが使用中であれば解放を試みる
-    check_and_release_port(port)
-
-    # ポート情報を保存
-    save_port_info(port)
-
-    # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    try:
-        socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
-    except OSError as e:
-        if "Address already in use" in str(e):
-            print(f"エラー: ポート {port} が既に使用されています。再度解放を試みます。")
-            check_and_release_port(port)
-            time.sleep(1)
-            print(f"再試行: サーバーを起動しています: http://0.0.0.0:{port}")
-            socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
-        else:
-            raise
