@@ -1,5 +1,9 @@
 import os
 import logging
+import signal
+import sys
+import atexit
+import socket
 from datetime import datetime, timedelta
 import pytz  # タイムゾーン変換用
 import traceback
@@ -594,6 +598,7 @@ if __name__ == '__main__':
     # ローカル環境用の設定
     import os
     port = int(os.environ.get("PORT", 5000))
+    save_port_info(port) # ポート情報を保存
 
     # サーバー起動 - シンプルな設定
     print(f"サーバーを起動しています: http://0.0.0.0:{port}")
@@ -751,3 +756,88 @@ def api_force_scrape():
         return jsonify({"success": False, "error": "スクレイピングに失敗しました"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ポート情報を一時ファイルに保存
+def save_port_info(port):
+    """使用中のポート情報を一時ファイルに保存"""
+    try:
+        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
+        with open(temp_file, 'w') as f:
+            f.write(str(port))
+        print(f"ポート情報を保存しました: {port}")
+    except Exception as e:
+        print(f"ポート情報保存中のエラー: {e}")
+
+# 終了時のクリーンアップ処理
+def cleanup_resources():
+    """アプリケーション終了時のリソース解放処理"""
+    print("アプリケーションをシャットダウンしています...")
+
+    # 使用中ポートの情報を削除
+    try:
+        temp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.port_info')
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+            print("ポート情報ファイルを削除しました")
+    except Exception as e:
+        print(f"ポート情報削除中のエラー: {e}")
+
+    # スケジューラーの停止
+    try:
+        scheduler.shutdown()
+        print("スケジューラーを停止しました")
+    except Exception as e:
+        print(f"スケジューラー停止中のエラー: {e}")
+
+    # DBセッションのクリーンアップ
+    try:
+        db.session.remove()
+        print("DBセッションをクリーンアップしました")
+    except Exception as e:
+        print(f"DBセッションクリーンアップ中のエラー: {e}")
+
+    print("アプリケーションを終了します")
+
+# 終了時の処理を登録
+atexit.register(cleanup_resources)
+
+# シグナルハンドラ (Ctrl+C での終了処理)
+def signal_handler(sig, frame):
+    print('Ctrl+C を検知しました。シャットダウンを開始します...')
+    cleanup_resources()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+
+# ---------------------------------------------------------------------
+# 10. ポート解放確認処理
+# ---------------------------------------------------------------------
+def check_and_release_port(port):
+    """指定されたポートが使用中であれば解放を試みる"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', port))
+        if result == 0:
+            print(f"ポート {port} は使用中です。解放を試みます...")
+            # ポートを解放するための処理(OSコマンドなど)を追加する必要があるかもしれません。
+            # 例: Windowsの場合は `netstat -a -b | findstr :<port>` でプロセスを特定し、強制終了する。
+            # 例: Linuxの場合は `lsof -i :<port>` でプロセスを特定し、killコマンドを使用する。
+            # ここでは簡略化のため、警告のみ出力
+            print(f"警告: ポート {port} の解放処理は実装されていません。手動で解放してください。")
+        else:
+            print(f"ポート {port} は使用されていません。")
+        sock.close()
+    except OSError as e:
+        print(f"ポート確認中のエラー: {e}")
+
+
+if __name__ == '__main__':
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    save_port_info(port) # ポート情報を保存
+
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
