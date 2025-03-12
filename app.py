@@ -300,6 +300,14 @@ def api_data():
         nocache: 指定するとキャッシュをバイパスして最新データを取得
     """
     try:
+        # ローカル環境でのデータベースアクセス確認
+        try:
+            store_count = db.session.query(func.count(StoreStatus.id)).scalar()
+            app.logger.info(f"データベース接続確認: StoreStatus テーブルには {store_count} 件のレコードがあります")
+        except Exception as db_err:
+            app.logger.error(f"データベース接続エラー: {str(db_err)}")
+            return jsonify({"error": True, "message": f"データベース接続エラー: {str(db_err)}"}), 500
+            
         from page_helper import paginate_query_results, format_store_status
         
         # 各店舗の最新タイムスタンプをサブクエリで取得

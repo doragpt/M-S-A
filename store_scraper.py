@@ -43,11 +43,11 @@ async def fetch_page(page, url, retries=3, timeout=20000):
         try:
             response = await page.goto(url, waitUntil='networkidle0', timeout=timeout)
             if response and response.status in [404, 403, 500]:
-                print(f"エラーステータス: {response.status} - {url}")
+                # エラーメッセージを表示せず、エラーフラグのみ設定
                 return False
             return True
         except Exception as e:
-            print(f"ページロード失敗（リトライ {attempt+1}/{retries}）: {url} - {e}")
+            # 詳細なエラーメッセージを表示せず、静かに再試行
             await asyncio.sleep(5)
     return False
 
@@ -79,15 +79,15 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         page = await browser.newPage()
         try:
             await stealth(page)  # 検出回避のため stealth を適用
-        except Exception as e:
-            print("stealth 適用エラー:", e)
+        except Exception:
+            pass  # エラーを表示せず静かに続行
         # ユーザーエージェントを設定
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         )
 
-        print("初回アクセス中:", attend_url)
+        # デバッグ表示を抑制
         # 指定URLにアクセス。タイムアウト20秒、リトライ3回
         success = await fetch_page(page, attend_url, retries=3, timeout=20000)
         if not success:
@@ -127,7 +127,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
             if store_name != "不明":
                 break
             attempt += 1
-            print(f"店舗情報再取得試行 {attempt} 回目: {url}")
             # 同じページを再利用して再度アクセス
             success = await fetch_page(page, attend_url, retries=3, timeout=20000)
             if not success:
@@ -142,7 +141,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
                 if a_elem:
                     area = a_elem.get_text(strip=True)
         if store_name == "不明":
-            print("再取得に失敗: ", url)
             await page.close()
             return {}
 
@@ -164,7 +162,6 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         # 本日の出勤情報は "item-0" 部分にある（明日の情報は対象外）
         today_tab = container.find("div", class_="item-0")
         wrappers = today_tab.find_all("div", class_="sugunavi_wrapper") if today_tab else []
-        print("シフト件数:", len(wrappers))
 
         total_staff = 0     # 総出勤数
         working_staff = 0   # 勤務中の人数
