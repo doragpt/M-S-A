@@ -2,6 +2,7 @@
 import sqlite3
 import datetime
 import pytz
+import sys
 
 def check_database_status():
     """データベース内のスクレイピング状況を確認する関数"""
@@ -41,6 +42,42 @@ def check_database_status():
     cursor.execute("SELECT COUNT(*) FROM store_status")
     total_records = cursor.fetchone()[0]
     print(f"総レコード数: {total_records}")
+    
+    # 店舗ごとのレコード件数を表示
+    if len(sys.argv) > 1 and sys.argv[1] == "--detail":
+        cursor.execute("""
+            SELECT store_name, COUNT(*) as count
+            FROM store_status
+            GROUP BY store_name
+            ORDER BY count DESC
+            LIMIT 20
+        """)
+        print("\n店舗別レコード数（上位20件）:")
+        for name, count in cursor.fetchall():
+            print(f"  {name}: {count}件")
+    
+    # 日付別のレコード数を表示
+    cursor.execute("""
+        SELECT date(timestamp) as date, COUNT(*) as count
+        FROM store_status
+        GROUP BY date(timestamp)
+        ORDER BY date DESC
+        LIMIT 10
+    """)
+    print("\n日付別レコード数（最新10日）:")
+    for date, count in cursor.fetchall():
+        print(f"  {date}: {count}件")
+    
+    # 最新データのチェック - 古いデータが表示されていないか確認
+    cursor.execute("""
+        SELECT store_name, timestamp, working_staff, active_staff 
+        FROM store_status 
+        ORDER BY timestamp DESC 
+        LIMIT 5
+    """)
+    print("\n最新のレコード（5件）:")
+    for store, time, working, active in cursor.fetchall():
+        print(f"  {store} - {time} - 稼働中:{working}人, 待機中:{active}人")
     
     conn.close()
 

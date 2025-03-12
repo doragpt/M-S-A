@@ -77,13 +77,25 @@
       color: #fff;
       border-bottom: none;
     }
+    .dashboard-controls {
+      margin-bottom: 20px;
+    }
+    .refresh-button {
+      padding: 8px 16px;
+      margin: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <!-- ヘッダー -->
   <div class="header" id="pageHeader">
     <h1>統合ダッシュボード</h1>
-    <div class="btn-group">
+    <div class="btn-group dashboard-controls">
       <button id="darkModeToggle" class="btn btn-light btn-sm">ダークモード切替</button>
       <button id="favoritesToggle" class="btn btn-light btn-sm">お気に入りのみ表示</button>
       <button id="refreshDataBtn" class="btn btn-primary btn-sm">最新データに更新</button>
@@ -398,7 +410,7 @@
           });
           document.getElementById("favoritesToggle").innerText = favoritesFilterActive ? "すべて表示" : "お気に入りのみ表示";
         });
-        
+
         // 最新データ取得ボタンのイベントリスナーを追加
         document.getElementById("refreshDataBtn")?.addEventListener("click", async () => {
           try {
@@ -406,14 +418,14 @@
             const timestamp = new Date().getTime();
             const response = await fetch(`/api/data?nocache=${timestamp}`);
             if (!response.ok) throw new Error("API error " + response.status);
-            
+
             const data = await response.json();
             console.log("最新データ取得成功:", data);
-            
+
             // ダッシュボードを更新
             updateDashboard();
             updateTop10Chart();
-            
+
             alert(`最新データの取得に成功しました！\n${data.meta.total_count}件の店舗データが取得されました。`);
           } catch (error) {
             console.error("データ更新エラー:", error);
@@ -421,10 +433,54 @@
           }
         });
 
-        async function updateDashboard() {
+
+        // データの強制リフレッシュ用のタイムスタンプパラメータを生成
+        function getCacheBuster() {
+          return "?_=" + new Date().getTime();
+        }
+
+        // APIからデータを取得する際にキャッシュバスターを付加
+        async function fetchDataWithCacheBuster(url) {
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
+            const response = await fetch(url + getCacheBuster());
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+          } catch (error) {
+            console.error('データ取得エラー:', error);
+            return null;
+          }
+        }
+
+        // ダッシュボードデータを更新する関数
+        async function refreshDashboard() {
+          console.log("ダッシュボードデータを更新中...");
+          const data = await fetchDataWithCacheBuster('/api/data');
+          if (data) {
+            updateDashboard(data); //This function needs to be implemented
+            updateTop10Chart();
+          }
+        }
+
+        // リフレッシュボタンを追加
+        const controlPanel = document.querySelector('.dashboard-controls');
+        const refreshBtn = document.createElement('button');
+        refreshBtn.textContent = 'データ更新';
+        refreshBtn.className = 'refresh-button';
+        controlPanel.appendChild(refreshBtn);
+        refreshBtn.addEventListener('click', refreshDashboard);
+
+        // ページロード時に自動更新
+        refreshDashboard();
+
+
+        async function updateDashboard(data) {
+          try {
+            if (!data) {
+              console.error("Failed to fetch data for dashboard update.");
+              return;
+            }
             document.getElementById("totalStores").innerText = data.length;
             const avgRate =
               data.reduce((sum, store) => {
@@ -987,11 +1043,11 @@
         const socket = io();
         socket.on("update", (msg) => {
           console.log("Socket update received:", msg.data);
-          updateDashboard();
+          updateDashboard(msg.data); // Update with socket data
           updateTop10Chart();
         });
 
-        updateDashboard();
+        updateDashboard(); //Initial Data Fetch
         updateTop10Chart();
       });
     })();
