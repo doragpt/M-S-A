@@ -97,6 +97,49 @@ class StoreURL(db.Model):
     store_url = db.Column(db.Text, unique=True, nullable=False)
     error_flag = db.Column(db.Integer, default=0)
 
+# 集計データテーブル
+class DailyAverage(db.Model):
+    """日次の平均稼働率（直近24時間）"""
+    __tablename__ = 'daily_averages'
+    id = db.Column(db.Integer, primary_key=True)
+    store_name = db.Column(db.Text, index=True)
+    avg_rate = db.Column(db.Float)
+    sample_count = db.Column(db.Integer)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    biz_type = db.Column(db.Text)
+    genre = db.Column(db.Text)
+    area = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=func.now())
+
+class WeeklyAverage(db.Model):
+    """週次の平均稼働率（直近7日間）"""
+    __tablename__ = 'weekly_averages'
+    id = db.Column(db.Integer, primary_key=True)
+    store_name = db.Column(db.Text, index=True)
+    avg_rate = db.Column(db.Float)
+    sample_count = db.Column(db.Integer)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    biz_type = db.Column(db.Text)
+    genre = db.Column(db.Text)
+    area = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=func.now())
+
+class StoreAverage(db.Model):
+    """店舗ごとの全期間平均稼働率（2年以内）"""
+    __tablename__ = 'store_averages'
+    id = db.Column(db.Integer, primary_key=True)
+    store_name = db.Column(db.Text, index=True)
+    avg_rate = db.Column(db.Float)
+    sample_count = db.Column(db.Integer)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    biz_type = db.Column(db.Text)
+    genre = db.Column(db.Text)
+    area = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=func.now())
+
 # ---------------------------------------------------------------------
 # 3. テーブル作成
 # ---------------------------------------------------------------------
@@ -117,9 +160,11 @@ def scheduled_scrape():
     ・重複チェックは「店舗名＋エリア＋スクレイピング実行時刻（分単位切り捨て）」で行い、
       既に同じ複合キーが存在する場合はそのレコードを更新する（上書き）。
     ・古いデータ（2年以上前）を削除してパフォーマンスを維持する。
-    ・データ更新後にキャッシュをクリアして最新情報を反映する。
+    ・データ更新後に集計データを計算し、集計用テーブルに保存する。
     ・処理完了後、Socket.IO を利用してクライアントへ更新通知を送信する。
     """
+    from aggregated_data import AggregatedData
+    
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
@@ -178,10 +223,15 @@ def scheduled_scrape():
         # 古いデータ（2年以上前）の削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
+        
+        # 集計データの計算と保存
+        app.logger.info("集計データの計算開始")
+        aggregation_result = AggregatedData.calculate_and_save_aggregated_data()
+        app.logger.info(f"集計データの計算完了: {aggregation_result}")
 
-        app.logger.info("スクレイピング完了＆古いデータ削除完了。")
-        # キャッシュクリア：特に/api/historyのキャッシュを削除
-        cache.clear()
+        # 特定のキャッシュのみをクリア（集計データは更新済みなのでそのまま）
+        cache.delete('view/api_data')
+        cache.delete('view/api_history')
 
         # Socket.IO でクライアントへ更新通知
         socketio.emit('update', {'data': 'Dashboard updated'})
@@ -567,3 +617,153 @@ def api_aggregated_data():
     } for r in results]
 
     return jsonify(data)
+
+@app.route('/api/averages/daily')
+@cache.cached(timeout=600)  # キャッシュ：10分間有効
+def api_daily_averages():
+    """
+    日次（直近24時間）の平均稼働率データを返すエンドポイント
+    """
+    from aggregated_data import AggregatedData
+    
+    results = AggregatedData.get_daily_averages()
+    
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'start_date': r.start_date.astimezone(jst).isoformat(),
+        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
+    
+    return jsonify(data)
+
+@app.route('/api/averages/weekly')
+@cache.cached(timeout=1800)  # キャッシュ：30分間有効
+def api_weekly_averages():
+    """
+    週次（直近7日間）の平均稼働率データを返すエンドポイント
+    """
+    from aggregated_data import AggregatedData
+    
+    results = AggregatedData.get_weekly_averages()
+    
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'start_date': r.start_date.astimezone(jst).isoformat(),
+        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
+    
+    return jsonify(data)
+
+@app.route('/api/averages/stores')
+@cache.cached(timeout=3600)  # キャッシュ：1時間有効
+def api_store_averages():
+    """
+    店舗ごとの全期間平均稼働率データを返すエンドポイント
+    """
+    from aggregated_data import AggregatedData
+    
+    results = AggregatedData.get_store_averages()
+    
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'start_date': r.start_date.astimezone(jst).isoformat(),
+        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
+    
+    return jsonify(data)
+
+@app.route('/api/history/optimized')
+@cache.cached(timeout=300)  # キャッシュ：5分間有効
+def api_history_optimized():
+    """
+    最適化されたスクレイピング履歴を返すエンドポイント
+    - 大量データの場合は日時でダウンサンプリングする
+    - 指定店舗のみの場合は完全なデータを返す
+    """
+    from page_helper import paginate_query_results, format_store_status
+    
+    # 店舗名フィルター（指定された場合は完全なデータを返す）
+    store = request.args.get('store')
+    if store:
+        return api_history()
+    
+    # 日付範囲フィルター
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    # 期間指定なし、かつ店舗指定なしの場合はダウンサンプリングを行う
+    if not start_date and not end_date:
+        # 期間指定なしの場合、過去7日間のデータだけに限定
+        start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    
+    # 基本クエリ
+    query = StoreStatus.query
+    
+    if start_date:
+        query = query.filter(StoreStatus.timestamp >= f"{start_date} 00:00:00")
+    
+    if end_date:
+        query = query.filter(StoreStatus.timestamp <= f"{end_date} 23:59:59")
+    
+    # 全件数をカウント
+    total_count = query.count()
+    
+    # 1万件を超える場合はダウンサンプリング
+    if total_count > 10000:
+        # 各店舗から一定間隔でサンプリング
+        store_names = db.session.query(distinct(StoreStatus.store_name)).all()
+        store_names = [s[0] for s in store_names]
+        
+        # ダウンサンプリングされたデータ
+        sampled_data = []
+        
+        for store_name in store_names:
+            # 各店舗のデータを時間順に取得
+            store_data = query.filter(StoreStatus.store_name == store_name).order_by(StoreStatus.timestamp.asc()).all()
+            
+            # サンプリング率を決定（最大100ポイント/店舗）
+            sample_rate = max(1, len(store_data) // 100)
+            
+            # サンプリング
+            sampled_store_data = store_data[::sample_rate]
+            sampled_data.extend(sampled_store_data)
+        
+        # 時間順にソート
+        sampled_data.sort(key=lambda x: x.timestamp)
+        
+        # データのフォーマット
+        jst = pytz.timezone('Asia/Tokyo')
+        data = [format_store_status(item, jst) for item in sampled_data]
+        
+        # メタデータを含むレスポンス
+        response = {
+            "items": data,
+            "meta": {
+                "original_count": total_count,
+                "sampled_count": len(sampled_data),
+                "sampling_rate": sample_rate,
+                "is_sampled": True
+            }
+        }
+        return jsonify(response)
+    else:
+        # 1万件以下の場合は通常のページネーション処理
+        return api_history()
