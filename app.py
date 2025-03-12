@@ -751,8 +751,7 @@ def api_scraping_status():
 
         # 最近追加された店舗（最新10件）
         recent_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
-            .order_by(StoreURL.id.desc()).limit(10).all()
-        store_data["recent_added_urls"] = [{"id": id, "url": url} for id, url in recent_urls]
+            .order_by(StoreURL.id.desc()).limit(10).all()        store_data["recent_added_urls"] = [{"id": id, "url": url} for id, url in recent_urls]
 
         # エラーのある店舗（最大10件）
         if error_stores > 0:

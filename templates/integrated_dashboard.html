@@ -951,10 +951,10 @@
           try {
             showSpinner("店舗データを読み込み中です...");
 
-            // キャッシュバスターを追加してAPIからデータを取得（flat=trueで全件取得）
+            // キャッシュバスターを追加してAPIからデータを取得（flat=trueで全件取得、per_page=10000で件数制限を大きく）
             const cacheBuster = new Date().getTime();
             console.log("データ取得開始: /api/data");
-            const response = await fetchWithRetry(`/api/data?flat=true&_=${cacheBuster}`, {}, 3, 2000, false);
+            const response = await fetchWithRetry(`/api/data?flat=true&per_page=10000&_=${cacheBuster}`, {}, 3, 2000, false);
             
             if (!response.ok) {
               throw new Error(`HTTP error ${response.status}: ${response.statusText || "Unknown Error"}`);
