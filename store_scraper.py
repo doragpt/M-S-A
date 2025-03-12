@@ -267,12 +267,12 @@ async def _scrape_all(store_urls: list) -> list:
     # 各店舗URLに対するスクレイピングタスクを作成
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # タスクをバッチ単位で実行し、各バッチの間は1秒待機に短縮
+    # タスクをバッチ単位で実行し、各バッチの間は3秒待機に延長
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
         results.extend(batch_results)
-        await asyncio.sleep(1)  # 待機時間を1秒に短縮
+        await asyncio.sleep(3)  # 待機時間を3秒に延長（サーバー負荷軽減と安定性向上）
     gc.collect()
     await browser.close()
     return results
