@@ -953,17 +953,29 @@
 
             // キャッシュバスターを追加してAPIからデータを取得（flat=trueで全件取得）
             const cacheBuster = new Date().getTime();
+            console.log("データ取得開始: /api/data");
             const response = await fetchWithRetry(`/api/data?flat=true&_=${cacheBuster}`, {}, 3, 2000, false);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error ${response.status}: ${response.statusText || "Unknown Error"}`);
+            }
+            
             const data = await response.json();
 
             // データが配列であることを確認
             if (!Array.isArray(data)) {
               console.error("APIから期待したデータ形式が返されませんでした", data);
               hideSpinner();
+              alert("データ形式エラー: サーバーから不正なデータ形式が返されました。リロードしてみてください。");
               return;
             }
 
             console.log("API取得データ:", data.length + "件");
+            
+            // 件数が極端に少ない場合は警告
+            if (data.length < 100) {
+              console.warn(`取得データ件数が少なすぎます: ${data.length}件`);
+            }
 
             // 店舗数の表示
             document.getElementById("totalStores").innerText = data.length;
@@ -1854,12 +1866,33 @@
           }
         });
         // 平均稼働ランキング更新
-        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
+        document.getElementById("updateRankingBtn")?.addEventListener("click", updateAverageRanking);
 
-        // ページロード時に平均稼働ランキングを初期化
-        fillIndustryDropdownForRanking().then(() => {
-          updateAverageRanking();
+        // タブ変更時のイベント - ランキングタブが選択されたときにデータ更新
+        document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+          tab.addEventListener('shown.bs.tab', function (event) {
+            if (event.target.id === 'ranking-tab') {
+              showSpinner("ランキングデータを読み込み中...");
+              fillIndustryDropdownForRanking().then(() => {
+                updateAverageRanking().finally(() => {
+                  hideSpinner();
+                });
+              }).catch(err => {
+                console.error("ランキング初期化エラー:", err);
+                hideSpinner();
+              });
+            }
+          });
         });
+
+        // ページロード時にランキングの初期化も行う
+        try {
+          fillIndustryDropdownForRanking().catch(err => {
+            console.error("業種リスト取得エラー:", err);
+          });
+        } catch (e) {
+          console.warn("ランキング初期化に失敗しました:", e);
+        }
 
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知

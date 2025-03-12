@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pytz  # タイムゾーン変換用
 import traceback
 import gc  # ガベージコレクション
+import time
 
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -322,7 +323,7 @@ def api_data():
             "has_next": paginated_result['meta']['has_next']
         }
     }
-    
+
     # フロントエンドとの互換性のため、フラットな配列形式でも返す
     if 'flat' in request.args or not data:
         return jsonify(data)
@@ -542,7 +543,7 @@ def debug_data():
         (StoreStatus.store_name == subq.c.store_name) &
         (StoreStatus.timestamp == subq.c.max_time)
     ).order_by(StoreStatus.timestamp.desc()).limit(20).all()
-    
+
     records = []
     for r in results:
         records.append({
@@ -551,7 +552,7 @@ def debug_data():
             'working_staff': r.working_staff,
             'active_staff': r.active_staff
         })
-    
+
     return jsonify(records)
 
 
@@ -866,14 +867,37 @@ def check_and_release_port(port):
     """指定されたポートが使用中であれば解放を試みる"""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)  # タイムアウトの設定
         result = sock.connect_ex(('127.0.0.1', port))
         if result == 0:
             print(f"ポート {port} は使用中です。解放を試みます...")
-            # ポートを解放するための処理(OSコマンドなど)を追加する必要があるかもしれません。
-            # 例: Windowsの場合は `netstat -a -b | findstr :<port>` でプロセスを特定し、強制終了する。
-            # 例: Linuxの場合は `lsof -i :<port>` でプロセスを特定し、killコマンドを使用する。
-            # ここでは簡略化のため、警告のみ出力
-            print(f"警告: ポート {port} の解放処理は実装されていません。手動で解放してください。")
+            # Linuxの場合のポート解放処理
+            try:
+                import subprocess
+                # lsofでポートを使用しているプロセスIDを取得
+                lsof_cmd = f"lsof -ti:{port}"
+                process = subprocess.run(lsof_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+                if process.returncode == 0 and process.stdout.strip():
+                    pid = process.stdout.strip()
+                    print(f"ポート {port} を使用しているプロセスID: {pid}")
+
+                    # プロセスを停止
+                    kill_cmd = f"kill -9 {pid}"
+                    subprocess.run(kill_cmd, shell=True)
+                    print(f"プロセスID {pid} を停止しました。")
+
+                    # 再度確認
+                    time.sleep(0.5)
+                    re_check = sock.connect_ex(('127.0.0.1', port))
+                    if re_check != 0:
+                        print(f"ポート {port} は正常に解放されました。")
+                    else:
+                        print(f"ポート {port} の解放に失敗しました。")
+                else:
+                    print(f"ポート {port} を使用しているプロセスが見つかりませんでした。")
+            except Exception as e:
+                print(f"ポート解放処理中のエラー: {e}")
         else:
             print(f"ポート {port} は使用されていません。")
         sock.close()
@@ -884,9 +908,26 @@ def check_and_release_port(port):
 if __name__ == '__main__':
     # ローカル環境用の設定
     import os
+    import time  # time.sleepの追加
+
     port = int(os.environ.get("PORT", 5000))
-    save_port_info(port) # ポート情報を保存
+
+    # ポートが使用中であれば解放を試みる
+    check_and_release_port(port)
+
+    # ポート情報を保存
+    save_port_info(port)
 
     # サーバー起動 - シンプルな設定
     print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    try:
+        socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    except OSError as e:
+        if "Address already in use" in str(e):
+            print(f"エラー: ポート {port} が既に使用されています。再度解放を試みます。")
+            check_and_release_port(port)
+            time.sleep(1)
+            print(f"再試行: サーバーを起動しています: http://0.0.0.0:{port}")
+            socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+        else:
+            raise
