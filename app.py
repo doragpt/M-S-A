@@ -625,3 +625,122 @@ def api_aggregated_data():
     } for r in results]
 
     return jsonify(data)
+
+
+# スクレイピング状況を確認するAPI
+@app.route('/api/scraping/status')
+def api_scraping_status():
+    """
+    スクレイピングの状態を確認するAPIエンドポイント。
+    - 全店舗数
+    - 最終スクレイピング実行時間
+    - 24時間以内にスクレイピングされた店舗数
+    - エラーフラグのある店舗数
+    - スクレイピングカバレッジ率
+    """
+    try:
+        # DB接続
+        store_data = {}
+        
+        # 全店舗数のカウント
+        total_urls = db.session.query(func.count(StoreURL.id)).scalar()
+        store_data["total_store_count"] = total_urls
+        
+        # 最終スクレイピング実行時刻
+        latest_scrape = db.session.query(func.max(StoreStatus.timestamp)).scalar()
+        if latest_scrape:
+            store_data["last_scrape_time"] = latest_scrape.isoformat()
+            time_diff = datetime.now() - latest_scrape
+            store_data["hours_since_last_scrape"] = round(time_diff.total_seconds() / 3600, 1)
+        else:
+            store_data["last_scrape_time"] = None
+            store_data["hours_since_last_scrape"] = None
+        
+        # 24時間以内にスクレイピングされた店舗数
+        day_ago = datetime.now() - timedelta(hours=24)
+        recent_stores = db.session.query(func.count(func.distinct(StoreStatus.store_name)))\
+            .filter(StoreStatus.timestamp > day_ago).scalar()
+        store_data["recent_scraped_stores"] = recent_stores
+        
+        # エラーフラグのある店舗数
+        error_stores = db.session.query(func.count(StoreURL.id))\
+            .filter(StoreURL.error_flag > 0).scalar()
+        store_data["error_flagged_stores"] = error_stores
+        
+        # カバレッジ計算
+        if total_urls > 0:
+            coverage = (recent_stores / total_urls) * 100
+            store_data["coverage_percentage"] = round(coverage, 1)
+        else:
+            store_data["coverage_percentage"] = 0
+        
+        # 最近追加された店舗（最新10件）
+        recent_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
+            .order_by(StoreURL.id.desc()).limit(10).all()
+        store_data["recent_added_urls"] = [{"id": id, "url": url} for id, url in recent_urls]
+        
+        # エラーのある店舗（最大10件）
+        if error_stores > 0:
+            error_urls = db.session.query(StoreURL.id, StoreURL.store_url)\
+                .filter(StoreURL.error_flag > 0).limit(10).all()
+            store_data["error_urls"] = [{"id": id, "url": url} for id, url in error_urls]
+        else:
+            store_data["error_urls"] = []
+        
+        return jsonify(store_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# 特定の店舗URLを強制的にスクレイピングするAPI
+@app.route('/api/scraping/force', methods=['POST'])
+def api_force_scrape():
+    """
+    特定のURLを強制的にスクレイピングするAPIエンドポイント。
+    
+    リクエストボディ:
+        url: スクレイピングするURL
+        または
+        id: スクレイピングする店舗ID
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # URLまたはIDで店舗を特定
+        store_url = None
+        if 'url' in data:
+            store_url = data['url']
+        elif 'id' in data:
+            store_url_obj = StoreURL.query.get(data['id'])
+            if store_url_obj:
+                store_url = store_url_obj.store_url
+        
+        if not store_url:
+            return jsonify({"error": "No valid URL or ID provided"}), 400
+        
+        # スクレイピング実行（同期処理なので注意）
+        result = scrape_store_data([store_url])
+        if result and len(result) > 0:
+            # 成功した場合、DBに保存
+            record = result[0]
+            if record:
+                store_status = StoreStatus(
+                    store_name=record.get('store_name'),
+                    biz_type=record.get('biz_type'),
+                    genre=record.get('genre'),
+                    area=record.get('area'),
+                    total_staff=record.get('total_staff'),
+                    working_staff=record.get('working_staff'),
+                    active_staff=record.get('active_staff'),
+                    url=record.get('url'),
+                    shift_time=record.get('shift_time')
+                )
+                db.session.add(store_status)
+                db.session.commit()
+                return jsonify({"success": True, "data": record})
+        
+        return jsonify({"success": False, "error": "スクレイピングに失敗しました"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
