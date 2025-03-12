@@ -28,20 +28,23 @@ MAX_TEMP_ERROR_RETRIES = 2
 async def fetch_page(page, url, retries=3, timeout=20000):
     """
     指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する関数
-    
+
     Parameters:
       - page: pyppeteer のページオブジェクト
       - url: アクセスするURL
       - retries: リトライ回数（デフォルト3回）
       - timeout: タイムアウト（ミリ秒単位、デフォルト20000ms=20秒）
-    
+
     Returns:
       - True: ページの読み込みに成功した場合
       - False: 全てのリトライで失敗した場合
     """
     for attempt in range(retries):
         try:
-            await page.goto(url, waitUntil='networkidle0', timeout=timeout)
+            response = await page.goto(url, waitUntil='networkidle0', timeout=timeout)
+            if response and response.status in [404, 403, 500]:
+                print(f"エラーステータス: {response.status} - {url}")
+                return False
             return True
         except Exception as e:
             print(f"ページロード失敗（リトライ {attempt+1}/{retries}）: {url} - {e}")
@@ -57,12 +60,12 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     - ヘッドレスブラウザを用いて対象ページにアクセス
     - BeautifulSoup でHTMLをパースして店舗情報とシフト情報を取得
     - ページ再利用により再取得時に新規ページ作成のオーバーヘッドを削減
-    
+
     Parameters:
       - browser: pyppeteer のブラウザオブジェクト
       - url: 店舗の基本URL（必要に応じて末尾に "/" を追加）
       - semaphore: 並列実行制御用のセマフォ
-    
+
     Returns:
       - dict: 取得した店舗情報およびシフト情報の集計結果
     """

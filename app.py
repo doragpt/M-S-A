@@ -139,6 +139,9 @@ def scheduled_scrape():
             results = scrape_store_data(store_urls)
         except Exception as e:
             app.logger.error("スクレイピング中のエラー: %s", e)
+            app.logger.error(traceback.format_exc())  # スタックトレースも記録
+            # ソケット通知でエラーを通知
+            socketio.emit('scraping_error', {'error': str(e)})
             return
 
         # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
