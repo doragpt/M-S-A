@@ -352,6 +352,42 @@ def api_data():
     return jsonify(response)
 
 
+@app.route('/bulk_add_store_urls', methods=['POST'])
+def bulk_add_store_urls():
+    """複数のURL一括追加処理"""
+    bulk_urls = request.form.get('bulk_urls', '')
+    
+    # 空白行や重複を除去
+    urls = [url.strip() for url in bulk_urls.splitlines() if url.strip()]
+    
+    # 成功・エラーカウント
+    success_count = 0
+    error_count = 0
+    
+    for url in urls:
+        # 重複チェック
+        existing = StoreURL.query.filter_by(store_url=url).first()
+        if existing:
+            continue  # 既に存在する場合はスキップ
+            
+        # 新規URL追加
+        try:
+            new_url = StoreURL(store_url=url)
+            db.session.add(new_url)
+            success_count += 1
+        except Exception:
+            error_count += 1
+    
+    # コミット
+    try:
+        db.session.commit()
+        flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'エラーが発生しました: {e}', 'danger')
+    
+    return redirect(url_for('manage_store_urls'))
+
 @app.route('/api/history')
 @cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷軽減）
 def api_history():

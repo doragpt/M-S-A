@@ -18,13 +18,37 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-    <form method="post" action="{{ url_for('manage_store_urls') }}">
-      <div class="mb-3">
-        <label for="store_url" class="form-label">店舗URL</label>
-        <input type="text" class="form-control" id="store_url" name="store_url" required>
+    <ul class="nav nav-tabs mb-3" id="entryTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single-entry" type="button" role="tab" aria-controls="single-entry" aria-selected="true">個別追加</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk-entry" type="button" role="tab" aria-controls="bulk-entry" aria-selected="false">一括追加</button>
+      </li>
+    </ul>
+    
+    <div class="tab-content" id="entryTabsContent">
+      <div class="tab-pane fade show active" id="single-entry" role="tabpanel" aria-labelledby="single-tab">
+        <form method="post" action="{{ url_for('manage_store_urls') }}">
+          <div class="mb-3">
+            <label for="store_url" class="form-label">店舗URL</label>
+            <input type="text" class="form-control" id="store_url" name="store_url" required>
+          </div>
+          <button type="submit" class="btn btn-primary">追加</button>
+        </form>
       </div>
-      <button type="submit" class="btn btn-primary">追加</button>
-    </form>
+      
+      <div class="tab-pane fade" id="bulk-entry" role="tabpanel" aria-labelledby="bulk-tab">
+        <form method="post" action="{{ url_for('bulk_add_store_urls') }}">
+          <div class="mb-3">
+            <label for="bulk_urls" class="form-label">複数のURL (1行に1つのURLを入力)</label>
+            <textarea class="form-control" id="bulk_urls" name="bulk_urls" rows="10" required></textarea>
+            <div class="form-text">各URLは改行で区切ってください。</div>
+          </div>
+          <button type="submit" class="btn btn-primary">一括追加</button>
+        </form>
+      </div>
+    </div>
     <hr>
     <h2>登録済み店舗URL</h2>
     <table class="table table-bordered">
