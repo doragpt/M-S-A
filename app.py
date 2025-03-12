@@ -130,13 +130,14 @@ def scheduled_scrape():
     APScheduler で1時間おきに実行されるスクレイピングジョブ。
     ・StoreURL テーブルに登録された各店舗URLに対してスクレイピングを実行し、
       得られた結果を StoreStatus テーブルに保存する。
-    ・700店舗を対象とした大規模スクレイピングに最適化
+    ・700店舗を30-40分以内に処理完了するように最適化
     ・重複チェックは「店舗名＋エリア＋スクレイピング実行時刻（分単位切り捨て）」で行い、
       既に同じ複合キーが存在する場合はそのレコードを更新する（上書き）。
     ・古いデータ（2年以上前）を削除してパフォーマンスを維持する。
     ・データ更新後にキャッシュをクリアして最新情報を反映する。
     ・処理完了後、Socket.IO を利用してクライアントへ更新通知を送信する。
     """
+    start_time = time.time()
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
@@ -204,12 +205,19 @@ def scheduled_scrape():
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
 
-        app.logger.info("スクレイピング完了＆古いデータ削除完了。")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+        
+        app.logger.info(f"スクレイピング完了＆古いデータ削除完了。処理時間: {minutes}分{seconds}秒")
+        app.logger.info(f"処理開始時刻: {datetime.fromtimestamp(start_time).strftime('%H:%M:%S')}, 終了時刻: {datetime.fromtimestamp(end_time).strftime('%H:%M:%S')}")
+        
         # キャッシュクリア：特に/api/historyのキャッシュを削除
         cache.clear()
 
         # Socket.IO でクライアントへ更新通知
-        socketio.emit('update', {'data': 'Dashboard updated'})
+        socketio.emit('update', {'data': 'Dashboard updated', 'elapsed_time': f"{minutes}分{seconds}秒"})
 
 # 深夜にメモリ解放とキャッシュクリアを行う関数
 def maintenance_task():
@@ -232,10 +240,19 @@ scheduler = BackgroundScheduler(
         'misfire_grace_time': 300  # 5分のミスファイア猶予時間
     }
 )
-# スケジュール設定：午前3時にメンテナンス、1時間ごとにスクレイピング
-scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')  # 1時間に1回に変更
+# スケジュール設定：
+# 1. アプリ起動後5分後に初回スクレイピング実行
+# 2. その後1時間ごとに定期実行
+# 3. 午前3時にメンテナンス実行
+from datetime import datetime, timedelta
+initial_run_time = datetime.now() + timedelta(minutes=5)
+scheduler.add_job(scheduled_scrape, 'date', run_date=initial_run_time, id='initial_scrape_job')
+scheduler.add_job(scheduled_scrape, 'interval', hours=1, start_date=initial_run_time + timedelta(hours=1), id='scrape_job')
 scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
+
+print(f"初回スクレイピング予定時刻: {initial_run_time.strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"その後1時間ごとに定期実行します")
 
 # ---------------------------------------------------------------------
 # 5. API エンドポイント

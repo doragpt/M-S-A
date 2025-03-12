@@ -11,16 +11,16 @@ import gc
 # 定数設定
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
-# 仮想デスクトップ環境（8GB RAM、6コア）に最適化
-MAX_CONCURRENT_TASKS = 5  # 6コアCPUに合わせて5並列に最適化
+# 700店舗を30-40分以内に処理するよう最適化
+MAX_CONCURRENT_TASKS = 15  # 並列処理数を大幅に増加
 # 店舗情報が取得できなかった場合の再試行回数
-MAX_RETRIES_FOR_INFO = 1  # 再試行回数を1回に短縮してさらに高速化
+MAX_RETRIES_FOR_INFO = 1  # 再試行回数を1回に維持
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に調整
+PAGE_LOAD_TIMEOUT = 10000  # ページロードのタイムアウトを10秒に短縮
 # メモリ管理
-FORCE_GC_AFTER_STORES = 10  # 10店舗処理後に強制GC実行（より頻繁に解放）
+FORCE_GC_AFTER_STORES = 20  # 20店舗処理後に強制GC実行
 # 一時的なエラーの最大再試行回数
-MAX_TEMP_ERROR_RETRIES = 2
+MAX_TEMP_ERROR_RETRIES = 1  # エラー再試行回数を1回に短縮
 
 # -------------------------------
 # fetch_page 関数
@@ -267,12 +267,12 @@ async def _scrape_all(store_urls: list) -> list:
     # 各店舗URLに対するスクレイピングタスクを作成
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # タスクをバッチ単位で実行し、各バッチの間は2秒待機
+    # タスクをバッチ単位で実行し、各バッチの間は1秒待機に短縮
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
         results.extend(batch_results)
-        await asyncio.sleep(2)  # 待機時間を2秒に変更
+        await asyncio.sleep(1)  # 待機時間を1秒に短縮
     gc.collect()
     await browser.close()
     return results
