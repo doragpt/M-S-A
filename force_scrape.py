@@ -1,17 +1,16 @@
 
-import os
 import sys
-import importlib.util
 import time
 from datetime import datetime
 
-def load_module_from_file(file_path, module_name):
-    """ファイルからモジュールを動的にロードする関数"""
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
+# app.pyからの直接インポート
+try:
+    sys.path.append('.')
+    from app import app, scheduled_scrape
+    from check_scraping import check_scraping_status
+except ImportError:
+    print("app.pyからのインポートに失敗しました。同じディレクトリに配置されていることを確認してください。")
+    sys.exit(1)
 
 def force_scrape():
     """
@@ -21,21 +20,17 @@ def force_scrape():
     print(f"強制スクレイピングを開始します: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     try:
-        # app.pyをモジュールとしてロード
-        app_module = load_module_from_file("app.py", "app_module")
-        
         # Flaskアプリケーションコンテキストを作成
-        with app_module.app.app_context():
+        with app.app_context():
             # scheduled_scrape関数を実行
-            app_module.scheduled_scrape()
+            scheduled_scrape()
         
         elapsed_time = time.time() - start_time
         print(f"スクレイピングが完了しました: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"処理時間: {elapsed_time:.2f}秒")
         
         # 結果を確認
-        check_module = load_module_from_file("check_scraping.py", "check_module")
-        check_module.check_scraping_status()
+        check_scraping_status()
         
     except Exception as e:
         print(f"スクレイピング実行中にエラーが発生しました: {e}")
