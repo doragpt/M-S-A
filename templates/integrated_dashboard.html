@@ -321,19 +321,19 @@
           </div>
           <div class="col-md-4 mb-3">
             <div class="card text-white bg-success">
-              <div class="card-header">平均稼働率</div>
+              <div class="card-header">現在稼働率</div>
               <div class="card-body">
-                <h5 id="avgRate" class="card-title">--</h5>
+                <h5 id="avgActiveRate" class="card-title">--</h5>
                 <p class="card-text">勤務中キャストに対する実働率</p>
               </div>
             </div>
           </div>
           <div class="col-md-4 mb-3">
             <div class="card text-white bg-warning">
-              <div class="card-header">最高稼働率</div>
+              <div class="card-header">月間平均稼働率</div>
               <div class="card-body">
-                <h5 id="maxRate" class="card-title">--</h5>
-                <p class="card-text">最高の稼働率店舗の稼働率</p>
+                <h5 id="monthlyAvgRate" class="card-title">--</h5>
+                <p class="card-text">月間の平均稼働率(サンプル数: <span id="monthlySampleCount"></span>)</p>
               </div>
             </div>
           </div>
@@ -653,7 +653,8 @@
           const urlDurationMap = {
             '/api/data': 2000,       // 標準的なデータ取得は2秒
             '/api/history': 5000,    // 履歴データは比較的大きいので5秒
-            '/api/aggregated': 3000  // 集計データは中間サイズで3秒
+            '/api/aggregated': 3000,  // 集計データは中間サイズで3秒
+            '/api/average_rates': 1500 // 平均稼働率APIは比較的速い
           };
 
           // URLベースの推定時間または引数の時間を使用
@@ -994,7 +995,7 @@
             });
 
             const avgRate = validStores > 0 ? (totalRate / validStores) : 0;
-            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
+            document.getElementById("avgActiveRate").innerText = avgRate.toFixed(1) + "%";
             document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
 
             const tableBody = document.getElementById("dataTable");

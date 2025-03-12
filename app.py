@@ -216,6 +216,16 @@ def scheduled_scrape():
         # キャッシュクリア：特に/api/historyのキャッシュを削除
         cache.clear()
 
+        # スクレイピング完了後に平均稼働率のキャッシュを更新（非同期で実行）
+        try:
+            from analytics import Analytics
+            app.logger.info("平均稼働率のキャッシュ更新を開始（スクレイピング完了後）")
+            # 7日間の平均稼働率を先に計算しておく（ダッシュボード表示用）
+            Analytics.calculate_store_averages(7)
+            app.logger.info("平均稼働率のキャッシュ更新完了")
+        except Exception as e:
+            app.logger.error(f"平均稼働率キャッシュ更新エラー: {str(e)}")
+
         # Socket.IO でクライアントへ更新通知
         socketio.emit('update', {'data': 'Dashboard updated', 'elapsed_time': f"{minutes}分{seconds}秒"})
 
