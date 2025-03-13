@@ -780,59 +780,7 @@ def api_average_ranking():
         app.logger.error(f"平均稼働ランキング取得エラー: {e}")
         return jsonify({"error": "ランキングの取得中にエラーが発生しました"}), 500
 
-# 業種内ジャンルランキングのAPIエンドポイント
-@app.route('/api/ranking/genre')
-@cache.memoize(timeout=600)  # キャッシュ：10分間有効
-def api_genre_ranking():
-    """
-    業種内のジャンル別平均稼働率ランキングを返すエンドポイント
-
-    クエリパラメータ:
-        biz_type: 業種でフィルタリング（必須）
-    """
-    biz_type = request.args.get('biz_type')
-    if not biz_type:
-        return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
-
-    try:
-        # 直接SQLクエリを実行
-        # 業種内のジャンル別平均稼働率とサンプル数を計算
-        query = db.session.query(
-            StoreStatus.genre,
-            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).label('avg_rate')
-        ).filter(
-            StoreStatus.biz_type == biz_type,
-            StoreStatus.working_staff > 0
-        ).group_by(
-            StoreStatus.genre
-        ).order_by(
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).desc()
-        )
-
-        results = query.all()
-
-        # 結果が空の場合は空のリストを返す
-        if not results:
-            return jsonify([])
-
-        data = [{
-            "genre": r.genre if r.genre else "不明",
-            "store_count": r.store_count,
-            "avg_rate": round(float(r.avg_rate), 1)
-        } for r in results]
-
-        return jsonify(data)
-    except Exception as e:
-        app.logger.error(f"ジャンルランキング取得エラー: {e}")
-        app.logger.error(traceback.format_exc())
-        return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
+# 業種内ジャンルランキングのAPIエンドポイントは下部で定義済み
 
 # 集計済みデータを提供するエンドポイント
 @app.route('/api/aggregated')
@@ -1096,3 +1044,103 @@ def api_history_optimized():
     else:
         # 1万件以下の場合は通常のページネーション処理
         return api_history()
+
+# エリア統計データを提供するエンドポイント
+@app.route('/api/area-stats')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_area_stats():
+    """
+    エリア別の統計情報を返すエンドポイント
+    """
+    try:
+        # エリア別の店舗数と平均稼働率を計算
+        query = db.session.query(
+            StoreStatus.area,
+            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate')
+        ).filter(
+            StoreStatus.working_staff > 0
+        ).group_by(
+            StoreStatus.area
+        ).order_by(
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).desc()
+        )
+
+        results = query.all()
+
+        data = [{
+            "area": r.area if r.area else "不明",
+            "store_count": r.store_count,
+            "avg_rate": round(float(r.avg_rate), 1)
+        } for r in results]
+
+        return jsonify(data)
+    except Exception as e:
+        app.logger.error(f"エリア統計取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "エリア統計の取得中にエラーが発生しました"}), 500
+
+# トップランキングを提供するエンドポイント
+@app.route('/api/ranking/top')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_top_ranking():
+    """
+    各業種のトップ店舗ランキングを返すエンドポイント
+    
+    クエリパラメータ:
+        limit: 各業種ごとの上位件数（デフォルト3件）
+    """
+    try:
+        limit = request.args.get('limit', 3, type=int)
+        
+        # 業種の一覧を取得
+        biz_types = db.session.query(StoreStatus.biz_type).distinct().all()
+        biz_types = [bt[0] for bt in biz_types if bt[0]]  # None値を除外
+        
+        result = {}
+        
+        for biz_type in biz_types:
+            # 各業種ごとにトップ店舗を取得
+            subq = db.session.query(
+                StoreStatus.store_name,
+                func.avg(
+                    (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                    func.nullif(StoreStatus.working_staff, 0)
+                ).label('avg_rate'),
+                func.count().label('sample_count'),
+                func.max(StoreStatus.genre).label('genre'),
+                func.max(StoreStatus.area).label('area')
+            ).filter(
+                StoreStatus.biz_type == biz_type,
+                StoreStatus.working_staff > 0
+            ).group_by(
+                StoreStatus.store_name
+            ).having(
+                func.count() >= 10
+            ).order_by(
+                func.avg(
+                    (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                    func.nullif(StoreStatus.working_staff, 0)
+                ).desc()
+            ).limit(limit).all()
+            
+            if subq:
+                result[biz_type] = [{
+                    'store_name': r.store_name,
+                    'avg_rate': round(float(r.avg_rate), 1),
+                    'sample_count': r.sample_count,
+                    'genre': r.genre if r.genre else '不明',
+                    'area': r.area if r.area else '不明'
+                } for r in subq]
+        
+        return jsonify(result)
+    except Exception as e:
+        app.logger.error(f"トップランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "トップランキングの取得中にエラーが発生しました"}), 500
