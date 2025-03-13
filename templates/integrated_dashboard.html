@@ -631,7 +631,7 @@
             const responseJson = await response.json();
             // Handle both formats - direct array or { data: [...] } object
             const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
-            
+
             data.forEach(store => {
               store.currentRate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
             });
@@ -664,7 +664,11 @@
                   tooltip: { callbacks: { label: context => `${context.parsed.x}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
+                    zoom: { 
+                      wheel: { enabled: true },
+                      drag: { enabled: true },
+                      mode: 'xy'
+                    }
                   },
                   legend: { display: false }
                 },
@@ -690,7 +694,7 @@
             const spinner = document.querySelector('#history .spinner-border');
             if (spinner) spinner.style.display = 'inline-block';
             else showSpinner();
-            
+
             const storeSelect = document.getElementById("storeSelectHistory");
             if(storeSelect) { storeSelect.value = savedHistoryStore; }
             const selectedStore = storeSelect ? storeSelect.value : "";
@@ -807,62 +811,6 @@
               });
             }
 
-            const ctx = document.getElementById("historyChart").getContext("2d");
-            if (charts.history) charts.history.destroy();
-
-            charts.history = new Chart(ctx, {
-              type: "line",
-              data: {
-                labels: labels,
-                datasets: [{
-                  label: "実働率 (%)",
-                  data: effectiveRates,
-                  borderColor: "rgba(255, 99, 132, 1)",
-                  backgroundColor: "rgba(255, 99, 132, 0.2)",
-                  fill: false,
-                  tension: 0.3,
-                  pointRadius: labels.length > 100 ? 0 : 3, // データ点が多い場合は非表示に
-                  pointHoverRadius: 5
-                }]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: {
-                    display: true,
-                    text: (selectedStore === "") 
-                          ? "全店舗の平均稼働率（期間指定）"
-                          : `店舗(${selectedStore})の履歴グラフ`,
-                    font: { size: 20 }
-                  },
-                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: {
-                    pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
-                  }
-                },
-                scales: {
-                  y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
-                  x: { 
-                    title: { display: true, text: "日時" },
-                    // データが多い場合に表示を間引く
-                    ticks: {
-                      maxTicksLimit: Math.min(labels.length, 20)  // 最大20目盛りに制限
-                    }
-                  }
-                },
-                animation: { duration: 500 } // アニメーション時間短縮
-              }
-            });
-
-            const historyStats = document.getElementById("historyStats");
-            if (effectiveRates.length > 0) {
-              const numericRates = effectiveRates.map(Number);
-              const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
-              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
-            } else {
-              historyStats.textContent = "該当データなし";
-            }
             // キャッシュに保存
             historyChartCache[cacheKey] = { labels, effectiveRates };
 
@@ -910,7 +858,11 @@
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
                   zoom: {
                     pan: { enabled: true, mode: 'xy' },
-                    zoom: { enabled: true, mode: 'xy' }
+                    zoom: { 
+                      wheel: { enabled: true },
+                      drag: { enabled: true },
+                      mode: 'xy' 
+                    }
                   }
                 },
                 scales: {
@@ -1043,7 +995,11 @@
                 plugins: {
                   title: { display: true, text: "時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } }
+                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                      wheel: { enabled: true },
+                      drag: { enabled: true },
+                      mode: 'xy'
+                    } }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -1345,7 +1301,11 @@
                 plugins: {
                   title: { display: true, text: "店舗履歴グラフ", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } }
+                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                      wheel: { enabled: true },
+                      drag: { enabled: true },
+                      mode: 'xy'
+                    } }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -1406,7 +1366,11 @@
                 plugins: {
                   title: { display: true, text: "店舗詳細 時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { enabled: true, mode: 'xy' } }
+                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                      wheel: { enabled: true },
+                      drag: { enabled: true },
+                      mode: 'xy'
+                    } }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -2149,6 +2113,14 @@
                       font: {
                         size: 16
                       }
+                    },
+                    zoom: {
+                      pan: { enabled: true, mode: 'xy' },
+                      zoom: {
+                        wheel: { enabled: true },
+                        drag: { enabled: true },
+                        mode: 'xy'
+                      }
                     }
                   }
                 }
@@ -2281,6 +2253,14 @@
                       text: storeId ? `店舗「${storeId}」の時間帯別稼働率` : '全店舗の時間帯別平均稼働率',
                       font: {
                         size: 16
+                      }
+                    },
+                    zoom: {
+                      pan: { enabled: true, mode: 'xy' },
+                      zoom: {
+                        wheel: { enabled: true },
+                        drag: { enabled: true },
+                        mode: 'xy'
                       }
                     }
                   }
