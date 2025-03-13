@@ -536,13 +536,15 @@ def api_history():
 
     if start_date := request.args.get('start_date'):
         # 日本時間の00:00:00として日付開始時刻を設定
-        start_datetime_str = f"{start_date} 00:00:00"
-        query = query.filter(StoreStatus.timestamp >= start_datetime_str)
+        start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        start_datetime = jst.localize(start_datetime)
+        query = query.filter(StoreStatus.timestamp >= start_datetime)
 
     if end_date := request.args.get('end_date'):
         # 日本時間の23:59:59として日付終了時刻を設定
-        end_datetime_str = f"{end_date} 23:59:59"
-        query = query.filter(StoreStatus.timestamp <= end_datetime_str)
+        end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
+        end_datetime = jst.localize(end_datetime)
+        query = query.filter(StoreStatus.timestamp <= end_datetime)
 
     # データ制限（オプション）
     if limit := request.args.get('limit', type=int):

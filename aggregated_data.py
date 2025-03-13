@@ -1,4 +1,3 @@
-
 """
 集計データを管理するモジュール
 スクレイピングデータの集計を行い、高速なデータ参照を可能にします
@@ -14,7 +13,7 @@ class AggregatedData:
     スクレイピングデータの集計を管理するクラス
     日次・週次・月次の平均稼働率などを事前計算して保存します
     """
-    
+
     @staticmethod
     def calculate_and_save_aggregated_data():
         """
@@ -22,17 +21,17 @@ class AggregatedData:
         scheduled_scrape 関数から呼び出す
         """
         from app import DailyAverage, WeeklyAverage, StoreAverage
-        
+
         # 現在の日付を取得
         today = datetime.now().date()
         one_day_ago = today - timedelta(days=1)
         one_week_ago = today - timedelta(weeks=1)
-        
+
         # 日次平均の計算（最新24時間）- JSTの現在日付を基準に
         jst = pytz.timezone('Asia/Tokyo')
         today_jst = datetime.now(jst).date()
         one_day_ago_jst = today_jst - timedelta(days=1)
-        
+
         # SQLiteの場合はタイムゾーン変換が必要
         # 日次平均の計算（最新24時間）
         daily_query = db.session.query(
@@ -53,22 +52,24 @@ class AggregatedData:
         ).group_by(
             StoreStatus.store_name
         ).all()
-        
+
         # 既存の日次平均を削除
         db.session.query(DailyAverage).delete()
-        
+
         # 新しい日次平均を保存 - JSTで現在時刻を取得
         now_jst = datetime.now(jst)
         for record in daily_query:
             # start_dateとend_dateのタイムゾーン情報を追加
             start_date = record.start_date
             if start_date.tzinfo is None:
-                start_date = pytz.utc.localize(start_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                start_date = jst.localize(start_date)
+
             end_date = record.end_date
             if end_date.tzinfo is None:
-                end_date = pytz.utc.localize(end_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                end_date = jst.localize(end_date)
+
             store_avg = DailyAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
@@ -81,7 +82,7 @@ class AggregatedData:
                 updated_at=now_jst
             )
             db.session.add(store_avg)
-        
+
         # 週次平均の計算 - JSTタイムゾーンを考慮
         one_week_ago_jst = today_jst - timedelta(weeks=1)
         weekly_query = db.session.query(
@@ -102,21 +103,23 @@ class AggregatedData:
         ).group_by(
             StoreStatus.store_name
         ).all()
-        
+
         # 既存の週次平均を削除
         db.session.query(WeeklyAverage).delete()
-        
+
         # 新しい週次平均を保存 - JSTタイムゾーン対応
         for record in weekly_query:
             # start_dateとend_dateのタイムゾーン情報を追加
             start_date = record.start_date
             if start_date.tzinfo is None:
-                start_date = pytz.utc.localize(start_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                start_date = jst.localize(start_date)
+
             end_date = record.end_date
             if end_date.tzinfo is None:
-                end_date = pytz.utc.localize(end_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                end_date = jst.localize(end_date)
+
             store_avg = WeeklyAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
@@ -129,7 +132,7 @@ class AggregatedData:
                 updated_at=now_jst
             )
             db.session.add(store_avg)
-        
+
         # 店舗別の全期間平均の計算（2年以内）
         two_years_ago = today - timedelta(days=730)
         store_query = db.session.query(
@@ -152,21 +155,23 @@ class AggregatedData:
         ).having(
             func.count() >= 10  # 最低10サンプル以上
         ).all()
-        
+
         # 既存の店舗平均を削除
         db.session.query(StoreAverage).delete()
-        
+
         # 新しい店舗平均を保存 - JSTタイムゾーン対応
         for record in store_query:
             # start_dateとend_dateのタイムゾーン情報を追加
             start_date = record.start_date
             if start_date.tzinfo is None:
-                start_date = pytz.utc.localize(start_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                start_date = jst.localize(start_date)
+
             end_date = record.end_date
             if end_date.tzinfo is None:
-                end_date = pytz.utc.localize(end_date).astimezone(jst)
-                
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                end_date = jst.localize(end_date)
+
             store_avg = StoreAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
@@ -179,35 +184,35 @@ class AggregatedData:
                 updated_at=now_jst
             )
             db.session.add(store_avg)
-        
+
         # 変更をコミット
         db.session.commit()
-        
+
         # キャッシュを更新
         cache.delete_memoized(get_daily_averages)
         cache.delete_memoized(get_weekly_averages)
         cache.delete_memoized(get_store_averages)
-        
+
         return {
             "daily_count": len(daily_query),
             "weekly_count": len(weekly_query),
             "store_count": len(store_query)
         }
-    
+
     @staticmethod
     @cache.memoize(timeout=3600)  # 1時間キャッシュ
     def get_daily_averages():
         """日次平均データを取得"""
         from app import DailyAverage
         return DailyAverage.query.all()
-    
+
     @staticmethod
     @cache.memoize(timeout=3600)  # 1時間キャッシュ
     def get_weekly_averages():
         """週次平均データを取得"""
         from app import WeeklyAverage
         return WeeklyAverage.query.all()
-    
+
     @staticmethod
     @cache.memoize(timeout=7200)  # 2時間キャッシュ
     def get_store_averages():

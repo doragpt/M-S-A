@@ -64,11 +64,12 @@ def format_store_status(item, timezone=None):
     if timezone is None:
         timezone = pytz.timezone('Asia/Tokyo')
     
-    # タイムスタンプが aware でない場合は UTC として扱い、指定されたタイムゾーンに変換
+    # タイムスタンプが aware でない場合は JST として扱い、指定されたタイムゾーンに変換
     timestamp = item.timestamp
     if timestamp.tzinfo is None:
-        # naive な datetime を UTC として扱い、指定されたタイムゾーンに変換
-        timestamp = pytz.utc.localize(timestamp).astimezone(timezone)
+        # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+        jst = pytz.timezone('Asia/Tokyo')
+        timestamp = jst.localize(timestamp)
     else:
         # すでに aware な datetime の場合は単に指定されたタイムゾーンに変換
         timestamp = timestamp.astimezone(timezone)
