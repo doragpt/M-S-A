@@ -20,7 +20,7 @@ class AggregatedData:
         集計データの計算と保存を行う関数
         scheduled_scrape 関数から呼び出す
         """
-        from app import DailyAverage, WeeklyAverage, StoreAverage
+        from app import DailyAverage, WeeklyAverage, StoreAverage, MonthlyAverage
 
         # 現在の日付を取得
         today = datetime.now().date()
@@ -132,6 +132,56 @@ class AggregatedData:
                 updated_at=now_jst
             )
             db.session.add(store_avg)
+            
+        # 月次平均の計算（直近30日間）
+        one_month_ago_jst = today_jst - timedelta(days=30)
+        monthly_query = db.session.query(
+            StoreStatus.store_name,
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate'),
+            func.count().label('sample_count'),
+            func.min(StoreStatus.timestamp).label('start_date'),
+            func.max(StoreStatus.timestamp).label('end_date'),
+            func.max(StoreStatus.biz_type).label('biz_type'),
+            func.max(StoreStatus.genre).label('genre'),
+            func.max(StoreStatus.area).label('area')
+        ).filter(
+            StoreStatus.timestamp >= one_month_ago_jst,
+            StoreStatus.working_staff > 0
+        ).group_by(
+            StoreStatus.store_name
+        ).all()
+
+        # 既存の月次平均を削除
+        db.session.query(MonthlyAverage).delete()
+
+        # 新しい月次平均を保存 - JSTタイムゾーン対応
+        for record in monthly_query:
+            # start_dateとend_dateのタイムゾーン情報を追加
+            start_date = record.start_date
+            if start_date.tzinfo is None:
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                start_date = jst.localize(start_date)
+
+            end_date = record.end_date
+            if end_date.tzinfo is None:
+                # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
+                end_date = jst.localize(end_date)
+
+            store_avg = MonthlyAverage(
+                store_name=record.store_name,
+                avg_rate=float(record.avg_rate),
+                sample_count=record.sample_count,
+                start_date=start_date,
+                end_date=end_date,
+                biz_type=record.biz_type,
+                genre=record.genre,
+                area=record.area,
+                updated_at=now_jst
+            )
+            db.session.add(store_avg)
 
         # 店舗別の全期間平均の計算（2年以内）
         two_years_ago = today - timedelta(days=730)
@@ -191,11 +241,13 @@ class AggregatedData:
         # キャッシュを更新
         cache.delete_memoized(get_daily_averages)
         cache.delete_memoized(get_weekly_averages)
+        cache.delete_memoized(get_monthly_averages)
         cache.delete_memoized(get_store_averages)
 
         return {
             "daily_count": len(daily_query),
             "weekly_count": len(weekly_query),
+            "monthly_count": len(monthly_query),
             "store_count": len(store_query)
         }
 
@@ -212,6 +264,13 @@ class AggregatedData:
         """週次平均データを取得"""
         from app import WeeklyAverage
         return WeeklyAverage.query.all()
+        
+    @staticmethod
+    @cache.memoize(timeout=3600)  # 1時間キャッシュ
+    def get_monthly_averages():
+        """月次平均データを取得"""
+        from app import MonthlyAverage
+        return MonthlyAverage.query.all()
 
     @staticmethod
     @cache.memoize(timeout=7200)  # 2時間キャッシュ

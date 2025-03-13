@@ -126,6 +126,20 @@ class WeeklyAverage(db.Model):
     area = db.Column(db.Text)
     updated_at = db.Column(db.DateTime, default=func.now())
 
+class MonthlyAverage(db.Model):
+    """月次の平均稼働率（直近30日間）"""
+    __tablename__ = 'monthly_averages'
+    id = db.Column(db.Integer, primary_key=True)
+    store_name = db.Column(db.Text, index=True)
+    avg_rate = db.Column(db.Float)
+    sample_count = db.Column(db.Integer)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    biz_type = db.Column(db.Text)
+    genre = db.Column(db.Text)
+    area = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=func.now())
+
 class StoreAverage(db.Model):
     """店舗ごとの全期間平均稼働率（2年以内）"""
     __tablename__ = 'store_averages'
@@ -148,10 +162,10 @@ with app.app_context():
     try:
         # 各モデルを明示的に参照して、SQLAlchemyに認識させる
         app.logger.info("データベーステーブルを作成しています...")
-        app.logger.info(f"モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage")
+        app.logger.info(f"モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage")
 
         # 明示的にモデルクラスを参照して、SQLAlchemyが認識できるようにする
-        tables = [StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage]
+        tables = [StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage]
         app.logger.info(f"登録テーブル数: {len(tables)}")
 
         # テーブル作成
@@ -322,6 +336,7 @@ def scheduled_scrape():
             cache.delete_memoized(api_history_optimized)
             cache.delete_memoized(api_daily_averages)
             cache.delete_memoized(api_weekly_averages)
+            cache.delete_memoized(api_monthly_averages)
             cache.delete_memoized(api_store_averages)
             cache.delete_memoized(api_average_ranking)
             cache.delete_memoized(api_aggregated_data)
@@ -830,6 +845,30 @@ def api_weekly_averages():
     from aggregated_data import AggregatedData
 
     results = AggregatedData.get_weekly_averages()
+
+    jst = pytz.timezone('Asia/Tokyo')
+    data = [{
+        'store_name': r.store_name,
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count,
+        'start_date': r.start_date.astimezone(jst).isoformat(),
+        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'biz_type': r.biz_type,
+        'genre': r.genre,
+        'area': r.area
+    } for r in results]
+
+    return jsonify(data)
+
+@app.route('/api/averages/monthly')
+@cache.cached(timeout=1800)  # キャッシュ：30分間有効
+def api_monthly_averages():
+    """
+    月次（直近30日間）の平均稼働率データを返すエンドポイント
+    """
+    from aggregated_data import AggregatedData
+
+    results = AggregatedData.get_monthly_averages()
 
     jst = pytz.timezone('Asia/Tokyo')
     data = [{
