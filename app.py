@@ -260,7 +260,7 @@ def scheduled_scrape():
                         app.logger.warning(f"必須データ不足のためスキップ: 店舗名={store_name}, エリア={area}")
                         continue
 
-                    # タイムスタンプ文字列をログに出力（デバッグ用）
+                    # タイムスタンプ文字列をログ出力（デバッグ用）
                     formatted_time = scrape_time.strftime('%Y-%m-%d %H:%M')
                     app.logger.debug(f"重複チェック用タイムスタンプ: {formatted_time}")
 
@@ -716,7 +716,7 @@ if __name__ == '__main__':
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
-def api_averageranking():
+def api_average_ranking():
     """
     店舗の平均稼働率ランキングを返すエンドポイント
 

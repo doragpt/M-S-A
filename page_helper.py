@@ -60,9 +60,9 @@ def format_store_status(item, timezone=None):
     戻り値:
         フォーマット済みの辞書
     """
-    # タイムゾーンが指定されていない場合は UTC を使用
+    # タイムゾーンが指定されていない場合は JST を使用
     if timezone is None:
-        timezone = pytz.UTC
+        timezone = pytz.timezone('Asia/Tokyo')
 
     # タイムスタンプをタイムゾーン対応のフォーマットに変換
     timestamp = item.timestamp
@@ -96,4 +96,15 @@ def format_store_status(item, timezone=None):
         'rate': round(rate, 1),
         'url': item.url,
         'shift_time': item.shift_time
+    }
+
+def prepare_data_for_integrated_dashboard():
+    """統合ダッシュボード用のデータを準備"""
+    # 日本のタイムゾーンに設定
+    now = datetime.now()
+    jst_now = now.strftime('%Y年%m月%d日 %H:%M:%S')
+
+    return {
+        'title': '統合ダッシュボード',
+        'current_time': jst_now
     }
