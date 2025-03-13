@@ -368,11 +368,7 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-<<<<<<< HEAD
 @cache.memoize(timeout=60)  # キャッシュ：1分間に短縮して最新データを提供
-=======
-@cache.memoize(timeout=300)  # キャッシュ：5分間有効
->>>>>>> ebba7e86e8b29df8ac7f8427c09a0895d75ff1ea
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
