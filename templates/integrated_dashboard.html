@@ -576,8 +576,7 @@
         async function updateDashboard() {
           try {
             // ページネーションなしで全データを取得（pageパラメータを指定しない）
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await response.json();
+            const responseJson = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = responseJson.data || responseJson; // 新旧APIの両方に対応
 
             // APIからメタデータを取得（バックエンドで計算された集計値）
@@ -680,8 +679,7 @@
           containerElement.style.display = 'none';
 
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await response.json();
+            const responseJson = await fetchWithRetry("/api/ranking/top", {}, 3, 2000);
             // Handle both formats - direct array or { data: [...] } object
             const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
 
@@ -969,9 +967,8 @@
         async function fillHistoryStoreDropdown() {
           try {
             showSpinner();
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            console.log("History store data:", data);
+            const stores = await fetchWithRetry("/api/stores", {}, 3, 2000);
+            console.log("History store data:", stores);
 
             const storeSelect = document.getElementById("storeSelectHistory");
             if (!storeSelect) {
@@ -979,15 +976,11 @@
               return;
             }
 
-            const stores = new Set();
-            data.forEach(item => { 
-              if (item.store_name) stores.add(item.store_name); 
-            });
-
-            console.log(`Found ${stores.size} unique stores`);
+            const uniqueStores = [...new Set(stores.map(item => item.store_name))];
+            console.log(`Found ${uniqueStores.length} unique stores`);
             storeSelect.innerHTML = '<option value="">全店舗</option>';
 
-            const sortedStores = Array.from(stores).sort();
+            const sortedStores = uniqueStores.sort();
             sortedStores.forEach(store => {
               storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
@@ -1112,9 +1105,8 @@
         async function fillHourlyStoreDropdown() {
           try {
             showSpinner();
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
-            console.log("Hourly store data:", data);
+            const stores = await fetchWithRetry("/api/stores", {}, 3, 2000);
+            console.log("Hourly store data:", stores);
 
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if (!hourlyStoreSelect) {
@@ -1122,15 +1114,11 @@
               return;
             }
 
-            const stores = new Set();
-            data.forEach(item => { 
-              if (item.store_name) stores.add(item.store_name); 
-            });
-
-            console.log(`Found ${stores.size} unique stores for hourly dropdown`);
+            const uniqueStores = [...new Set(stores.map(item => item.store_name))];
+            console.log(`Found ${uniqueStores.length} unique stores for hourly dropdown`);
             hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
 
-            const sortedStores = Array.from(stores).sort();
+            const sortedStores = uniqueStores.sort();
             sortedStores.forEach(store => { 
               hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`; 
             });
@@ -1152,46 +1140,11 @@
          ***********************************************/
         async function updateAreaStatistics() {
           try {
-            showSpinner();
-            // /api/data から最新データを取得し、各エリアの店舗数をカウント
-            const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await responseData.json();
-            // Handle both formats - direct array or { data: [...] } object
-            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
-            console.log("Area stats data latest:", dataLatest);
+            showSpinner("areaSpinner");
 
-            const areaStoreCount = {};
-            dataLatest.forEach(store => {
-              const area = store.area || "不明";
-              if (!areaStoreCount[area]) { areaStoreCount[area] = 0; }
-              areaStoreCount[area]++;
-            });
-
-            // /api/history から履歴データを取得し、各エリアの平均稼働率を計算
-            const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await responseHistory.json();
-            console.log("Area stats history data:", dataHistory);
-
-            const areaRateData = {};
-            dataHistory.forEach(record => {
-              const area = record.area || "不明";
-
-              // 稼働率をレコードから取得または計算
-              let rate = 0;
-              if (record.rate) {
-                rate = record.rate; // API形式に対応
-              } else if (record.working_staff > 0) {
-                rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
-              }
-
-              if (rate > 0) {
-                if (!areaRateData[area]) {
-                  areaRateData[area] = { totalRate: 0, count: 0 };
-                }
-                areaRateData[area].totalRate += rate;
-                areaRateData[area].count++;
-              }
-            });
+            // エリア統計データを取得
+            const areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
+            console.log("Area stats data:", areaData);
 
             // テーブル表示用に、両方のデータを統合
             const areaTable = document.getElementById("areaTable");
@@ -1204,23 +1157,17 @@
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
-            const allAreas = new Set([...Object.keys(areaStoreCount), ...Object.keys(areaRateData)]);
-
-            allAreas.forEach(area => {
-              const storeCount = areaStoreCount[area] || 0;
-              const rateData = areaRateData[area] || { totalRate: 0, count: 0 };
-              const avgRate = rateData.count > 0 ? (rateData.totalRate / rateData.count).toFixed(1) : "0.0";
-
+            areaData.forEach(item => {
               areaTable.insertAdjacentHTML("beforeend", `
                 <tr>
-                  <td>${area}</td>
-                  <td>${storeCount}</td>
-                  <td>${avgRate}</td>
+                  <td>${item.area}</td>
+                  <td>${item.store_count}</td>
+                  <td>${item.avg_rate.toFixed(1)}</td>
                 </tr>
               `);
 
-              labels.push(area);
-              avgRates.push(parseFloat(avgRate));
+              labels.push(item.area);
+              avgRates.push(item.avg_rate);
             });
 
             const ctx = document.getElementById("areaChart").getContext("2d");
@@ -1269,12 +1216,10 @@
          ***********************************************/
         async function fillIndustryDropdown() {
           try {
-            const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await responseLatest.json();
-            // Handle both formats - direct array or { data: [...] } object
-            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+            // 最新データ取得
+            const latestData = await fetchWithRetry("/api/data/latest", {}, 3, 2000);
             const industries = new Set();
-            dataLatest.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
+            latestData.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
             const industrySelect = document.getElementById("industrySelectType");
             if (!industrySelect) return;
             industrySelect.innerHTML = "";
@@ -1290,30 +1235,21 @@
           }
         }
 
-        async function updateIndustryRanking() {
-          const industrySelector = document.getElementById('industrySelectType');
-          if (!industrySelector) {
-            console.error('Industry selector not found in the DOM');
-            return Promise.reject('Industry selector not found');
-          }
-
-          const selectedIndustry = industrySelector.value;
-
+        async function updateIndustryRanking(industry = null) {
           try {
-            const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const responseJson = await responseLatest.json();
-            // Handle both formats - direct array or { data: [...] } object
-            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
-            // データが配列でなければ配列に変換
-            if (!Array.isArray(dataLatest)) {
-              console.warn('Data latest is not an array, converting:', dataLatest);
-              dataLatest = dataLatest && typeof dataLatest === 'object' ? [dataLatest] : [];
+            showSpinner("industryRankingSpinner");
+
+            if (!industry) {
+              industry = document.getElementById("industrySelector")?.value || null;
             }
-            const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
+
+            // API呼び出し
+            const latestData = await fetchWithRetry("/api/data/latest", {}, 3, 2000);
+            const latestStoreNames = new Set(latestData.map(store => store.store_name));
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
             const filtered = dataHistory.filter(record => latestStoreNames.has(record.store_name) &&
-              (selectedIndustry ? record.biz_type === selectedIndustry : true));
+              (industry ? record.biz_type === industry : true));
             const genreData = {};
             filtered.forEach(record => {
               const genre = record.genre || "不明";
@@ -1635,7 +1571,7 @@
             });
 
             // クリックされたボタンのターゲットコンテンツを表示
-            const targetId = this.getAttribute('href');
+            consttargetId = this.getAttribute('href');
             document.querySelector(targetId).classList.add('show', 'active');
 
             // 業種内ジャンルランキングのタブが選択された場合
@@ -1655,13 +1591,21 @@
         // 業種データをロードして選択ボックスに反映する共通関数
         function loadBusinessTypes(selectId) {
           const select = document.getElementById(selectId);
+          if (!select) {
+            console.error(`Select element with ID ${selectId} not found`);
+            return;
+          }
+
           if (!select.options.length) {
             // 業種データが未読み込みの場合のみ実行
-            fetch('/api/data')
-              .then(response => response.json())
-              .then(responseJson => {
-                // Handle both formats - direct array or { data: [...] } object
-                const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+            fetch('/api/aggregated')
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+              })
+              .then(data => {
                 // 重複のないbiz_typeリストを作成
                 const bizTypes = [...new Set(data.map(item => item.biz_type))].filter(Boolean);
                 bizTypes.sort();
