@@ -868,39 +868,7 @@ def api_aggregated_data():
 
     return jsonify(data)
 
-# 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
-@app.route('/api/aggregated')
-@cache.cached(timeout=3600)  # キャッシュ：1時間有効
-def api_aggregated_data():
-    """
-    日付ごとに集計された平均稼働率データを返すエンドポイント
-    """
-    # 日付ごとの集計クエリ
-    query = db.session.query(
-        func.date(StoreStatus.timestamp).label('date'),
-        func.avg(
-            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-            func.nullif(StoreStatus.working_staff, 0)
-        ).label('avg_rate'),
-        func.count().label('sample_count')
-    ).filter(
-        StoreStatus.working_staff > 0
-    ).group_by(
-        func.date(StoreStatus.timestamp)
-    ).order_by(
-        func.date(StoreStatus.timestamp)
-    )
-
-    results = query.all()
-
-    # 結果を整形
-    data = [{
-        'date': r.date.isoformat(),
-        'avg_rate': float(r.avg_rate),
-        'sample_count': r.sample_count
-    } for r in results]
-
-    return jsonify(data)
+# 注：このエンドポイントは上で既に定義されているため、ここでの重複定義を削除しました
 
 @app.route('/api/averages/daily')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
