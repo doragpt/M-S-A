@@ -28,6 +28,12 @@ class AggregatedData:
         one_day_ago = today - timedelta(days=1)
         one_week_ago = today - timedelta(weeks=1)
         
+        # 日次平均の計算（最新24時間）- JSTの現在日付を基準に
+        jst = pytz.timezone('Asia/Tokyo')
+        today_jst = datetime.now(jst).date()
+        one_day_ago_jst = today_jst - timedelta(days=1)
+        
+        # SQLiteの場合はタイムゾーン変換が必要
         # 日次平均の計算（最新24時間）
         daily_query = db.session.query(
             StoreStatus.store_name,
@@ -51,22 +57,33 @@ class AggregatedData:
         # 既存の日次平均を削除
         db.session.query(DailyAverage).delete()
         
-        # 新しい日次平均を保存
+        # 新しい日次平均を保存 - JSTで現在時刻を取得
+        now_jst = datetime.now(jst)
         for record in daily_query:
+            # start_dateとend_dateのタイムゾーン情報を追加
+            start_date = record.start_date
+            if start_date.tzinfo is None:
+                start_date = pytz.utc.localize(start_date).astimezone(jst)
+                
+            end_date = record.end_date
+            if end_date.tzinfo is None:
+                end_date = pytz.utc.localize(end_date).astimezone(jst)
+                
             store_avg = DailyAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
                 sample_count=record.sample_count,
-                start_date=record.start_date,
-                end_date=record.end_date,
+                start_date=start_date,
+                end_date=end_date,
                 biz_type=record.biz_type,
                 genre=record.genre,
                 area=record.area,
-                updated_at=datetime.now()
+                updated_at=now_jst
             )
             db.session.add(store_avg)
         
-        # 週次平均の計算
+        # 週次平均の計算 - JSTタイムゾーンを考慮
+        one_week_ago_jst = today_jst - timedelta(weeks=1)
         weekly_query = db.session.query(
             StoreStatus.store_name,
             func.avg(
@@ -89,18 +106,27 @@ class AggregatedData:
         # 既存の週次平均を削除
         db.session.query(WeeklyAverage).delete()
         
-        # 新しい週次平均を保存
+        # 新しい週次平均を保存 - JSTタイムゾーン対応
         for record in weekly_query:
+            # start_dateとend_dateのタイムゾーン情報を追加
+            start_date = record.start_date
+            if start_date.tzinfo is None:
+                start_date = pytz.utc.localize(start_date).astimezone(jst)
+                
+            end_date = record.end_date
+            if end_date.tzinfo is None:
+                end_date = pytz.utc.localize(end_date).astimezone(jst)
+                
             store_avg = WeeklyAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
                 sample_count=record.sample_count,
-                start_date=record.start_date,
-                end_date=record.end_date,
+                start_date=start_date,
+                end_date=end_date,
                 biz_type=record.biz_type,
                 genre=record.genre,
                 area=record.area,
-                updated_at=datetime.now()
+                updated_at=now_jst
             )
             db.session.add(store_avg)
         
@@ -130,18 +156,27 @@ class AggregatedData:
         # 既存の店舗平均を削除
         db.session.query(StoreAverage).delete()
         
-        # 新しい店舗平均を保存
+        # 新しい店舗平均を保存 - JSTタイムゾーン対応
         for record in store_query:
+            # start_dateとend_dateのタイムゾーン情報を追加
+            start_date = record.start_date
+            if start_date.tzinfo is None:
+                start_date = pytz.utc.localize(start_date).astimezone(jst)
+                
+            end_date = record.end_date
+            if end_date.tzinfo is None:
+                end_date = pytz.utc.localize(end_date).astimezone(jst)
+                
             store_avg = StoreAverage(
                 store_name=record.store_name,
                 avg_rate=float(record.avg_rate),
                 sample_count=record.sample_count,
-                start_date=record.start_date,
-                end_date=record.end_date,
+                start_date=start_date,
+                end_date=end_date,
                 biz_type=record.biz_type,
                 genre=record.genre,
                 area=record.area,
-                updated_at=datetime.now()
+                updated_at=now_jst
             )
             db.session.add(store_avg)
         

@@ -1,6 +1,8 @@
 
 import pytz
 from datetime import datetime
+from flask import request, abort
+from math import ceil
 
 def paginate_query_results(query, page, per_page, max_per_page=100):
     """
@@ -28,55 +30,67 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
     
     # 総アイテム数とページ数を計算
     total_count = query.count()
-    total_pages = (total_count + per_page - 1) // per_page
+    total_pages = ceil(total_count / per_page) if per_page > 0 else 0
     
     # 次のページと前のページがあるかどうか
     has_next = page < total_pages
     has_prev = page > 1
     
+    # 結果と情報を辞書にまとめる
     return {
-        'items': items,
-        'meta': {
-            'page': page,
-            'per_page': per_page,
-            'total_count': total_count,
-            'total_pages': total_pages,
-            'has_next': has_next,
-            'has_prev': has_prev
+        "items": items,
+        "meta": {
+            "page": page,
+            "per_page": per_page,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "has_next": has_next,
+            "has_prev": has_prev
         }
     }
 
 def format_store_status(item, timezone=None):
     """
-    StoreStatus オブジェクトを JSON 化可能な辞書に変換する
+    StoreStatus モデルオブジェクトを JSON 形式に変換する
     
     引数:
-        item: StoreStatus モデルのオブジェクト
-        timezone: タイムゾーンオブジェクト（デフォルトはUTC）
+        item: StoreStatus オブジェクト
+        timezone: タイムゾーン（pytz タイムゾーンオブジェクト）
     
     戻り値:
-        JSON 化可能な辞書
+        JSON シリアライズ可能な辞書
     """
-    timestamp = item.timestamp
+    # JSTタイムゾーンがない場合はデフォルトで設定
+    if timezone is None:
+        timezone = pytz.timezone('Asia/Tokyo')
     
-    # タイムゾーン変換（指定がある場合）
-    if timezone:
-        if timestamp.tzinfo is None:
-            # タイムゾーン情報がない場合はUTCとして扱う
-            timestamp = pytz.utc.localize(timestamp)
+    # タイムスタンプが aware でない場合は UTC として扱い、指定されたタイムゾーンに変換
+    timestamp = item.timestamp
+    if timestamp.tzinfo is None:
+        # naive な datetime を UTC として扱い、指定されたタイムゾーンに変換
+        timestamp = pytz.utc.localize(timestamp).astimezone(timezone)
+    else:
+        # すでに aware な datetime の場合は単に指定されたタイムゾーンに変換
         timestamp = timestamp.astimezone(timezone)
     
-    # フォーマット済みの辞書を返す
+    # 稼働率の計算 (稼働中スタッフがいる場合のみ計算)
+    rate = 0
+    if item.working_staff > 0:
+        # 稼働率 = (勤務中 - 待機中) / 勤務中 × 100
+        rate = ((item.working_staff - item.active_staff) / item.working_staff) * 100
+    
+    # 結果を辞書にまとめる
     return {
-        'id': item.id,
-        'timestamp': timestamp.isoformat(),
-        'store_name': item.store_name,
-        'biz_type': item.biz_type,
-        'genre': item.genre,
-        'area': item.area,
-        'total_staff': item.total_staff,
-        'working_staff': item.working_staff,
-        'active_staff': item.active_staff,
-        'url': item.url,
-        'shift_time': item.shift_time
+        "id": item.id,
+        "timestamp": timestamp.strftime('%Y-%m-%d %H:%M:%S %Z%z'),  # タイムゾーン情報を含めた形式
+        "store_name": item.store_name,
+        "biz_type": item.biz_type,
+        "genre": item.genre,
+        "area": item.area,
+        "total_staff": item.total_staff,
+        "working_staff": item.working_staff,
+        "active_staff": item.active_staff,
+        "rate": round(rate, 1),  # 小数点以下1桁に丸める
+        "url": item.url,
+        "shift_time": item.shift_time
     }

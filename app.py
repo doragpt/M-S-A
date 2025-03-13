@@ -356,11 +356,12 @@ def maintenance_task():
         app.logger.info(f"ガベージコレクション完了: {collected}オブジェクト解放")
 
 # APScheduler の設定：1時間ごとに scheduled_scrape を実行
-# ジョブIDを 'scrape_job' として登録
+# ジョブIDを 'scrape_job' として登録（日本時間を基準に）
 executors = {'default': ProcessPoolExecutor(max_workers=1)}
-scheduler = BackgroundScheduler(executors=executors)
+jst = pytz.timezone('Asia/Tokyo')
+scheduler = BackgroundScheduler(executors=executors, timezone=jst)
 scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
-# 毎日午前3時にメンテナンスタスクを実行
+# 毎日午前3時（日本時間）にメンテナンスタスクを実行
 scheduler.add_job(maintenance_task, 'cron', hour=3, minute=0, id='maintenance_job')
 scheduler.start()
 
@@ -421,8 +422,10 @@ def api_data():
     if valid_stores > 0 and total_working_staff > 0:
         avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
 
-    # データのフォーマット
+    # データのフォーマット - JSTタイムゾーンを明示的に設定
     jst = pytz.timezone('Asia/Tokyo')
+    # 現在時刻をJSTで取得（API呼び出し時刻）
+    now_jst = datetime.now(jst)
 
     if use_pagination:
         # ページネーション適用
@@ -444,7 +447,8 @@ def api_data():
                 "per_page": paginated_result['meta']['per_page'],
                 "total_pages": paginated_result['meta']['total_pages'],
                 "has_prev": paginated_result['meta']['has_prev'],
-                "has_next": paginated_result['meta']['has_next']
+                "has_next": paginated_result['meta']['has_next'],
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
             }
         }
     else:
@@ -459,7 +463,8 @@ def api_data():
                 "avg_rate": round(avg_rate, 1),
                 "max_rate": round(max_rate, 1),
                 "total_working_staff": total_working_staff,
-                "total_active_staff": total_active_staff
+                "total_active_staff": total_active_staff,
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
             }
         }
 
@@ -518,6 +523,10 @@ def api_history():
     """
     from page_helper import paginate_query_results, format_store_status
 
+    # JSTタイムゾーン
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+    
     # ベースクエリ
     query = StoreStatus.query
 
@@ -526,10 +535,14 @@ def api_history():
         query = query.filter(StoreStatus.store_name == store)
 
     if start_date := request.args.get('start_date'):
-        query = query.filter(StoreStatus.timestamp >= f"{start_date} 00:00:00")
+        # 日本時間の00:00:00として日付開始時刻を設定
+        start_datetime_str = f"{start_date} 00:00:00"
+        query = query.filter(StoreStatus.timestamp >= start_datetime_str)
 
     if end_date := request.args.get('end_date'):
-        query = query.filter(StoreStatus.timestamp <= f"{end_date} 23:59:59")
+        # 日本時間の23:59:59として日付終了時刻を設定
+        end_datetime_str = f"{end_date} 23:59:59"
+        query = query.filter(StoreStatus.timestamp <= end_datetime_str)
 
     # データ制限（オプション）
     if limit := request.args.get('limit', type=int):
@@ -548,21 +561,30 @@ def api_history():
         items = paginated_result['items']
 
         # データのフォーマット
-        jst = pytz.timezone('Asia/Tokyo')
         data = [format_store_status(item, jst) for item in items]
 
         # メタデータを含むレスポンス
         response = {
             "items": data,
-            "meta": paginated_result['meta']
+            "meta": {
+                **paginated_result['meta'],
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+            }
         }
         return jsonify(response)
     else:
         # 従来通りすべての結果を返す場合
         results = query.all()
-        jst = pytz.timezone('Asia/Tokyo')
         data = [format_store_status(r, jst) for r in results]
-        return jsonify(data)
+        
+        response = {
+            "items": data,
+            "meta": {
+                "total_count": len(results),
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+            }
+        }
+        return jsonify(response)
 
 
 # ---------------------------------------------------------------------
@@ -671,6 +693,11 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 5000))
 
+    # タイムゾーン設定を確認
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+    print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
+    
     # サーバー起動 - シンプルな設定
     print(f"サーバーを起動しています: http://0.0.0.0:{port}")
     socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
