@@ -211,7 +211,10 @@
         <!-- トップ10店舗グラフ -->
         <div class="row my-3">
           <div class="col">
-            <canvas id="currentRateChart"></canvas>
+            <div id="top10ChartLoading" style="display: none;">読み込み中...</div>
+            <div id="top10ChartContainer">
+              <canvas id="currentRateChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -241,7 +244,10 @@
           </div>
           <div class="card mb-3">
             <div class="card-body">
-              <canvas id="historyChart"></canvas>
+              <div id="historyChartLoading" style="display: none;">読み込み中...</div>
+              <div id="historyChartContainer">
+                <canvas id="historyChart"></canvas>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -269,7 +275,10 @@
             </div>
           </div>
           <div class="chart-container">
-            <canvas id="hourlyChart"></canvas>
+            <div id="hourlyAnalysisLoading" style="display: none;">読み込み中...</div>
+            <div id="hourlyAnalysisContainer">
+              <canvas id="hourlyChart"></canvas>
+            </div>
           </div>
           <div class="card">
             <div class="card-body">
@@ -366,19 +375,22 @@
             <button id="updateRankingBtn" class="btn btn-primary">ランキング更新</button>
           </div>
           <div class="table-responsive">
-            <table id="rankingTable" class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>順位</th>
-                  <th>店舗名</th>
-                  <th>業種</th>
-                  <th>ジャンル</th>
-                  <th>エリア</th>
-                  <th>平均稼働率 (%)</th>
-                </tr>
-              </thead>
-              <tbody id="rankingTableBody"></tbody>
-            </table>
+            <div id="averageRankingLoading" style="display: none;">読み込み中...</div>
+            <div id="averageRankingContainer">
+              <table id="rankingTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>順位</th>
+                    <th>店舗名</th>
+                    <th>業種</th>
+                    <th>ジャンル</th>
+                    <th>エリア</th>
+                    <th>平均稼働率 (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="rankingTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -626,11 +638,28 @@
          * updateTop10Chart: トップ10店舗グラフ更新 (/api/data)
          ***********************************************/
         async function updateTop10Chart() {
+          const loadingElement = document.getElementById('top10ChartLoading');
+          const containerElement = document.getElementById('top10ChartContainer');
+
+          if (!loadingElement || !containerElement) {
+            console.error('Top10 chart elements not found in the DOM');
+            return;
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
+
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const responseJson = await response.json();
             // Handle both formats - direct array or { data: [...] } object
             const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+
+            // データが配列でなければ配列に変換
+            if (!Array.isArray(data)) {
+              console.warn('Data is not an array, converting:', data);
+              data = data && typeof data === 'object' ? [data] : [];
+            }
 
             data.forEach(store => {
               store.currentRate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
@@ -681,6 +710,9 @@
             });
           } catch (error) {
             console.error("トップ10店舗グラフエラー:", error);
+          } finally {
+            loadingElement.style.display = 'none';
+            containerElement.style.display = 'block';
           }
         }
 
@@ -690,14 +722,21 @@
         let historyChartCache = {}; // キャッシュ用オブジェクト
 
         async function updateHistoryChart() {
-          try {
-            const spinner = document.querySelector('#history .spinner-border');
-            if (spinner) spinner.style.display = 'inline-block';
-            else showSpinner();
+          const loadingElement = document.getElementById('historyChartLoading');
+          const containerElement = document.getElementById('historyChartContainer');
 
+          if (!loadingElement || !containerElement) {
+            console.error('History chart elements not found in the DOM');
+            return;
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
+
+          try {
             const storeSelect = document.getElementById("storeSelectHistory");
             if(storeSelect) { storeSelect.value = savedHistoryStore; }
-            const selectedStore = storeSelect ? storeSelect.value : "";
+            const selectedStore = storeSelect ? selectedStore : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
 
@@ -708,7 +747,8 @@
             if (historyChartCache[cacheKey]) {
               const cachedData = historyChartCache[cacheKey];
               updateHistoryChartDisplay(cachedData.labels, cachedData.effectiveRates);
-              hideSpinner();
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
               return;
             }
 
@@ -817,11 +857,12 @@
             // チャート更新処理
             updateHistoryChartDisplay(labels, effectiveRates);
 
-            hideSpinner();
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             console.error(error.stack);
-            hideSpinner();
+          } finally {
+            loadingElement.style.display = 'none';
+            containerElement.style.display = 'block';
           }
         }
 
@@ -936,6 +977,17 @@
          * updateHourlyAnalysis: 時間帯別分析更新 (/api/history)
          ***********************************************/
         async function updateHourlyAnalysis() {
+          const loadingElement = document.getElementById('hourlyAnalysisLoading');
+          const containerElement = document.getElementById('hourlyAnalysisContainer');
+
+          if (!loadingElement || !containerElement) {
+            console.error('Hourly analysis elements not found in the DOM');
+            return;
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
+
           try {
             showSpinner();
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
@@ -1013,6 +1065,9 @@
             console.error("時間帯別分析エラー:", err);
             console.error(err.stack);
             hideSpinner();
+          } finally {
+            loadingElement.style.display = 'none';
+            containerElement.style.display = 'block';
           }
         }
         document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
@@ -1199,13 +1254,24 @@
         }
 
         async function updateIndustryRanking() {
+          const industrySelector = document.getElementById('industrySelector');
+          if (!industrySelector) {
+            console.error('Industry selector not found in the DOM');
+            return Promise.reject('Industry selector not found');
+          }
+
+          const selectedIndustry = industrySelector.value;
+
           try {
-            const industrySelect = document.getElementById("industrySelectType");
-            const selectedIndustry = industrySelect ? industrySelect.value : "";
             const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
             const responseJson = await responseLatest.json();
             // Handle both formats - direct array or { data: [...] } object
             const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+            // データが配列でなければ配列に変換
+            if (!Array.isArray(dataLatest)) {
+              console.warn('Data latest is not an array, converting:', dataLatest);
+              dataLatest = dataLatest && typeof dataLatest === 'object' ? [dataLatest] : [];
+            }
             const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
@@ -1388,8 +1454,19 @@
          * updateAverageRanking: 平均稼働ランキング更新 (/api/ranking/average)
          ***********************************************/
         async function updateAverageRanking() {
+          const loadingElement = document.getElementById('averageRankingLoading');
+          const containerElement = document.getElementById('averageRankingContainer');
+
+          if (!loadingElement || !containerElement) {
+            console.error('Average ranking elements not found in the DOM');
+            return Promise.resolve(); // エラーにならないように空のPromiseを返す
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
+
+          // APIエンドポイントが404の場合は、ユーザーに通知
           try {
-            showSpinner();
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let apiUrl = "/api/ranking/average";
 
@@ -1418,10 +1495,12 @@
               `;
               tbody.insertAdjacentHTML("beforeend", rowHtml);
             });
-            hideSpinner();
           } catch (error) {
-            console.error("平均稼働ランキングエラー:", error);
-            hideSpinner();
+            console.warn('Average ranking endpoint not available:', error);
+            containerElement.innerHTML = '<div class="alert alert-warning">平均稼働ランキングデータは現在利用できません</div>';
+          } finally {
+            loadingElement.style.display = 'none';
+            containerElement.style.display = 'block';
           }
         }
 
@@ -1451,7 +1530,7 @@
             // ローカルストレージから前回の選択を復元
             const savedIndustryRanking = localStorage.getItem("industryRankingFilter");
             if (savedIndustryRanking && sortedIndustries.includes(savedIndustryRanking)) {
-              industrySelect.value = savedIndustryRanking;
+                            industrySelect.value = savedIndustryRanking;
             }
 
             // 選択変更時の保存処理
@@ -1659,8 +1738,19 @@
          * updateAverageRanking: 平均稼働ランキング更新 (/api/ranking/average)
          ***********************************************/
         async function updateAverageRanking() {
+          const loadingElement = document.getElementById('averageRankingLoading');
+          const containerElement = document.getElementById('averageRankingContainer');
+
+          if (!loadingElement || !containerElement) {
+            console.error('Average ranking elements not found in the DOM');
+            return Promise.resolve(); // エラーにならないように空のPromiseを返す
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
+
+          // APIエンドポイントが404の場合は、ユーザーに通知
           try {
-            showSpinner();
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let apiUrl = "/api/ranking/average";
 
@@ -1689,10 +1779,12 @@
               `;
               tbody.insertAdjacentHTML("beforeend", rowHtml);
             });
-            hideSpinner();
           } catch (error) {
-            console.error("平均稼働ランキングエラー:", error);
-            hideSpinner();
+            console.warn('Average ranking endpoint not available:', error);
+            containerElement.innerHTML = '<div class="alert alert-warning">平均稼働ランキングデータは現在利用できません</div>';
+          } finally {
+            loadingElement.style.display = 'none';
+            containerElement.style.display = 'block';
           }
         }
 
@@ -1960,11 +2052,18 @@
           const startDate = document.getElementById('startDate').value;
           const endDate = document.getElementById('endDate').value;
           const historyStats = document.getElementById('historyStats');
-          const spinner = document.querySelector('#history .spinner-border');
+          const loadingElement = document.getElementById('historyChartLoading');
+          const containerElement = document.getElementById('historyChartContainer');
 
-          // ローディング表示
-          spinner.style.display = 'inline-block';
+          if (!loadingElement || !containerElement) {
+            console.error('History chart elements not found in the DOM');
+            return;
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
           historyStats.textContent = '読み込み中...';
+
 
           // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
           let url;
@@ -1999,7 +2098,8 @@
               // 通常データの場合の処理
               if (!data.length) {
                 historyStats.textContent = '該当データがありません';
-                spinner.style.display = 'none';
+                loadingElement.style.display = 'none';
+                containerElement.style.display = 'block';
                 return;
               }
 
@@ -2010,7 +2110,8 @@
 
               if (filteredData.length === 0) {
                 historyStats.textContent = '有効なデータがありません（出勤スタッフ0人の記録のみ）';
-                spinner.style.display = 'none';
+                loadingElement.style.display = 'none';
+                containerElement.style.display = 'block';
                 return;
               }
 
@@ -2126,22 +2227,30 @@
                 }
               });
 
-              spinner.style.display = 'none';
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
             })
             .catch(error => {
               console.error('履歴データ取得エラー:', error);
               historyStats.textContent = 'データ取得中にエラーが発生しました';
-              spinner.style.display = 'none';
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
             });
         }
 
         function updateHourlyAnalysis() {
           const storeId = document.getElementById('hourlyStoreSelect').value;
           const hourlyStats = document.getElementById('hourlyStats');
-          const spinner = document.querySelector('#hourly .spinner-border');
+          const loadingElement = document.getElementById('hourlyAnalysisLoading');
+          const containerElement = document.getElementById('hourlyAnalysisContainer');
 
-          // ローディング表示
-          spinner.style.display = 'inline-block';
+          if (!loadingElement || !containerElement) {
+            console.error('Hourly analysis elements not found in the DOM');
+            return;
+          }
+
+          loadingElement.style.display = 'block';
+          containerElement.style.display = 'none';
           hourlyStats.textContent = '読み込み中...';
 
           // データ取得URL
@@ -2155,7 +2264,8 @@
             .then(data => {
               if (!data.length) {
                 hourlyStats.textContent = '該当データがありません';
-                spinner.style.display = 'none';
+                loadingElement.style.display = 'none';
+                containerElement.style.display = 'block';
                 return;
               }
 
@@ -2206,7 +2316,8 @@
               const totalSamples = Object.values(hourly).reduce((sum, h) => sum + h.count, 0);
 
               hourlyStats.textContent = `分析対象サンプル数: ${totalSamples}件`;
-              spinner.style.display = 'none';
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
 
               // チャート描画
               const ctx = document.getElementById('hourlyChart').getContext('2d');
@@ -2270,7 +2381,8 @@
             .catch(error => {
               console.error('時間帯データ取得エラー:', error);
               hourlyStats.textContent = 'データ取得中にエラーが発生しました';
-              spinner.style.display = 'none';
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
             });
         }
 
