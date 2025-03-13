@@ -489,18 +489,34 @@
         /***********************************************
          * fetchWithRetry: API呼び出しのリトライ処理
          ***********************************************/
-        async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000) {
-          for (let i = 0; i < retries; i++) {
-            try {
-              const response = await fetch(url, options);
-              if (!response.ok) throw new Error("HTTP error " + response.status);
-              return response;
-            } catch (err) {
-              console.error(`Fetch error (${url}), attempt ${i + 1}:`, err);
-              if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
-              else throw err;
+        async function fetchWithRetry(url, options = {}, maxRetries = 3, delay = 2000) {
+          let currentRetry = 0;
+
+          return new Promise(async (resolve, reject) => {
+            while (currentRetry < maxRetries) {
+              try {
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+                // Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                  throw new Error(`Expected JSON but got ${contentType}`);
+                }
+
+                const data = await response.json();
+                return resolve(data);
+              } catch (error) {
+                currentRetry++;
+                console.error(`Fetch error (${url}), attempt ${currentRetry}: ${error}`);
+                if (currentRetry >= maxRetries) {
+                  return reject(error);
+                }
+                // Wait before retrying
+                await new Promise(r => setTimeout(r, delay));
+              }
             }
-          }
+          });
         }
 
         /***********************************************
@@ -805,7 +821,7 @@
                   const dateKey = d.toLocaleDateString();
 
                   if (!dateMap.has(dateKey)) {
-                    dateMap.set(dateKey, { sum: 0, count: 0 });
+                    dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
                   }
 
                   // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
@@ -1822,13 +1838,11 @@
                     console.error('平均稼働ランキングエラー:', err);
                     if (loadingEl) loadingEl.style.display = 'none';
                     if (containerEl) containerEl.style.display = 'block';
-                    handleError(err, "updateAverageRanking");
                   });
               } else {
                 console.error('平均稼働ランキングエラー:', error);
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (containerEl) containerEl.style.display = 'block';
-                handleError(error, "updateAverageRanking");
               }
             });
         }
@@ -1938,13 +1952,21 @@
         // 業種データをロードして選択ボックスに反映する共通関数
         function loadBusinessTypes(selectId) {
           const select = document.getElementById(selectId);
+          if (!select) {
+            console.error(`Select element with ID ${selectId} not found`);
+            return;
+          }
+
           if (!select.options.length) {
             // 業種データが未読み込みの場合のみ実行
-            fetch('/api/data')
-              .then(response => response.json())
-              .then(responseJson => {
-                // Handle both formats - direct array or { data: [...] } object
-                const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+            fetch('/api/aggregated')
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+              })
+              .then(data => {
                 // 重複のないbiz_typeリストを作成
                 const bizTypes = [...new Set(data.map(item => item.biz_type))].filter(Boolean);
                 bizTypes.sort();
@@ -2498,8 +2520,7 @@
           // 更新ボタンのイベントリスナーが設定されていることを確認
           console.log("イベントハンドラ設定確認:");
           const updateButtons = {
-            "historyBtn": document.getElementById("updateHistoryBtn"),
-            "hourlyBtn": document.getElementById("updateHourlyBtn"),
+            "historyBtn": document.getElementById("updateHistoryBtn"),            "hourlyBtn": document.getElementById("updateHourlyBtn"),
             "areaBtn": document.getElementById("updateAreaBtn"),
             "typeBtn":document.getElementById("industrySelectType"),
             "rankingBtn": document.getElementById("updateRankingBtn")

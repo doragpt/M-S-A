@@ -14,6 +14,8 @@ from apscheduler.executors.pool import ProcessPoolExecutor
 
 # 追加：Flask-Caching のインポート
 from flask_caching import Cache
+import json
+from database import get_db_connection # Added
 
 # ロギング設定
 logging.basicConfig(
@@ -340,6 +342,7 @@ def scheduled_scrape():
             cache.delete_memoized(api_store_averages)
             cache.delete_memoized(api_average_ranking)
             cache.delete_memoized(api_aggregated_data)
+            cache.delete_memoized(api_genre_ranking) # Added
 
             # 古いキャッシュキーも念のためクリア
             legacy_keys = [
@@ -912,14 +915,14 @@ def api_store_averages():
 def api_genre_ranking():
     """
     業種内のジャンル別平均稼働率ランキングを返すエンドポイント
-    
+
     クエリパラメータ:
         biz_type: 業種でフィルタリング（必須）
     """
     biz_type = request.args.get('biz_type')
     if not biz_type:
         return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
-    
+
     try:
         # 直接SQLクエリを実行
         # 業種内のジャンル別平均稼働率とサンプル数を計算
@@ -941,19 +944,19 @@ def api_genre_ranking():
                 func.nullif(StoreStatus.working_staff, 0)
             ).desc()
         )
-        
+
         results = query.all()
-        
+
         # 結果が空の場合は空のリストを返す
         if not results:
             return jsonify([])
-        
+
         data = [{
             "genre": r.genre if r.genre else "不明",
             "store_count": r.store_count,
             "avg_rate": round(float(r.avg_rate), 1)
         } for r in results]
-        
+
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"ジャンルランキング取得エラー: {e}")
