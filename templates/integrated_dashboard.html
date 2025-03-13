@@ -96,6 +96,16 @@
       z-index: 2000;
       display: none;
     }
+    #errorContainer {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 10px;
+      background-color: red;
+      color: white;
+      z-index: 2001;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +121,9 @@
       </div>
     </div>
   </div>
+
+  <!-- エラー表示コンテナ -->
+  <div id="errorContainer"></div>
 
   <!-- ヘッダー -->
   <div class="header" id="pageHeader">
@@ -631,6 +644,7 @@
             });
           } catch (error) {
             console.error("APIデータ取得エラー:", error);
+            handleError(error, "updateDashboard");
           }
         }
 
@@ -710,6 +724,7 @@
             });
           } catch (error) {
             console.error("トップ10店舗グラフエラー:", error);
+            handleError(error, "updateTop10Chart");
           } finally {
             loadingElement.style.display = 'none';
             containerElement.style.display = 'block';
@@ -860,6 +875,7 @@
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             console.error(error.stack);
+            handleError(error, "updateHistoryChart");
           } finally {
             loadingElement.style.display = 'none';
             containerElement.style.display = 'block';
@@ -969,6 +985,7 @@
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
             console.error(err.stack);
+            handleError(err, "fillHistoryStoreDropdown");
             hideSpinner();
           }
         }
@@ -1064,6 +1081,7 @@
           } catch (err) {
             console.error("時間帯別分析エラー:", err);
             console.error(err.stack);
+            handleError(err, "updateHourlyAnalysis");
             hideSpinner();
           } finally {
             loadingElement.style.display = 'none';
@@ -1106,6 +1124,7 @@
           } catch (err) {
             console.error("時間帯分析店舗リスト取得エラー:", err);
             console.error(err.stack);
+            handleError(err, "fillHourlyStoreDropdown");
             hideSpinner();
           }
         }
@@ -1224,6 +1243,7 @@
           } catch (error) {
             console.error("エリア統計エラー:", error);
             console.error(error.stack);
+            handleError(error, "updateAreaStatistics");
             hideSpinner();
           }
         }
@@ -1250,6 +1270,7 @@
             });
           } catch (err) {
             console.error("業種ドロップダウン取得エラー:", err);
+            handleError(err, "fillIndustryDropdown");
           }
         }
 
@@ -1328,6 +1349,7 @@
             });
           } catch (error) {
             console.error("業種内ジャンルランキングエラー:", error);
+            handleError(error, "updateIndustryRanking");
           }
         }
 
@@ -1382,6 +1404,7 @@
             });
           } catch (error) {
             console.error("店舗詳細履歴グラフエラー:", error);
+            handleError(error, "updateDetailHistoryChart");
           }
         }
 
@@ -1447,6 +1470,7 @@
             });
           } catch (err) {
             console.error("店舗詳細時間帯分析エラー:", err);
+            handleError(err, "updateDetailHourlyChart");
           }
         }
 
@@ -1514,8 +1538,7 @@
         /***********************************************
          * fillIndustryDropdownForRanking: 業種別ランキング用ドロップダウン更新
          ***********************************************/
-        async function fillIndustryDropdownForRanking() {
-          try {
+        async function fillIndustryDropdownForRanking() {          try {
             // 最適化: 現在のデータから業種を取得（履歴全件不要）
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
@@ -1546,6 +1569,7 @@
             });
           } catch (err) {
             console.error("ランキング業種ドロップダウン取得エラー:", err);
+            handleError(err, "fillIndustryDropdownForRanking");
           }
         }
 
@@ -1734,6 +1758,7 @@
               tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
               // エラーの詳細をコンソールに出力
               console.error('エラー詳細:', error.stack);
+              handleError(error, "updateTypeRanking");
             })
             .finally(() => {
               // ローディング非表示
@@ -1797,11 +1822,13 @@
                     console.error('平均稼働ランキングエラー:', err);
                     if (loadingEl) loadingEl.style.display = 'none';
                     if (containerEl) containerEl.style.display = 'block';
+                    handleError(err, "updateAverageRanking");
                   });
               } else {
                 console.error('平均稼働ランキングエラー:', error);
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (containerEl) containerEl.style.display = 'block';
+                handleError(error, "updateAverageRanking");
               }
             });
         }
@@ -1841,6 +1868,7 @@
             });
           } catch (err) {
             console.error("ランキング業種ドロップダウン取得エラー:", err);
+            handleError(err, "fillIndustryDropdownForRanking");
           }
         }
 
@@ -2029,6 +2057,7 @@
               tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
               // エラーの詳細をコンソールに出力
               console.error('エラー詳細:', error.stack);
+              handleError(error, "updateTypeRanking");
             })
             .finally(() => {
               // ローディング非表示
@@ -2082,6 +2111,7 @@
             .catch(error => {
               console.error('ランキングデータ取得エラー:', error);
               tableBody.innerHTML = '<tr><td colspan="6" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+              handleError(error, "updateRanking");
             })
             .finally(() => {
               // ローディング非表示
@@ -2291,6 +2321,7 @@
               historyStats.textContent = 'データ取得中にエラーが発生しました';
               loadingElement.style.display = 'none';
               containerElement.style.display = 'block';
+              handleError(error, "updateHistoryChart");
             });
         }
 
@@ -2439,6 +2470,7 @@
               hourlyStats.textContent = 'データ取得中にエラーが発生しました';
               loadingElement.style.display = 'none';
               containerElement.style.display = 'block';
+              handleError(error, "updateHourlyAnalysis");
             });
         }
 
@@ -2450,6 +2482,7 @@
           // グローバルエラーハンドリング
           window.addEventListener('error', function(e) {
             console.error('グローバルエラー:', e.message);
+            handleError(e, "global");
           });
 
           // 初期表示タブはタブ1
@@ -2468,7 +2501,7 @@
             "historyBtn": document.getElementById("updateHistoryBtn"),
             "hourlyBtn": document.getElementById("updateHourlyBtn"),
             "areaBtn": document.getElementById("updateAreaBtn"),
-            "typeBtn": document.getElementById("industrySelectType"),
+            "typeBtn":document.getElementById("industrySelectType"),
             "rankingBtn": document.getElementById("updateRankingBtn")
           };
 
@@ -2479,6 +2512,228 @@
             }
           }
         });
+
+        // グローバルエラーハンドリング関数
+        function handleError(error, context) {
+          console.error(`エラー (${context}):`, error);
+          // アラートの代わりにコンソールに出力するだけにして、UXを向上
+          const errorMsg = `エラーが発生しました (${context}): ${error.message || error}`;
+          console.error(errorMsg);
+
+          // エラー表示用の要素があれば利用する
+          const errorContainer = document.getElementById('errorContainer');
+          if (errorContainer) {
+            errorContainer.textContent = errorMsg;
+            errorContainer.style.display = 'block';
+            // 5秒後に非表示
+            setTimeout(() => {
+              errorContainer.style.display = 'none';
+            }, 5000);
+          }
+        }
+
+        async function fetchCurrentData() {
+          try {
+            const response = await fetchWithRetry('/api/data');
+            const data = await response.json();
+            dataLatest = Array.isArray(data) ? data : (data.data || []);
+            fillIndustryDropdown(dataLatest);
+          } catch (error) {
+            console.error('現在のデータ取得エラー:', error);
+            handleError(error, 'fetchCurrentData');
+          }
+        }
+
+        async function loadStoreList() {
+          try {
+            const response = await fetchWithRetry('/api/data');
+            const data = await response.json();
+            const stores = new Set();
+
+            data.forEach(item => {
+              if (item.store_name) {
+                stores.add(item.store_name);
+              }
+            });
+
+            const storeSelectHistory = document.getElementById('storeSelectHistory');
+            const storeSelectHourly = document.getElementById('hourlyStoreSelect');
+
+            // ドロップダウンオプションの作成
+            storeSelectHistory.innerHTML = '<option value="">全店舗</option>';
+            storeSelectHourly.innerHTML = '<option value="">全店舗</option>';
+
+            Array.from(stores).sort().forEach(store => {
+              const option = document.createElement('option');
+              option.value = store;
+              option.text = store;
+
+              storeSelectHistory.appendChild(option.cloneNode(true));
+              storeSelectHourly.appendChild(option.cloneNode(true));
+            });
+          } catch (error) {
+            console.error('店舗リスト読み込みエラー:', error);
+            handleError(error, 'loadStoreList');
+          }
+        }
+
+        // 集計データ処理関数
+        function processAggregatedData(data) {
+          const labels = data.map(item => item.date);
+          const effectiveRates = data.map(item => item.avg_rate);
+
+          // サンプル数と平均値の計算
+          const overallAvg = effectiveRates.reduce((sum, rate) => sum + rate, 0) / effectiveRates.length;
+
+          document.getElementById('historyStats').textContent = `期間内サンプル数: ${effectiveRates.length}件, 平均稼働率: ${overallAvg.toFixed(1)}%`;
+
+          // グラフの描画
+          const ctx = document.getElementById('historyChart').getContext('2d');
+
+          if (charts.history) {
+            charts.history.destroy();
+          }
+
+          charts.history = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '稼働率 (%)',
+                data: effectiveRates,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                pointRadius: 1,
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  type: 'time',
+                  time: {
+                    unit: 'day',
+                    tooltipFormat: 'yyyy/MM/dd',
+                    displayFormats: {
+                      day: 'MM/dd'
+                    }
+                  },
+                  title: {
+                    display: true,
+                    text: '日付'
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  max: 100,
+                  title: {
+                    display: true,
+                    text: '稼働率 (%)'
+                  }
+                }
+              },
+              plugins: {
+                title: {
+                  display: true,
+                  text: '全店舗の平均稼働率推移',
+                  font: {
+                    size: 16
+                  }
+                },
+                zoom: {
+                  pan: { enabled: true, mode: 'xy' },
+                  zoom: {
+                    wheel: { enabled: true },
+                    drag: { enabled: true },
+                    mode: 'xy'
+                  }
+                }
+              }
+            }
+          });
+
+          document.getElementById('historyChartLoading').style.display = 'none';
+          document.getElementById('historyChartContainer').style.display = 'block';
+        }
+
+        // 比較分析ボタンクリック時の処理
+        document.getElementById('compareBtn').addEventListener('click', function() {
+          const checkedStores = Array.from(document.querySelectorAll('.compare-checkbox:checked')).map(checkbox => checkbox.dataset.storeName);
+          if (checkedStores.length < 2) {
+            alert('比較分析には2店舗以上を選択してください。');
+            return;
+          }
+
+          // 比較分析モーダル表示とグラフ描画処理（仮）
+          const modal = new bootstrap.Modal(document.getElementById('compareModal'));
+          modal.show();
+
+          // TODO: /api/compare エンドポイントにリクエストを送信し、データを取得する
+          const ctx = document.getElementById('compareChart').getContext('2d');
+          if (charts.compare) charts.compare.destroy();
+          charts.compare = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: ['日1', '日2', '日3'], // 仮データ
+              datasets: [
+                { label: checkedStores[0], data: [80, 70, 90] }, // 仮データ
+                { label: checkedStores[1], data: [75, 85, 70] }  // 仮データ
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                title: { display: true, text: '店舗比較分析', font: { size: 18 } }
+              }
+            }
+          });
+        });
+
+
+        //ダークモードトグル
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('click', function() {
+          document.body.classList.toggle('dark');
+          document.getElementById('pageHeader').classList.toggle('dark');
+        });
+
+        //お気に入りトグル
+        const favoritesToggle = document.getElementById('favoritesToggle');
+        favoritesToggle.addEventListener('click', function() {
+          favoritesFilterActive = !favoritesFilterActive;
+          const rows = document.querySelectorAll('#storeTable tbody tr');
+          rows.forEach(row => {
+            const storeName = row.cells[1].innerText.trim();
+            row.style.display = favoritesFilterActive && !favorites.includes(storeName) ? 'none' : '';
+          });
+          favoritesToggle.textContent = favoritesFilterActive ? 'すべて表示' : 'お気に入りのみ表示';
+        });
+
+
+        //初期化処理
+        function init() {
+          updateDashboard();
+          updateTop10Chart();
+          updateAreaStatistics();
+          fillIndustryDropdown();
+          updateIndustryRanking();
+          fillHistoryStoreDropdown();
+          updateHistoryChart();
+          fillHourlyStoreDropdown();
+          updateHourlyAnalysis();
+          updateRanking();
+        }
+
+        init();
+
+        //グローバルエラーハンドリング
+
+        window.addEventListener('error', function(event) {
+          handleError(event.error, 'global');
+        });
+
       });
     })();
   </script>
