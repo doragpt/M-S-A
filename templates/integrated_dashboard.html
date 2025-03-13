@@ -731,7 +731,7 @@
                   record.rate ? record.rate.toFixed(1) : 
                   (record.working_staff > 0 ? 
                   ((record.working_staff - record.active_staff) / record.working_staff* 100).toFixed(1) : 0)
-                ););
+                );
               } else {                // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
 
