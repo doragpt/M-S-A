@@ -143,8 +143,28 @@ class StoreAverage(db.Model):
 # ---------------------------------------------------------------------
 # 3. テーブル作成
 # ---------------------------------------------------------------------
+# 明示的にモデルをインポートして、db.create_all()がすべてのテーブルを作成するようにする
 with app.app_context():
-    db.create_all()
+    try:
+        # 各モデルを明示的に参照して、SQLAlchemyに認識させる
+        app.logger.info("データベーステーブルを作成しています...")
+        app.logger.info(f"モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage")
+        
+        # 明示的にモデルクラスを参照して、SQLAlchemyが認識できるようにする
+        tables = [StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage]
+        app.logger.info(f"登録テーブル数: {len(tables)}")
+        
+        # テーブル作成
+        db.create_all()
+        
+        # テーブルが作成されたか確認
+        table_names = db.inspect(db.engine).get_table_names()
+        app.logger.info(f"作成されたテーブル: {', '.join(table_names)}")
+        
+        app.logger.info("データベーステーブルの作成が完了しました")
+    except Exception as e:
+        app.logger.error(f"テーブル作成中にエラーが発生しました: {e}")
+        app.logger.error(traceback.format_exc())
 
 # ---------------------------------------------------------------------
 # 4. スクレイピング処理 & 定期実行
@@ -185,40 +205,89 @@ def scheduled_scrape():
             return
 
         # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
-        for record in results:
-            if record:  # 空の結果はスキップ
-                # 重複チェック：店舗名とエリアと実行時刻（分単位）でチェック
-                existing = StoreStatus.query.filter(
-                    StoreStatus.store_name == record.get('store_name'),
-                    StoreStatus.area == record.get('area'),
-                    func.date_trunc('minute', StoreStatus.timestamp) == scrape_time.replace(second=0, microsecond=0)
-                ).first()
-                if existing:
-                    # 既存レコードがあれば更新
-                    existing.biz_type = record.get('biz_type')
-                    existing.genre = record.get('genre')
-                    existing.area = record.get('area')
-                    existing.total_staff = record.get('total_staff')
-                    existing.working_staff = record.get('working_staff')
-                    existing.active_staff = record.get('active_staff')
-                    existing.url = record.get('url')
-                    existing.shift_time = record.get('shift_time')
-                else:
-                    # 新規の場合は新たにレコードを追加
-                    new_status = StoreStatus(
-                        timestamp=scrape_time,
-                        store_name=record.get('store_name'),
-                        biz_type=record.get('biz_type'),
-                        genre=record.get('genre'),
-                        area=record.get('area'),
-                        total_staff=record.get('total_staff'),
-                        working_staff=record.get('working_staff'),
-                        active_staff=record.get('active_staff'),
-                        url=record.get('url'),
-                        shift_time=record.get('shift_time')
-                    )
-                    db.session.add(new_status)
-        db.session.commit()
+        record_update_count = 0
+        record_insert_count = 0
+        
+        try:
+            app.logger.info(f"スクレイピング結果: {len(results)}件のレコードを処理開始")
+            
+            for record in results:
+                if not record:  # 空の結果はスキップ
+                    app.logger.warning("空のレコードをスキップしました")
+                    continue
+                
+                try:
+                    # レコードの内容確認（デバッグ用）
+                    store_name = record.get('store_name', '')
+                    area = record.get('area', '')
+                    total_staff = record.get('total_staff', 0)
+                    working_staff = record.get('working_staff', 0)
+                    active_staff = record.get('active_staff', 0)
+                    
+                    app.logger.debug(f"処理中のレコード: {store_name} ({area}) - 総:{total_staff}, 勤務:{working_staff}, 待機:{active_staff}")
+                    
+                    if not store_name or not area:
+                        app.logger.warning(f"必須データ不足のためスキップ: 店舗名={store_name}, エリア={area}")
+                        continue
+                    
+                    # タイムスタンプ文字列をログに出力（デバッグ用）
+                    formatted_time = scrape_time.strftime('%Y-%m-%d %H:%M')
+                    app.logger.debug(f"重複チェック用タイムスタンプ: {formatted_time}")
+                    
+                    # 重複チェック: 店舗名とエリアと実行時刻（分単位）でチェック
+                    # SQLクエリをログ出力
+                    timestamp_query = f"strftime('%Y-%m-%d %H:%M', timestamp) = '{formatted_time}'"
+                    query_desc = f"StoreStatus.store_name='{store_name}' AND StoreStatus.area='{area}' AND {timestamp_query}"
+                    app.logger.debug(f"重複チェッククエリ: {query_desc}")
+                    
+                    existing = StoreStatus.query.filter(
+                        StoreStatus.store_name == store_name,
+                        StoreStatus.area == area,
+                        func.strftime('%Y-%m-%d %H:%M', StoreStatus.timestamp) == formatted_time
+                    ).first()
+                    
+                    if existing:
+                        # 既存レコードがあれば更新
+                        app.logger.info(f"既存レコードを更新: {store_name} (ID: {existing.id})")
+                        existing.biz_type = record.get('biz_type')
+                        existing.genre = record.get('genre')
+                        existing.area = area
+                        existing.total_staff = total_staff
+                        existing.working_staff = working_staff
+                        existing.active_staff = active_staff
+                        existing.url = record.get('url', '')
+                        existing.shift_time = record.get('shift_time', '')
+                        record_update_count += 1
+                    else:
+                        # 新規の場合は新たにレコードを追加
+                        app.logger.info(f"新規レコードを追加: {store_name}")
+                        new_status = StoreStatus(
+                            timestamp=scrape_time,
+                            store_name=store_name,
+                            biz_type=record.get('biz_type'),
+                            genre=record.get('genre'),
+                            area=area,
+                            total_staff=total_staff,
+                            working_staff=working_staff,
+                            active_staff=active_staff,
+                            url=record.get('url', ''),
+                            shift_time=record.get('shift_time', '')
+                        )
+                        db.session.add(new_status)
+                        record_insert_count += 1
+                        
+                except Exception as e:
+                    app.logger.error(f"レコード処理中の例外発生: {record.get('store_name', 'unknown')} - {str(e)}")
+                    app.logger.error(traceback.format_exc())
+            
+            # セッションの変更をコミット
+            db.session.commit()
+            app.logger.info(f"DB処理完了: 更新={record_update_count}件, 新規追加={record_insert_count}件")
+            
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"DB操作中に例外が発生しました: {str(e)}")
+            app.logger.error(traceback.format_exc())
 
         # 古いデータ（2年以上前）の削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
@@ -230,8 +299,33 @@ def scheduled_scrape():
         app.logger.info(f"集計データの計算完了: {aggregation_result}")
 
         # 特定のキャッシュのみをクリア（集計データは更新済みなのでそのまま）
-        cache.delete('view/api_data')
-        cache.delete('view/api_history')
+        try:
+            app.logger.info("キャッシュをクリアしています...")
+            
+            # すべてのAPIエンドポイントのキャッシュをクリア
+            cache.delete_memoized(api_data)
+            cache.delete_memoized(api_history)
+            cache.delete_memoized(api_history_optimized)
+            cache.delete_memoized(api_daily_averages)
+            cache.delete_memoized(api_weekly_averages)
+            cache.delete_memoized(api_store_averages)
+            cache.delete_memoized(api_average_ranking)
+            cache.delete_memoized(api_aggregated_data)
+            
+            # 古いキャッシュキーも念のためクリア
+            legacy_keys = [
+                'view/api_data', 
+                'view/api_history',
+                'api_data',
+                'api_history'
+            ]
+            for key in legacy_keys:
+                cache.delete(key)
+                
+            app.logger.info("キャッシュのクリアが完了しました")
+        except Exception as e:
+            app.logger.error(f"キャッシュクリア中にエラーが発生しました: {str(e)}")
+            app.logger.error(traceback.format_exc())
 
         # Socket.IO でクライアントへ更新通知
         socketio.emit('update', {'data': 'Dashboard updated'})
@@ -260,7 +354,7 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効
+@cache.memoize(timeout=300)  # キャッシュ：5分間有効
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
@@ -389,7 +483,7 @@ def bulk_add_store_urls():
     return redirect(url_for('manage_store_urls'))
 
 @app.route('/api/history')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効（DB負荷軽減）
+@cache.memoize(timeout=300)  # キャッシュ：5分間有効（DB負荷軽減）
 def api_history():
     """
     スクレイピング履歴を検索・フィルタリングして返すエンドポイント（タイムゾーンは JST）。
