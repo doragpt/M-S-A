@@ -716,7 +716,7 @@ if __name__ == '__main__':
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
-def api_average_ranking():
+def api_averageranking():
     """
     店舗の平均稼働率ランキングを返すエンドポイント
 
@@ -903,7 +903,7 @@ def api_aggregated_data():
     return jsonify(data)
 
 @app.route('/api/averages/daily')
-@cache.cached(timeout=600)  # キャッシュ：10分間有効
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
 def api_daily_averages():
     """
     日次（直近24時間）の平均稼働率データを返すエンドポイント
@@ -927,7 +927,7 @@ def api_daily_averages():
     return jsonify(data)
 
 @app.route('/api/averages/weekly')
-@cache.cached(timeout=1800)  # キャッシュ：30分間有効
+@cache.memoize(timeout=1800)  # キャッシュ：30分間有効
 def api_weekly_averages():
     """
     週次（直近7日間）の平均稼働率データを返すエンドポイント
@@ -951,7 +951,7 @@ def api_weekly_averages():
     return jsonify(data)
 
 @app.route('/api/averages/monthly')
-@cache.cached(timeout=1800)  # キャッシュ：30分間有効
+@cache.memoize(timeout=1800)  # キャッシュ：30分間有効
 def api_monthly_averages():
     """
     月次（直近30日間）の平均稼働率データを返すエンドポイント
@@ -975,7 +975,7 @@ def api_monthly_averages():
     return jsonify(data)
 
 @app.route('/api/averages/stores')
-@cache.cached(timeout=3600)  # キャッシュ：1時間有効
+@cache.memoize(timeout=3600)  # キャッシュ：1時間有効
 def api_store_averages():
     """
     店舗ごとの全期間平均稼働率データを返すエンドポイント
@@ -999,7 +999,7 @@ def api_store_averages():
     return jsonify(data)
 
 @app.route('/api/ranking/genre')
-@cache.cached(timeout=600)  # キャッシュ：10分間有効
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
 def api_genre_ranking():
     """
     業種内のジャンル別平均稼働率ランキングを返すエンドポイント
@@ -1052,7 +1052,7 @@ def api_genre_ranking():
         return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
 
 @app.route('/api/history/optimized')
-@cache.cached(timeout=300)  # キャッシュ：5分間有効
+@cache.memoize(timeout=300)  # キャッシュ：5分間有効
 def api_history_optimized():
     """
     最適化されたスクレイピング履歴を返すエンドポイント
