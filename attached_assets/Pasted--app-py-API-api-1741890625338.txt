@@ -1,0 +1,145 @@
+以下に、修正すべき具体的なポイントとそのコード例を示します。  
+なお、バックエンド（app.py）側では、実際に実装されている API エンドポイントは以下のとおりです：
+
+- **`/api/data`**  
+- **`/api/ranking/average`**  
+- **`/api/ranking/genre`**  
+- **`/api/aggregated`**  
+- **`/api/history`**
+
+しかし、あなたのフロントエンド（integrated_dashboard.html）では下記の未実装エンドポイントが参照されています：
+
+- `/api/data/latest`  
+- `/api/ranking/top`  
+- `/api/area-stats`  
+- `/api/stores`
+
+このままでは 404 エラーが発生します。  
+そこで、２通りの対処方法があります。
+
+---
+
+## 【方法１】フロントエンド側の呼び出しURLをバックエンド実装に合わせて変更する
+
+### ① 最新データ取得  
+**変更前（例）：**
+```js
+const latestData = await fetchWithRetry("/api/data/latest", {}, 3, 2000);
+```
+**変更後：**
+```js
+const latestData = await fetchWithRetry("/api/data", {}, 3, 2000);
+```
+※ updateIndustryDropdown、updateIndustryRanking、fillIndustryDropdown など、すべての「/api/data/latest」の参照を「/api/data」に変更してください。
+
+---
+
+### ② トップランキング取得  
+**変更前（例）：**
+```js
+const responseJson = await fetchWithRetry("/api/ranking/top", {}, 3, 2000);
+```
+**変更後：**
+```js
+const responseJson = await fetchWithRetry("/api/ranking/average", {}, 3, 2000);
+```
+※ updateTop10Chart 内のURLを修正してください。
+
+---
+
+### ③ エリア統計取得  
+**変更前（例）：**
+```js
+const areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
+```
+**変更後：**
+```js
+const areaData = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
+```
+※ ただし、/api/aggregated は日次の全体集計を返すため、エリア別に再計算する処理が必要な場合は、JavaScript 側で該当データからエリアごとに集計するか、バックエンド側に新たなエンドポイントを追加してください。
+
+---
+
+### ④ 店舗リスト取得  
+**変更前（例）：**
+```js
+const stores = await fetchWithRetry("/api/stores", {}, 3, 2000);
+```
+**変更後：**
+```js
+const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+const stores = Array.isArray(response) ? response : (response.data || []);
+```
+※ その後、`stores.map(item => item.store_name)` でユニークな店舗名を抽出してください。  
+たとえば、fillHistoryStoreDropdown の場合：
+```js
+async function fillHistoryStoreDropdown() {
+  try {
+    showSpinner();
+    const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+    const stores = Array.isArray(response) ? response : (response.data || []);
+    console.log("History store data:", stores);
+    
+    const storeSelect = document.getElementById("storeSelectHistory");
+    if (!storeSelect) {
+      hideSpinner();
+      return;
+    }
+    
+    const uniqueStores = [...new Set(stores.map(item => item.store_name))];
+    console.log(`Found ${uniqueStores.length} unique stores`);
+    storeSelect.innerHTML = '<option value="">全店舗</option>';
+    
+    uniqueStores.sort().forEach(store => {
+      storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
+    });
+    
+    storeSelect.value = savedHistoryStore;
+    storeSelect.addEventListener("change", () => { 
+      localStorage.setItem("historyStoreFilter", storeSelect.value); 
+    });
+    
+    hideSpinner();
+  } catch (err) {
+    console.error("履歴グラフ店舗リスト取得エラー:", err);
+    console.error(err.stack);
+    handleError(err, "fillHistoryStoreDropdown");
+    hideSpinner();
+  }
+}
+```
+
+---
+
+## 【方法２】バックエンド側に新たなラッパーエンドポイントを追加する
+
+もしフロント側の URL を変更できない場合は、app.py に次のようなルートを追加して、未実装の URL を実装済みのものにマッピングする方法もあります。
+
+### 例：`/api/data/latest` の追加
+```python
+@app.route('/api/data/latest')
+def api_data_latest():
+    return api_data()  # すでに実装されている /api/data の処理を流用
+```
+
+同様に、
+- `/api/ranking/top` → `return api_average_ranking()`
+- `/api/area-stats` → `return api_aggregated_data()`
+- `/api/stores` については、最新データから店舗名だけを抽出して返すエンドポイントを追加する
+
+※ こちらの方法はフロント側の変更を避けられますが、コードの重複や混乱の原因となるため、可能なら方法１のようにフロント側の呼び出し URL を統一するほうが望ましいです。
+
+---
+
+## まとめ
+
+- **基本的な原因は、フロント側の API 呼び出し URL とバックエンド側で実装されているエンドポイントが一致していないことです。**
+- 上記の具体例に沿って、以下の URL を修正してください：
+  - `/api/data/latest` → `/api/data`
+  - `/api/ranking/top` → `/api/ranking/average`
+  - `/api/area-stats` → `/api/aggregated`（もしくは必要に応じたエリア集計処理を実装）
+  - `/api/stores` → `/api/data` を使ってユニークな店舗名リストを作成する処理に変更
+
+これらの変更を加えると、統合ダッシュボードや管理画面の各機能が正しく動作する可能性が高まります。まずは方法１として、フロントエンド側の URL を変更する形で試してみてください。
+
+もし変更後も問題が発生する場合は、具体的なエラーメッセージと該当箇所のコードをご提示いただければ、さらに詳しくご対応いたします。
