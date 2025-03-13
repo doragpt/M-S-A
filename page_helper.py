@@ -80,9 +80,12 @@ def format_store_status(item, timezone=None):
         rate = ((item.working_staff - item.active_staff) / item.working_staff) * 100
 
     # 結果を辞書にまとめる
+    # JavaScriptのDateオブジェクトで確実に解析できる形式に調整
+    formatted_timestamp = timestamp.strftime('%Y-%m-%dT%H:%M:%S.000%z')
+    
     return {
         "id": item.id,
-        "timestamp": timestamp.strftime('%Y-%m-%dT%H:%M:%S%z'),  # ISO8601形式 (JavaScript の Date で正しく解析できる)
+        "timestamp": formatted_timestamp,  # ISO8601形式 (JavaScript の Date で確実に解析できる形式)
         "store_name": item.store_name,
         "biz_type": item.biz_type,
         "genre": item.genre,

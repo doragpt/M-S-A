@@ -916,30 +916,48 @@ def api_genre_ranking():
     クエリパラメータ:
         biz_type: 業種でフィルタリング（必須）
     """
-    from aggregated_data import AggregatedData
-    
     biz_type = request.args.get('biz_type')
     if not biz_type:
         return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
     
     try:
-        # データベース接続を取得
-        with db.engine.connect() as conn:
-            results = AggregatedData.calculate_genre_ranking(conn, biz_type)
+        # 直接SQLクエリを実行
+        # 業種内のジャンル別平均稼働率とサンプル数を計算
+        query = db.session.query(
+            StoreStatus.genre,
+            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate')
+        ).filter(
+            StoreStatus.biz_type == biz_type,
+            StoreStatus.working_staff > 0
+        ).group_by(
+            StoreStatus.genre
+        ).order_by(
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).desc()
+        )
+        
+        results = query.all()
         
         # 結果が空の場合は空のリストを返す
         if not results:
             return jsonify([])
         
         data = [{
-            "genre": r['genre'] if r['genre'] else "不明",
-            "store_count": r['store_count'],
-            "avg_rate": round(r['avg_rate'], 1)
+            "genre": r.genre if r.genre else "不明",
+            "store_count": r.store_count,
+            "avg_rate": round(float(r.avg_rate), 1)
         } for r in results]
         
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"ジャンルランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
         return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
 
 @app.route('/api/history/optimized')

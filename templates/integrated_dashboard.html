@@ -2060,8 +2060,24 @@
                 try {
                   // JavaScriptが正しく解析できる形式かチェック
                   const timestamp = record.timestamp;
-                  // console.log('パース対象のタイムスタンプ:', timestamp);
-                  return new Date(timestamp);
+                  console.log('パース対象のタイムスタンプ:', timestamp);
+                  
+                  // タイムスタンプの前処理（必要に応じて形式を修正）
+                  let cleanTimestamp = timestamp;
+                  
+                  // JST+0900 形式の場合は対応
+                  if (timestamp.includes('JST')) {
+                    cleanTimestamp = timestamp.replace(' JST', '');
+                  }
+                  
+                  const date = new Date(cleanTimestamp);
+                  
+                  // 正しく解析できたかチェック
+                  if (isNaN(date.getTime())) {
+                    throw new Error('Invalid date format');
+                  }
+                  
+                  return date;
                 } catch (e) {
                   console.error('タイムスタンプ解析エラー:', record.timestamp, e);
                   return null;
