@@ -736,8 +736,7 @@
             });
           } catch (error) {
             console.error("トップ10店舗グラフエラー:", error);
-            handleError(error, "updateTop10Chart");
-          } finally {
+            handleError(error, "updateTop10Chart");} finally {
             loadingElement.style.display = 'none';
             containerElement.style.display = 'block';
           }
@@ -2209,16 +2208,8 @@
 
         async function loadStoreList() {
           try {
-            const response = await fetchWithRetry('/api/data');
-            const data = await response.json();
-            const stores = new Set();
-
-            data.forEach(item => {
-              if (item.store_name) {
-                stores.add(item.store_name);
-              }
-            });
-
+            const response = await fetchWithRetry('/api/data', {}, 3, 2000);
+            const stores = Array.isArray(response) ? response : (response.data || []);
             const storeSelectHistory = document.getElementById('storeSelectHistory');
             const storeSelectHourly = document.getElementById('hourlyStoreSelect');
 
@@ -2226,10 +2217,11 @@
             storeSelectHistory.innerHTML = '<option value="">全店舗</option>';
             storeSelectHourly.innerHTML = '<option value="">全店舗</option>';
 
-            Array.from(stores).sort().forEach(store => {
+            const uniqueStoreNames = [...new Set(stores.map(store => store.store_name))].sort();
+            uniqueStoreNames.forEach(storeName => {
               const option = document.createElement('option');
-              option.value = store;
-              option.text = store;
+              option.value = storeName;
+              option.text = storeName;
 
               storeSelectHistory.appendChild(option.cloneNode(true));
               storeSelectHourly.appendChild(option.cloneNode(true));
