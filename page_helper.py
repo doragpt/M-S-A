@@ -1,3 +1,4 @@
+
 import pytz
 from datetime import datetime
 from flask import request, abort
@@ -35,76 +36,64 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
     has_next = page < total_pages
     has_prev = page > 1
 
-    # 結果と情報を辞書にまとめる
+    # レスポンス生成
     return {
-        "items": items,
-        "meta": {
-            "page": page,
-            "per_page": per_page,
-            "total_count": total_count,
-            "total_pages": total_pages,
-            "has_next": has_next,
-            "has_prev": has_prev
+        'items': items,
+        'meta': {
+            'page': page,
+            'per_page': per_page,
+            'total_count': total_count,
+            'total_pages': total_pages,
+            'has_next': has_next,
+            'has_prev': has_prev
         }
     }
 
 def format_store_status(item, timezone=None):
     """
-    StoreStatus モデルオブジェクトを JSON 形式に変換する
+    StoreStatus モデルオブジェクトをJSON互換の辞書フォーマットに変換
 
     引数:
-        item: StoreStatus オブジェクト
-        timezone: タイムゾーン（pytz タイムゾーンオブジェクト）
+        item: StoreStatus モデルオブジェクト
+        timezone: 出力タイムスタンプに設定するタイムゾーン（pytzオブジェクト）
 
     戻り値:
-        JSON シリアライズ可能な辞書
+        フォーマット済みの辞書
     """
-    # JSTタイムゾーンがない場合はデフォルトで設定
+    # タイムゾーンが指定されていない場合は UTC を使用
     if timezone is None:
-        timezone = pytz.timezone('Asia/Tokyo')
+        timezone = pytz.UTC
 
-    # タイムスタンプが aware でない場合は JST として扱い、指定されたタイムゾーンに変換
+    # タイムスタンプをタイムゾーン対応のフォーマットに変換
     timestamp = item.timestamp
     if timestamp.tzinfo is None:
-        # SQLiteではタイムゾーン情報がないので、JST(+9)として解釈
-        jst = pytz.timezone('Asia/Tokyo')
-        timestamp = jst.localize(timestamp)
+        # タイムゾーン情報がない場合は指定されたタイムゾーンを適用
+        timestamp = timezone.localize(timestamp)
     else:
-        # すでに aware な datetime の場合は単に指定されたタイムゾーンに変換
+        # 既にタイムゾーン情報がある場合は変換
         timestamp = timestamp.astimezone(timezone)
 
-    # 稼働率の計算 (稼働中スタッフがいる場合のみ計算)
+    # タイムスタンプをISO 8601形式の文字列に変換
+    formatted_timestamp = timestamp.isoformat()
+
+    # 稼働率の計算
     rate = 0
-    if item.working_staff > 0:
-        # 稼働率 = (勤務中 - 待機中) / 勤務中 × 100
+    if item.working_staff and item.working_staff > 0:
+        # (勤務中 - 待機中) / 勤務中 × 100
         rate = ((item.working_staff - item.active_staff) / item.working_staff) * 100
 
     # 結果を辞書にまとめる
-    # JavaScriptのDateオブジェクトで確実に解析できる形式に調整
-    formatted_timestamp = timestamp.strftime('%Y-%m-%dT%H:%M:%S.000%z')
-    
     return {
-        "id": item.id,
-        "timestamp": formatted_timestamp,  # ISO8601形式 (JavaScript の Date で確実に解析できる形式)
-        "store_name": item.store_name,
-        "biz_type": item.biz_type,
-        "genre": item.genre,
-        "area": item.area,
-        "total_staff": item.total_staff,
-        "working_staff": item.working_staff,
-        "active_staff": item.active_staff,
-        "rate": round(rate, 1),  # 小数点以下1桁に丸める
-        "url": item.url,
-        "shift_time": item.shift_time
-    }
-
-def prepare_data_for_integrated_dashboard():
-    """統合ダッシュボード用のデータを準備"""
-    # 日本のタイムゾーンに設定
-    now = datetime.now()
-    jst_now = now.strftime('%Y年%m月%d日 %H:%M:%S')
-
-    return {
-        'title': '統合ダッシュボード',
-        'current_time': jst_now
+        'id': item.id,
+        'timestamp': formatted_timestamp,
+        'store_name': item.store_name,
+        'biz_type': item.biz_type,
+        'genre': item.genre,
+        'area': item.area,
+        'total_staff': item.total_staff,
+        'working_staff': item.working_staff,
+        'active_staff': item.active_staff,
+        'rate': round(rate, 1),
+        'url': item.url,
+        'shift_time': item.shift_time
     }
