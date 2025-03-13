@@ -697,21 +697,8 @@ def manual_scrape():
 
 
 # ---------------------------------------------------------------------
-# 9. メイン実行部
+# 9. API エンドポイント (移動済み)
 # ---------------------------------------------------------------------
-if __name__ == '__main__':
-    # ローカル環境用の設定
-    import os
-    port = int(os.environ.get("PORT", 5000))
-
-    # タイムゾーン設定を確認
-    jst = pytz.timezone('Asia/Tokyo')
-    now_jst = datetime.now(jst)
-    print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
-
-    # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
 
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
@@ -780,7 +767,59 @@ def api_average_ranking():
         app.logger.error(f"平均稼働ランキング取得エラー: {e}")
         return jsonify({"error": "ランキングの取得中にエラーが発生しました"}), 500
 
-# 業種内ジャンルランキングのAPIエンドポイントは下部で定義済み
+# 業種内ジャンルランキングのAPIエンドポイント
+@app.route('/api/ranking/genre')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_genre_ranking():
+    """
+    業種内のジャンル別平均稼働率ランキングを返すエンドポイント
+
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング（必須）
+    """
+    biz_type = request.args.get('biz_type')
+    if not biz_type:
+        return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
+
+    try:
+        # 直接SQLクエリを実行
+        # 業種内のジャンル別平均稼働率とサンプル数を計算
+        query = db.session.query(
+            StoreStatus.genre,
+            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate')
+        ).filter(
+            StoreStatus.biz_type == biz_type,
+            StoreStatus.working_staff > 0
+        ).group_by(
+            StoreStatus.genre
+        ).order_by(
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).desc()
+        )
+
+        results = query.all()
+
+        # 結果が空の場合は空のリストを返す
+        if not results:
+            return jsonify([])
+
+        data = [{
+            "genre": r.genre if r.genre else "不明",
+            "store_count": r.store_count,
+            "avg_rate": round(float(r.avg_rate), 1)
+        } for r in results]
+
+        return jsonify(data)
+    except Exception as e:
+        app.logger.error(f"ジャンルランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
 
 # 集計済みデータを提供するエンドポイント
 @app.route('/api/aggregated')
@@ -815,8 +854,6 @@ def api_aggregated_data():
     } for r in results]
 
     return jsonify(data)
-
-# 注：このエンドポイントは上で既に定義されているため、ここでの重複定義を削除しました
 
 @app.route('/api/averages/daily')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
@@ -913,59 +950,6 @@ def api_store_averages():
     } for r in results]
 
     return jsonify(data)
-
-@app.route('/api/ranking/genre')
-@cache.memoize(timeout=600)  # キャッシュ：10分間有効
-def api_genre_ranking():
-    """
-    業種内のジャンル別平均稼働率ランキングを返すエンドポイント
-
-    クエリパラメータ:
-        biz_type: 業種でフィルタリング（必須）
-    """
-    biz_type = request.args.get('biz_type')
-    if not biz_type:
-        return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
-
-    try:
-        # 直接SQLクエリを実行
-        # 業種内のジャンル別平均稼働率とサンプル数を計算
-        query = db.session.query(
-            StoreStatus.genre,
-            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).label('avg_rate')
-        ).filter(
-            StoreStatus.biz_type == biz_type,
-            StoreStatus.working_staff > 0
-        ).group_by(
-            StoreStatus.genre
-        ).order_by(
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).desc()
-        )
-
-        results = query.all()
-
-        # 結果が空の場合は空のリストを返す
-        if not results:
-            return jsonify([])
-
-        data = [{
-            "genre": r.genre if r.genre else "不明",
-            "store_count": r.store_count,
-            "avg_rate": round(float(r.avg_rate), 1)
-        } for r in results]
-
-        return jsonify(data)
-    except Exception as e:
-        app.logger.error(f"ジャンルランキング取得エラー: {e}")
-        app.logger.error(traceback.format_exc())
-        return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
 
 @app.route('/api/history/optimized')
 @cache.memoize(timeout=300)  # キャッシュ：5分間有効
@@ -1092,19 +1076,19 @@ def api_area_stats():
 def api_top_ranking():
     """
     各業種のトップ店舗ランキングを返すエンドポイント
-    
+
     クエリパラメータ:
         limit: 各業種ごとの上位件数（デフォルト3件）
     """
     try:
         limit = request.args.get('limit', 3, type=int)
-        
+
         # 業種の一覧を取得
         biz_types = db.session.query(StoreStatus.biz_type).distinct().all()
         biz_types = [bt[0] for bt in biz_types if bt[0]]  # None値を除外
-        
+
         result = {}
-        
+
         for biz_type in biz_types:
             # 各業種ごとにトップ店舗を取得
             subq = db.session.query(
@@ -1129,7 +1113,7 @@ def api_top_ranking():
                     func.nullif(StoreStatus.working_staff, 0)
                 ).desc()
             ).limit(limit).all()
-            
+
             if subq:
                 result[biz_type] = [{
                     'store_name': r.store_name,
@@ -1138,9 +1122,26 @@ def api_top_ranking():
                     'genre': r.genre if r.genre else '不明',
                     'area': r.area if r.area else '不明'
                 } for r in subq]
-        
+
         return jsonify(result)
     except Exception as e:
         app.logger.error(f"トップランキング取得エラー: {e}")
         app.logger.error(traceback.format_exc())
         return jsonify({"error": "トップランキングの取得中にエラーが発生しました"}), 500
+
+# ---------------------------------------------------------------------
+# 9. メイン実行部
+# ---------------------------------------------------------------------
+if __name__ == '__main__':
+    # ローカル環境用の設定
+    import os
+    port = int(os.environ.get("PORT", 5000))
+
+    # タイムゾーン設定を確認
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+    print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
+
+    # サーバー起動 - シンプルな設定
+    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
