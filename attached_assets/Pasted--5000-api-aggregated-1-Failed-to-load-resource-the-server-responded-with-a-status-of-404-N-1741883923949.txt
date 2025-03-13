@@ -1,0 +1,73 @@
+
+﻿
+:5000/api/aggregated:1 
+ Failed to load resource: the server responded with a status of 404 (NOT FOUND)
+
+(index):2320 履歴データ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateHistoryChart): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateHistoryChart): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2175 
+ GET http://160.251.196.100:5000/api/aggregated 404 (NOT FOUND)
+(index):2088 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):2320 履歴データ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateHistoryChart): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateHistoryChart): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2112 ランキングデータ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateRanking): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateRanking): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2175 
+ GET http://160.251.196.100:5000/api/aggregated 404 (NOT FOUND)
+(index):2088 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):2320 履歴データ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateHistoryChart): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateHistoryChart): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2112 ランキングデータ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateRanking): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateRanking): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):495 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):499 Fetch error (/api/ranking/average), attempt 1: Error: HTTP error 404
+    at fetchWithRetry ((index):496:39)
+(index):2088 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):2112 ランキングデータ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateRanking): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521 エラーが発生しました (updateRanking): Unexpected token '<', "<!doctype "... is not valid JSON
+(index):1985 
+ GET http://160.251.196.100:5000/api/ranking/genre?biz_type=%E5%BE%85%E3%81%A1%E5%90%88%E3%82%8F%E3%81%9B 404 (NOT FOUND)
+(index):2056 ジャンルランキング取得エラー: TypeError: Cannot set properties of null (setting 'innerHTML')
+    at (index):2000:35
+(index):1985 
+ GET http://160.251.196.100:5000/api/ranking/genre?biz_type=%E5%BE%85%E3%81%A1%E5%90%88%E3%82%8F%E3%81%9B 404 (NOT FOUND)
+(index):2056 ジャンルランキング取得エラー: TypeError: Cannot set properties of null (setting 'innerHTML')
+    at (index):2000:35
+(index):2057 Uncaught (in promise) TypeError: Cannot set properties of null (setting 'innerHTML')
+    at (index):2057:35
+(index):2057 Uncaught (in promise) TypeError: Cannot set properties of null (setting 'innerHTML')
+    at (index):2057:35
+(index):495 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):499 Fetch error (/api/ranking/average), attempt 2: Error: HTTP error 404
+    at fetchWithRetry ((index):496:39)
+(index):495 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+(index):499 Fetch error (/api/ranking/average), attempt 3: Error: HTTP error 404
+    at fetchWithRetry ((index):496:39)
+(index):1822 平均稼働ランキングエラー: TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at (index):1797:40
+    at Array.forEach (<anonymous>)
+    at handleRankingData ((index):1789:18)
+    at (index):1819:21
+(index):2518 エラー (updateAverageRanking): TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at (index):1797:40
+    at Array.forEach (<anonymous>)
+    at handleRankingData ((index):1789:18)
+    at (index):1819:21
+(index):2521 エラーが発生しました (updateAverageRanking): Cannot read properties of undefined (reading 'toFixed')
+(index):2175 
+ GET http://160.251.196.100:5000/api/aggregated 404 (NOT FOUND)
+(index):2320 履歴データ取得エラー: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2518 エラー (updateHistoryChart): SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(index):2521
