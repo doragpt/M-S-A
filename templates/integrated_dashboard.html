@@ -731,7 +731,7 @@
                   record.rate ? record.rate.toFixed(1) : 
                   (record.working_staff > 0 ? 
                   ((record.working_staff - record.active_staff) / record.working_staff* 100).toFixed(1) : 0)
-                );
+                ););
               } else {                // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
 
@@ -1502,17 +1502,8 @@
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知
          ***********************************************/
-        const socket = io();
-        socket.on("update", (msg) => {
-          console.log("Socket update received:", msg.data);
-          updateDashboard();
-          updateTop10Chart();
-          updateAreaStatistics();
-          updateIndustryRanking();
-          const toastEl = document.getElementById("updateToast");
-          const toast = new bootstrap.Toast(toastEl);
-          toast.show();
-        });
+        // socketはすでに下部で宣言されているため削除
+        // Socket更新イベントのリスナーは初期ロード処理の後に設定
 
         /***********************************************
          * 初期ロード処理
@@ -1780,17 +1771,8 @@
         /***********************************************
          * Socket.IOによるリアルタイム更新とトースト通知
          ***********************************************/
-        const socket = io();
-        socket.on("update", (msg) => {
-          console.log("Socket update received:", msg.data);
-          updateDashboard();
-          updateTop10Chart();
-          updateAreaStatistics();
-          updateIndustryRanking();
-          const toastEl = document.getElementById("updateToast");
-          const toast = new bootstrap.Toast(toastEl);
-          toast.show();
-        });
+        // socketはすでに下部で宣言されているため削除
+        // Socket更新イベントのリスナーは初期ロード処理の後に設定
 
         /***********************************************
          * 初期ロード処理
@@ -2061,22 +2043,22 @@
                   // JavaScriptが正しく解析できる形式かチェック
                   const timestamp = record.timestamp;
                   console.log('パース対象のタイムスタンプ:', timestamp);
-                  
+
                   // タイムスタンプの前処理（必要に応じて形式を修正）
                   let cleanTimestamp = timestamp;
-                  
+
                   // JST+0900 形式の場合は対応
                   if (timestamp.includes('JST')) {
                     cleanTimestamp = timestamp.replace(' JST', '');
                   }
-                  
+
                   const date = new Date(cleanTimestamp);
-                  
+
                   // 正しく解析できたかチェック
                   if (isNaN(date.getTime())) {
                     throw new Error('Invalid date format');
                   }
-                  
+
                   return date;
                 } catch (e) {
                   console.error('タイムスタンプ解析エラー:', record.timestamp, e);
