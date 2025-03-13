@@ -1,0 +1,48 @@
+Uncaught (in promise) TypeError: Cannot read properties of null (reading 'style')
+    at updateHistoryChart ((index):2002:19)
+    at HTMLDocument.<anonymous> ((index):1528:9)
+
+2
+(index):2172 Uncaught TypeError: Cannot read properties of null (reading 'style')
+    at HTMLButtonElement.updateHourlyAnalysis ((index):2172:19)
+updateHourlyAnalysis	@	(index):2172
+2
+(index):2002 Uncaught TypeError: Cannot read properties of null (reading 'style')
+    at HTMLButtonElement.updateHistoryChart ((index):2002:19)
+updateHistoryChart	@	(index):2002
+(index):470 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+fetchWithRetry	@	(index):470
+updateAverageRanking	@	(index):1708
+(index):474 Fetch error (/api/ranking/average), attempt 1: Error: HTTP error 404
+    at fetchWithRetry ((index):471:39)
+    at async HTMLButtonElement.updateAverageRanking ((index):1708:30)
+fetchWithRetry	@	(index):474
+await in fetchWithRetry		
+updateAverageRanking	@	(index):1708
+(index):470 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+fetchWithRetry	@	(index):470
+await in fetchWithRetry		
+updateAverageRanking	@	(index):1708
+(index):474 Fetch error (/api/ranking/average), attempt 2: Error: HTTP error 404
+    at fetchWithRetry ((index):471:39)
+    at async HTMLButtonElement.updateAverageRanking ((index):1708:30)
+fetchWithRetry	@	(index):474
+await in fetchWithRetry		
+updateAverageRanking	@	(index):1708
+(index):470 
+ GET http://160.251.196.100:5000/api/ranking/average 404 (NOT FOUND)
+fetchWithRetry	@	(index):470
+await in fetchWithRetry		
+updateAverageRanking	@	(index):1708
+(index):474 Fetch error (/api/ranking/average), attempt 3: Error: HTTP error 404
+    at fetchWithRetry ((index):471:39)
+    at async HTMLButtonElement.updateAverageRanking ((index):1708:30)
+fetchWithRetry	@	(index):474
+await in fetchWithRetry		
+updateAverageRanking	@	(index):1708
+(index):1730 平均稼働ランキングエラー: Error: HTTP error 404
+    at fetchWithRetry ((index):471:39)
+    at async HTMLButtonElement.updateAverageRanking ((index):1708:30)
+updateAverageRanking	@	(index):1730
