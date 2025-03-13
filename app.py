@@ -368,25 +368,18 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
+<<<<<<< HEAD
+@cache.memoize(timeout=60)  # キャッシュ：1分間に短縮して最新データを提供
+=======
 @cache.memoize(timeout=300)  # キャッシュ：5分間有効
+>>>>>>> ebba7e86e8b29df8ac7f8427c09a0895d75ff1ea
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
     集計値（全体平均など）も含める。
 
     クエリパラメータ:
-        page: ページ番号（1から始まる）
-        per_page: 1ページあたりの項目数（最大100）
-        biz_type: 業種でフィルタリング
-        area: エリアでフィルタリング
-        format: 'compact'を指定すると必要最小限のフィールドだけを返す
-    """
-    """
-    各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
-    集計値（全体平均など）も含める。
-
-    クエリパラメータ:
-        page: ページ番号（1から始まる）
+        page: ページ番号（1から始まる）- 指定しない場合は全データを返す
         per_page: 1ページあたりの項目数（最大100）
     """
     from page_helper import paginate_query_results, format_store_status
@@ -403,11 +396,12 @@ def api_data():
         (StoreStatus.timestamp == subq.c.max_time)
     ).order_by(StoreStatus.timestamp.desc())
 
-    # ページネーションのパラメータを取得
+    # ページネーションの有無を確認
+    use_pagination = 'page' in request.args
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    # クエリの全結果を取得（集計値の計算用）
+    # クエリの全結果を取得（集計値の計算用+全データ返却用）
     all_results = query.all()
 
     # 集計値の計算
@@ -431,31 +425,47 @@ def api_data():
     if valid_stores > 0 and total_working_staff > 0:
         avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
 
-    # ページネーション適用
-    paginated_result = paginate_query_results(query, page, per_page)
-    items = paginated_result['items']
-
     # データのフォーマット
     jst = pytz.timezone('Asia/Tokyo')
-    data = [format_store_status(item, jst) for item in items]
 
-    # レスポンスの組み立て（データ、集計値、ページネーション情報を含む）
-    response = {
-        "data": data,
-        "meta": {
-            "total_count": total_store_count,
-            "valid_stores": valid_stores,
-            "avg_rate": round(avg_rate, 1),
-            "max_rate": round(max_rate,1), # Added max_rate to meta
-            "total_working_staff": total_working_staff,
-            "total_active_staff": total_active_staff,
-            "page": paginated_result['meta']['page'],
-            "per_page": paginated_result['meta']['per_page'],
-            "total_pages": paginated_result['meta']['total_pages'],
-            "has_prev": paginated_result['meta']['has_prev'],
-            "has_next": paginated_result['meta']['has_next']
+    if use_pagination:
+        # ページネーション適用
+        paginated_result = paginate_query_results(query, page, per_page)
+        items = paginated_result['items']
+        data = [format_store_status(item, jst) for item in items]
+
+        # ページネーション情報を含むレスポンス
+        response = {
+            "data": data,
+            "meta": {
+                "total_count": total_store_count,
+                "valid_stores": valid_stores,
+                "avg_rate": round(avg_rate, 1),
+                "max_rate": round(max_rate, 1),
+                "total_working_staff": total_working_staff,
+                "total_active_staff": total_active_staff,
+                "page": paginated_result['meta']['page'],
+                "per_page": paginated_result['meta']['per_page'],
+                "total_pages": paginated_result['meta']['total_pages'],
+                "has_prev": paginated_result['meta']['has_prev'],
+                "has_next": paginated_result['meta']['has_next']
+            }
         }
-    }
+    else:
+        # ページネーションなし - 全データ返却
+        data = [format_store_status(item, jst) for item in all_results]
+
+        response = {
+            "data": data,
+            "meta": {
+                "total_count": total_store_count,
+                "valid_stores": valid_stores,
+                "avg_rate": round(avg_rate, 1),
+                "max_rate": round(max_rate, 1),
+                "total_working_staff": total_working_staff,
+                "total_active_staff": total_active_staff
+            }
+        }
 
     return jsonify(response)
 
