@@ -628,7 +628,10 @@
         async function updateTop10Chart() {
           try {
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = await response.json();
+            const responseJson = await response.json();
+            // Handle both formats - direct array or { data: [...] } object
+            const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
+            
             data.forEach(store => {
               store.currentRate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
             });
@@ -684,7 +687,10 @@
 
         async function updateHistoryChart() {
           try {
-            showSpinner();
+            const spinner = document.querySelector('#history .spinner-border');
+            if (spinner) spinner.style.display = 'inline-block';
+            else showSpinner();
+            
             const storeSelect = document.getElementById("storeSelectHistory");
             if(storeSelect) { storeSelect.value = savedHistoryStore; }
             const selectedStore = storeSelect ? storeSelect.value : "";
@@ -1104,7 +1110,8 @@
             // /api/data から最新データを取得し、各エリアの店舗数をカウント
             const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
             const responseJson = await responseData.json();
-            const dataLatest = responseJson.data || responseJson; // API形式に対応
+            // Handle both formats - direct array or { data: [...] } object
+            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
             console.log("Area stats data latest:", dataLatest);
 
             const areaStoreCount = {};
@@ -1216,7 +1223,9 @@
         async function fillIndustryDropdown() {
           try {
             const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await responseLatest.json();
+            const responseJson = await responseLatest.json();
+            // Handle both formats - direct array or { data: [...] } object
+            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
             const industries = new Set();
             dataLatest.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
             const industrySelect = document.getElementById("industrySelectType");
@@ -1238,7 +1247,9 @@
             const industrySelect = document.getElementById("industrySelectType");
             const selectedIndustry = industrySelect ? industrySelect.value : "";
             const responseLatest = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await responseLatest.json();
+            const responseJson = await responseLatest.json();
+            // Handle both formats - direct array or { data: [...] } object
+            const dataLatest = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
             const latestStoreNames = new Set(dataLatest.map(store => store.store_name));
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
@@ -1558,9 +1569,11 @@
             // 業種データが未読み込みの場合のみ実行
             fetch('/api/data')
               .then(response => response.json())
-              .then(data => {
+              .then(responseJson => {
+                // Handle both formats - direct array or { data: [...] } object
+                const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
                 // 重複のないbiz_typeリストを作成
-                const bizTypes = [...new Set(data.data.map(item => item.biz_type))].filter(Boolean);
+                const bizTypes = [...new Set(data.map(item => item.biz_type))].filter(Boolean);
                 bizTypes.sort();
 
                 // 選択肢をクリア
