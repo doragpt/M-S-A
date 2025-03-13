@@ -1,38 +1,55 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sqlite3
+from database import get_db_connection
+import sys
+
 """
-データベースにインデックスを作成してパフォーマンスを向上させるスクリプト
+パフォーマンス改善のためのインデックス作成スクリプト
 """
-from app import app, db
-from sqlalchemy import text
 
 def create_indices():
-    with app.app_context():
-        try:
-            print("データベースインデックスを作成しています...")
+    try:
+        conn = get_db_connection()
 
-            # StoreStatus テーブルにインデックスを作成
-            # タイムスタンプ検索用インデックス（時系列データ検索の高速化）
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_timestamp ON store_status (timestamp)"))
+        # store_nameインデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_store_name ON history(store_name)')
+        print("- store_name インデックスを作成しました")
 
-            # 店舗名検索用インデックス（特定店舗のデータ絞り込み高速化）
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_store_name ON store_status (store_name)"))
+        # timestampインデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_timestamp ON history(timestamp)')
+        print("- timestamp インデックスを作成しました")
 
-            # 業種・ジャンル・エリア検索用インデックス（統計分析の高速化）
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_biz_type ON store_status (biz_type)"))
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_genre ON store_status (genre)"))
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_area ON store_status (area)"))
+        # biz_typeインデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_biz_type ON history(biz_type)')
+        print("- biz_type インデックスを作成しました")
 
-            # 複合インデックス（店舗名+タイムスタンプ）
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_timestamp ON store_status (store_name, timestamp)"))
+        # areaインデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_area ON history(area)')
+        print("- area インデックスを作成しました")
 
-            # 勤務中スタッフカウント用インデックス（稼働率計算の高速化）
-            db.session.execute(text("CREATE INDEX IF NOT EXISTS idx_store_status_working_staff ON store_status (working_staff)"))
+        # genreインデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_genre ON history(genre)')
+        print("- genre インデックスを作成しました")
 
-            db.session.commit()
-            print("インデックス作成が完了しました")
+        # 複合インデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_store_time ON history(store_name, timestamp)')
+        print("- store_name + timestamp 複合インデックスを作成しました")
 
-        except Exception as e:
-            db.session.rollback()
-            print(f"インデックス作成中にエラーが発生しました: {e}")
+        # 集計用インデックス
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_working_active ON history(working_staff, active_staff)')
+        print("- working_staff + active_staff 集計用インデックスを作成しました")
+
+        conn.commit()
+        conn.close()
+
+        print("すべてのインデックスを作成しました。クエリのパフォーマンスが向上します。")
+        return True
+    except Exception as e:
+        print(f"エラーが発生しました: {e}")
+        return False
 
 if __name__ == "__main__":
-    create_indices()
+    success = create_indices()
+    sys.exit(0 if success else 1)

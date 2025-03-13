@@ -526,7 +526,7 @@ def api_history():
     # JSTタイムゾーン
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     # ベースクエリ
     query = StoreStatus.query
 
@@ -578,7 +578,7 @@ def api_history():
         # 従来通りすべての結果を返す場合
         results = query.all()
         data = [format_store_status(r, jst) for r in results]
-        
+
         response = {
             "items": data,
             "meta": {
@@ -699,7 +699,7 @@ if __name__ == '__main__':
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
     print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
-    
+
     # サーバー起動 - シンプルな設定
     print(f"サーバーを起動しています: http://0.0.0.0:{port}")
     socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)

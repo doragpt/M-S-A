@@ -219,3 +219,114 @@ class AggregatedData:
         """店舗別平均データを取得"""
         from app import StoreAverage
         return StoreAverage.query.all()
+
+    @staticmethod
+    def calculate_hourly_average(conn, store_name=None):
+        """時間帯別の平均稼働率を計算"""
+        query = 'SELECT * FROM history'
+        params = []
+
+        if store_name:
+            query += ' WHERE store_name = ?'
+            params.append(store_name)
+
+        data = conn.execute(query, params).fetchall()
+        hourly_data = {}
+
+        for record in data:
+            dt = datetime.strptime(record['timestamp'], '%Y-%m-%d %H:%M:%S')
+            hour = dt.hour
+
+            if record['working_staff'] > 0:
+                rate = ((record['working_staff'] - record['active_staff']) / record['working_staff']) * 100
+                if hour not in hourly_data:
+                    hourly_data[hour] = {'sum': 0, 'count': 0}
+                hourly_data[hour]['sum'] += rate
+                hourly_data[hour]['count'] += 1
+
+        # 平均を計算
+        result = []
+        for hour in range(24):
+            if hour in hourly_data and hourly_data[hour]['count'] > 0:
+                avg = hourly_data[hour]['sum'] / hourly_data[hour]['count']
+                result.append({'hour': hour, 'rate': round(avg, 1)})
+            else:
+                result.append({'hour': hour, 'rate': 0})
+
+        return result
+
+    @staticmethod
+    def calculate_area_statistics(conn):
+        """エリア別の統計情報を計算"""
+        query = """
+        SELECT 
+            area,
+            COUNT(DISTINCT store_name) as store_count,
+            AVG(CASE WHEN working_staff > 0 
+                THEN ((working_staff - active_staff) * 100.0 / working_staff) 
+                ELSE 0 END) as avg_rate
+        FROM history
+        GROUP BY area
+        ORDER BY avg_rate DESC
+        """
+
+        data = conn.execute(query).fetchall()
+        return data
+
+    @staticmethod
+    def calculate_genre_ranking(conn, biz_type=None):
+        """業種内ジャンルの平均稼働率ランキングを計算"""
+        query = """
+        SELECT 
+            genre,
+            COUNT(DISTINCT store_name) as store_count,
+            AVG(CASE WHEN working_staff > 0 
+                THEN ((working_staff - active_staff) * 100.0 / working_staff) 
+                ELSE 0 END) as avg_rate
+        FROM history
+        """
+
+        params = []
+        if biz_type:
+            query += " WHERE biz_type = ? "
+            params.append(biz_type)
+
+        query += """
+        GROUP BY genre
+        HAVING store_count >= 2
+        ORDER BY avg_rate DESC
+        """
+
+        data = conn.execute(query, params).fetchall()
+        return data
+
+    @staticmethod
+    def calculate_store_ranking(conn, biz_type=None):
+        """店舗の平均稼働率ランキングを計算"""
+        query = """
+        SELECT 
+            store_name, 
+            MAX(biz_type) as biz_type,
+            MAX(genre) as genre,
+            MAX(area) as area,
+            AVG(CASE WHEN working_staff > 0 
+                THEN ((working_staff - active_staff) * 100.0 / working_staff) 
+                ELSE 0 END) as avg_rate,
+            COUNT(*) as sample_count
+        FROM history
+        """
+
+        params = []
+        if biz_type:
+            query += " WHERE biz_type = ? "
+            params.append(biz_type)
+
+        query += """
+        GROUP BY store_name
+        HAVING sample_count >= 5
+        ORDER BY avg_rate DESC
+        LIMIT 50
+        """
+
+        data = conn.execute(query, params).fetchall()
+        return data
