@@ -215,7 +215,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ2: 店舗履歴グラフ（期間指定） -->
       <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
         <div class="my-4">
@@ -252,7 +252,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ3: 時間帯別分析 -->
       <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
         <div class="my-4">
@@ -273,7 +273,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ4: エリア統計 -->
       <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
         <div class="my-4">
@@ -297,7 +297,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ5: 業種内ジャンルランキング -->
       <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
         <div class="my-4">
@@ -327,7 +327,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- タブ6: 平均稼働ランキング -->
       <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
         <div class="my-4">
@@ -517,43 +517,22 @@
          ***********************************************/
         async function updateDashboard() {
           try {
+            // ページネーションなしで全データを取得（pageパラメータを指定しない）
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const responseJson = await response.json();
             const data = responseJson.data || responseJson; // 新旧APIの両方に対応
-            
+
             // APIからメタデータを取得（バックエンドで計算された集計値）
             const meta = responseJson.meta || {}; 
-            
-            // 店舗数の表示（APIのメタデータか、データ長から）
+
+            // 店舗数の表示（APIのメタデータから）
             document.getElementById("totalStores").innerText = meta.total_count || data.length;
-            
-            // 平均稼働率の表示（APIのメタデータか、クライアント計算から）
-            const avgRate = meta.avg_rate !== undefined ? meta.avg_rate : 
-              data.reduce((sum, store) => {
-                if (store.working_staff > 0) {
-                  return sum + ((store.working_staff - store.active_staff) / store.working_staff * 100);
-                }
-                return sum;
-              }, 0) / (data.length || 1);
-            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-            
-            // 最高稼働率の計算（常にクライアント側で計算）
-            const data = await response.json();
-            document.getElementById("totalStores").innerText = data.length;
-            const avgRate = data.reduce((sum, store) => {
-              if (store.working_staff > 0) {
-                return sum + ((store.working_staff - store.active_staff) / store.working_staff * 100);
-              }
-              return sum;
-            }, 0) / (data.length || 1);
-            document.getElementById("avgRate").innerText = avgRate.toFixed(1) + "%";
-            const maxRate = data.reduce((max, store) => {
-              if (store.working_staff > 0) {
-                return Math.max(max, ((store.working_staff - store.active_staff) / store.working_staff * 100));
-              }
-              return max;
-            }, 0);
-            document.getElementById("maxRate").innerText = maxRate.toFixed(1) + "%";
+
+            // 平均稼働率の表示（APIのメタデータから）
+            document.getElementById("avgRate").innerText = (meta.avg_rate || 0).toFixed(1) + "%";
+
+            // 最高稼働率の表示（APIのメタデータから）
+            document.getElementById("maxRate").innerText = (meta.max_rate || 0).toFixed(1) + "%";
 
             const tableBody = document.getElementById("dataTable");
             tableBody.innerHTML = "";
@@ -685,7 +664,7 @@
          * updateHistoryChart: 店舗履歴グラフ更新 (/api/history or /api/aggregated)
          ***********************************************/
         let historyChartCache = {}; // キャッシュ用オブジェクト
-        
+
         async function updateHistoryChart() {
           try {
             showSpinner();
@@ -694,10 +673,10 @@
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
-            
+
             // キャッシュキーを作成
             const cacheKey = `${selectedStore}_${startDate}_${endDate}`;
-            
+
             // キャッシュがあれば使用
             if (historyChartCache[cacheKey]) {
               const cachedData = historyChartCache[cacheKey];
@@ -705,25 +684,25 @@
               hideSpinner();
               return;
             }
-            
+
             let labels = [];
             let effectiveRates = [];
-            
+
             // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
             if (selectedStore || (startDate && endDate)) {
               // 個別店舗指定、または期間指定の場合: フィルター付きでhistoryAPIを呼び出し
               let url = "/api/history?";
               const params = new URLSearchParams();
-              
+
               if (selectedStore) params.append("store", selectedStore);
               if (startDate) params.append("start_date", startDate);
               if (endDate) params.append("end_date", endDate);
               // サンプル数を制限してパフォーマンス改善
               params.append("limit", "2000");
-              
+
               const response = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
               const data = await response.json();
-              
+
               if (selectedStore) {
                 // 単一店舗の場合は時間まで表示
                 labels = data.map(record => {
@@ -737,25 +716,25 @@
               } else {
                 // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
-                
+
                 data.forEach(record => {
                   const d = new Date(record.timestamp);
                   const dateKey = d.toLocaleDateString();
-                  
+
                   if (!dateMap.has(dateKey)) {
                     dateMap.set(dateKey, { sum: 0, count: 0 });
                   }
-                  
+
                   if (record.working_staff > 0) {
                     const rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
                     dateMap.get(dateKey).sum += rate;
                     dateMap.get(dateKey).count += 1;
                   }
                 });
-                
+
                 // 日付でソート
                 const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
-                
+
                 labels = sortedDates;
                 effectiveRates = sortedDates.map(date => {
                   const entry = dateMap.get(date);
@@ -766,42 +745,42 @@
               // 期間指定がなく全店舗の場合: 事前集計データを使用
               const response = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
               const data = await response.json();
-              
+
               // 日付ごとに集計
               const dateMap = new Map();
-              
+
               data.forEach(entry => {
                 const dateKey = entry.date;
-                
+
                 if (!dateMap.has(dateKey)) {
                   dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
                 }
-                
+
                 const mapEntry = dateMap.get(dateKey);
                 mapEntry.sum += entry.avg_rate * entry.sample_count; // 加重平均のため
                 mapEntry.count += entry.sample_count;
                 mapEntry.rateSum += entry.avg_rate;
                 mapEntry.rateSamples += 1;
               });
-              
+
               // 日付でソート
               const sortedDates = Array.from(dateMap.keys()).sort();
-              
+
               labels = sortedDates.map(date => {
                 const d = new Date(date);
                 return d.toLocaleDateString();
               });
-              
+
               effectiveRates = sortedDates.map(date => {
                 const entry = dateMap.get(date);
                 // 加重平均を使用（サンプル数で重み付け）
                 return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
               });
             }
-            
+
             const ctx = document.getElementById("historyChart").getContext("2d");
             if (charts.history) charts.history.destroy();
-            
+
             charts.history = new Chart(ctx, {
               type: "line",
               data: {
@@ -846,7 +825,7 @@
                 animation: { duration: 500 } // アニメーション時間短縮
               }
             });
-            
+
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
@@ -857,22 +836,22 @@
             }
             // キャッシュに保存
             historyChartCache[cacheKey] = { labels, effectiveRates };
-            
+
             // チャート更新処理
             updateHistoryChartDisplay(labels, effectiveRates);
-            
+
             hideSpinner();
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             hideSpinner();
           }
         }
-        
+
         // チャート表示処理を別関数に分離
         function updateHistoryChartDisplay(labels, effectiveRates) {
             const ctx = document.getElementById("historyChart").getContext("2d");
             if (charts.history) charts.history.destroy();
-            
+
             charts.history = new Chart(ctx, {
               type: "line",
               data: {
@@ -917,7 +896,7 @@
                 animation: { duration: 500 } // アニメーション時間短縮
               }
             });
-            
+
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
               const numericRates = effectiveRates.map(Number);
@@ -1321,19 +1300,19 @@
             showSpinner();
             const rankingType = document.getElementById("rankingTypeSelect").value;
             let apiUrl = "/api/ranking/average";
-            
+
             if (rankingType === "industry") {
               const selectedIndustry = document.getElementById("industrySelectRanking").value;
               apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
             }
-            
+
             const response = await fetchWithRetry(apiUrl, {}, 3, 2000);
             const rankingData = await response.json();
-            
+
             // 前処理済みデータをそのまま使用
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
-            
+
             rankingData.forEach((store, index) => {
               const rowHtml = `
                 <tr>
@@ -1363,26 +1342,26 @@
             const response = await fetchWithRetry("/api/data", {}, 3, 2000);
             const data = await response.json();
             const industries = new Set();
-            
+
             data.forEach(record => { 
               if (record.biz_type) industries.add(record.biz_type); 
             });
-            
+
             const industrySelect = document.getElementById("industrySelectRanking");
             industrySelect.innerHTML = "";
-            
+
             // 業種でソート
             const sortedIndustries = Array.from(industries).sort();
             sortedIndustries.forEach(ind => { 
               industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`; 
             });
-            
+
             // ローカルストレージから前回の選択を復元
             const savedIndustryRanking = localStorage.getItem("industryRankingFilter");
             if (savedIndustryRanking && sortedIndustries.includes(savedIndustryRanking)) {
               industrySelect.value = savedIndustryRanking;
             }
-            
+
             // 選択変更時の保存処理
             industrySelect.addEventListener("change", () => {
               localStorage.setItem("industryRankingFilter", industrySelect.value);
