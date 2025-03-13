@@ -50,6 +50,14 @@
       </div>
     </div>
     <hr>
+    <h2>管理操作</h2>
+    <div class="mb-4">
+      <form method="post" action="{{ url_for('manual_scrape') }}" class="d-inline">
+        <button type="submit" class="btn btn-success">スクレイピング開始</button>
+      </form>
+      <small class="text-muted ms-2">ボタンをクリックすると、即時スクレイピングを開始し、次回の定期実行が1時間後に設定されます</small>
+    </div>
+    
     <h2>登録済み店舗URL</h2>
     <table class="table table-bordered">
       <thead>
