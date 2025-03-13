@@ -149,18 +149,18 @@ with app.app_context():
         # 各モデルを明示的に参照して、SQLAlchemyに認識させる
         app.logger.info("データベーステーブルを作成しています...")
         app.logger.info(f"モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage")
-        
+
         # 明示的にモデルクラスを参照して、SQLAlchemyが認識できるようにする
         tables = [StoreStatus, StoreURL, DailyAverage, WeeklyAverage, StoreAverage]
         app.logger.info(f"登録テーブル数: {len(tables)}")
-        
+
         # テーブル作成
         db.create_all()
-        
+
         # テーブルが作成されたか確認
         table_names = db.inspect(db.engine).get_table_names()
         app.logger.info(f"作成されたテーブル: {', '.join(table_names)}")
-        
+
         app.logger.info("データベーステーブルの作成が完了しました")
     except Exception as e:
         app.logger.error(f"テーブル作成中にエラーが発生しました: {e}")
@@ -184,7 +184,7 @@ def scheduled_scrape():
     ・処理完了後、Socket.IO を利用してクライアントへ更新通知を送信する。
     """
     from aggregated_data import AggregatedData
-    
+
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
         scrape_time = datetime.now()
@@ -199,23 +199,37 @@ def scheduled_scrape():
 
         app.logger.info("【スクレイピング開始】対象店舗数: %d", len(store_urls))
         try:
-            results = scrape_store_data(store_urls)
+            app.logger.info("スクレイピング処理を開始します...")
+            try:
+                results = scrape_store_data(store_urls)
+                app.logger.info("スクレイピング処理が完了しました。結果件数: %d", len(results))
+            except Exception as e:
+                if "signal only works in main thread" in str(e):
+                    app.logger.info("メインスレッドエラーを検出しました。マルチプロセス実行に切り替えます。")
+                    import multiprocessing
+                    ctx = multiprocessing.get_context('spawn')
+                    with ctx.Pool(1) as pool:
+                        results = pool.apply(scrape_store_data, (store_urls,))
+                    app.logger.info("マルチプロセス実行が完了しました。結果件数: %d", len(results))
+                else:
+                    raise
         except Exception as e:
             app.logger.error("スクレイピング中のエラー: %s", e)
+            app.logger.error(traceback.format_exc())
             return
 
         # 結果をDBに保存（既存レコードがあれば更新、なければ新規追加）
         record_update_count = 0
         record_insert_count = 0
-        
+
         try:
             app.logger.info(f"スクレイピング結果: {len(results)}件のレコードを処理開始")
-            
+
             for record in results:
                 if not record:  # 空の結果はスキップ
                     app.logger.warning("空のレコードをスキップしました")
                     continue
-                
+
                 try:
                     # レコードの内容確認（デバッグ用）
                     store_name = record.get('store_name', '')
@@ -223,29 +237,29 @@ def scheduled_scrape():
                     total_staff = record.get('total_staff', 0)
                     working_staff = record.get('working_staff', 0)
                     active_staff = record.get('active_staff', 0)
-                    
+
                     app.logger.debug(f"処理中のレコード: {store_name} ({area}) - 総:{total_staff}, 勤務:{working_staff}, 待機:{active_staff}")
-                    
+
                     if not store_name or not area:
                         app.logger.warning(f"必須データ不足のためスキップ: 店舗名={store_name}, エリア={area}")
                         continue
-                    
+
                     # タイムスタンプ文字列をログに出力（デバッグ用）
                     formatted_time = scrape_time.strftime('%Y-%m-%d %H:%M')
                     app.logger.debug(f"重複チェック用タイムスタンプ: {formatted_time}")
-                    
+
                     # 重複チェック: 店舗名とエリアと実行時刻（分単位）でチェック
                     # SQLクエリをログ出力
                     timestamp_query = f"strftime('%Y-%m-%d %H:%M', timestamp) = '{formatted_time}'"
                     query_desc = f"StoreStatus.store_name='{store_name}' AND StoreStatus.area='{area}' AND {timestamp_query}"
                     app.logger.debug(f"重複チェッククエリ: {query_desc}")
-                    
+
                     existing = StoreStatus.query.filter(
                         StoreStatus.store_name == store_name,
                         StoreStatus.area == area,
                         func.strftime('%Y-%m-%d %H:%M', StoreStatus.timestamp) == formatted_time
                     ).first()
-                    
+
                     if existing:
                         # 既存レコードがあれば更新
                         app.logger.info(f"既存レコードを更新: {store_name} (ID: {existing.id})")
@@ -275,15 +289,15 @@ def scheduled_scrape():
                         )
                         db.session.add(new_status)
                         record_insert_count += 1
-                        
+
                 except Exception as e:
                     app.logger.error(f"レコード処理中の例外発生: {record.get('store_name', 'unknown')} - {str(e)}")
                     app.logger.error(traceback.format_exc())
-            
+
             # セッションの変更をコミット
             db.session.commit()
             app.logger.info(f"DB処理完了: 更新={record_update_count}件, 新規追加={record_insert_count}件")
-            
+
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"DB操作中に例外が発生しました: {str(e)}")
@@ -292,7 +306,7 @@ def scheduled_scrape():
         # 古いデータ（2年以上前）の削除
         db.session.query(StoreStatus).filter(StoreStatus.timestamp < retention_date).delete()
         db.session.commit()
-        
+
         # 集計データの計算と保存
         app.logger.info("集計データの計算開始")
         aggregation_result = AggregatedData.calculate_and_save_aggregated_data()
@@ -301,7 +315,7 @@ def scheduled_scrape():
         # 特定のキャッシュのみをクリア（集計データは更新済みなのでそのまま）
         try:
             app.logger.info("キャッシュをクリアしています...")
-            
+
             # すべてのAPIエンドポイントのキャッシュをクリア
             cache.delete_memoized(api_data)
             cache.delete_memoized(api_history)
@@ -311,7 +325,7 @@ def scheduled_scrape():
             cache.delete_memoized(api_store_averages)
             cache.delete_memoized(api_average_ranking)
             cache.delete_memoized(api_aggregated_data)
-            
+
             # 古いキャッシュキーも念のためクリア
             legacy_keys = [
                 'view/api_data', 
@@ -321,7 +335,7 @@ def scheduled_scrape():
             ]
             for key in legacy_keys:
                 cache.delete(key)
-                
+
             app.logger.info("キャッシュのクリアが完了しました")
         except Exception as e:
             app.logger.error(f"キャッシュクリア中にエラーが発生しました: {str(e)}")
@@ -450,20 +464,20 @@ def api_data():
 def bulk_add_store_urls():
     """複数のURL一括追加処理"""
     bulk_urls = request.form.get('bulk_urls', '')
-    
+
     # 空白行や重複を除去
     urls = [url.strip() for url in bulk_urls.splitlines() if url.strip()]
-    
+
     # 成功・エラーカウント
     success_count = 0
     error_count = 0
-    
+
     for url in urls:
         # 重複チェック
         existing = StoreURL.query.filter_by(store_url=url).first()
         if existing:
             continue  # 既に存在する場合はスキップ
-            
+
         # 新規URL追加
         try:
             new_url = StoreURL(store_url=url)
@@ -471,7 +485,7 @@ def bulk_add_store_urls():
             success_count += 1
         except Exception:
             error_count += 1
-    
+
     # コミット
     try:
         db.session.commit()
@@ -479,7 +493,7 @@ def bulk_add_store_urls():
     except Exception as e:
         db.session.rollback()
         flash(f'エラーが発生しました: {e}', 'danger')
-    
+
     return redirect(url_for('manage_store_urls'))
 
 @app.route('/api/history')
@@ -755,9 +769,9 @@ def api_daily_averages():
     日次（直近24時間）の平均稼働率データを返すエンドポイント
     """
     from aggregated_data import AggregatedData
-    
+
     results = AggregatedData.get_daily_averages()
-    
+
     jst = pytz.timezone('Asia/Tokyo')
     data = [{
         'store_name': r.store_name,
@@ -769,7 +783,7 @@ def api_daily_averages():
         'genre': r.genre,
         'area': r.area
     } for r in results]
-    
+
     return jsonify(data)
 
 @app.route('/api/averages/weekly')
@@ -779,9 +793,9 @@ def api_weekly_averages():
     週次（直近7日間）の平均稼働率データを返すエンドポイント
     """
     from aggregated_data import AggregatedData
-    
+
     results = AggregatedData.get_weekly_averages()
-    
+
     jst = pytz.timezone('Asia/Tokyo')
     data = [{
         'store_name': r.store_name,
@@ -793,7 +807,7 @@ def api_weekly_averages():
         'genre': r.genre,
         'area': r.area
     } for r in results]
-    
+
     return jsonify(data)
 
 @app.route('/api/averages/stores')
@@ -803,9 +817,9 @@ def api_store_averages():
     店舗ごとの全期間平均稼働率データを返すエンドポイント
     """
     from aggregated_data import AggregatedData
-    
+
     results = AggregatedData.get_store_averages()
-    
+
     jst = pytz.timezone('Asia/Tokyo')
     data = [{
         'store_name': r.store_name,
@@ -817,7 +831,7 @@ def api_store_averages():
         'genre': r.genre,
         'area': r.area
     } for r in results]
-    
+
     return jsonify(data)
 
 @app.route('/api/history/optimized')
@@ -829,60 +843,60 @@ def api_history_optimized():
     - 指定店舗のみの場合は完全なデータを返す
     """
     from page_helper import paginate_query_results, format_store_status
-    
+
     # 店舗名フィルター（指定された場合は完全なデータを返す）
     store = request.args.get('store')
     if store:
         return api_history()
-    
+
     # 日付範囲フィルター
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    
+
     # 期間指定なし、かつ店舗指定なしの場合はダウンサンプリングを行う
     if not start_date and not end_date:
         # 期間指定なしの場合、過去7日間のデータだけに限定
         start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    
+
     # 基本クエリ
     query = StoreStatus.query
-    
+
     if start_date:
         query = query.filter(StoreStatus.timestamp >= f"{start_date} 00:00:00")
-    
+
     if end_date:
         query = query.filter(StoreStatus.timestamp <= f"{end_date} 23:59:59")
-    
+
     # 全件数をカウント
     total_count = query.count()
-    
+
     # 1万件を超える場合はダウンサンプリング
     if total_count > 10000:
         # 各店舗から一定間隔でサンプリング
-        store_names = db.session.query(distinct(StoreStatus.store_name)).all()
+        store_names = db.session.query(func.distinct(StoreStatus.store_name)).all()
         store_names = [s[0] for s in store_names]
-        
+
         # ダウンサンプリングされたデータ
         sampled_data = []
-        
+
         for store_name in store_names:
             # 各店舗のデータを時間順に取得
             store_data = query.filter(StoreStatus.store_name == store_name).order_by(StoreStatus.timestamp.asc()).all()
-            
+
             # サンプリング率を決定（最大100ポイント/店舗）
             sample_rate = max(1, len(store_data) // 100)
-            
+
             # サンプリング
             sampled_store_data = store_data[::sample_rate]
             sampled_data.extend(sampled_store_data)
-        
+
         # 時間順にソート
         sampled_data.sort(key=lambda x: x.timestamp)
-        
+
         # データのフォーマット
         jst = pytz.timezone('Asia/Tokyo')
         data = [format_store_status(item, jst) for item in sampled_data]
-        
+
         # メタデータを含むレスポンス
         response = {
             "items": data,
