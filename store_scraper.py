@@ -64,6 +64,9 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     Returns:
       - dict: 取得した店舗情報およびシフト情報の集計結果
     """
+    import logging
+    logger = logging.getLogger('app')
+    
     async with semaphore:
         # URLの末尾に "/" がなければ追加し、出勤情報ページのURLを作成
         if not url.endswith("/"):
@@ -75,14 +78,14 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         try:
             await stealth(page)  # 検出回避のため stealth を適用
         except Exception as e:
-            print("stealth 適用エラー:", e)
+            logger.error("stealth 適用エラー: %s", e)
         # ユーザーエージェントを設定
         await page.setUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         )
 
-        print("初回アクセス中:", attend_url)
+        logger.info("スクレイピング開始: %s", attend_url)
         # 指定URLにアクセス。タイムアウト20秒、リトライ3回
         success = await fetch_page(page, attend_url, retries=3, timeout=20000)
         if not success:
@@ -239,6 +242,12 @@ async def _scrape_all(store_urls: list) -> list:
     複数店舗のスクレイピングを並列実行数制限付きで実行する関数
     - バッチ処理間の待機時間を3秒から2秒に短縮
     """
+    import logging
+    logger = logging.getLogger('app')
+    
+    logger.info("スクレイピングを開始します（店舗数: %d、並列実行数: %d）", 
+               len(store_urls), MAX_CONCURRENT_TASKS)
+    
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     executable_path = '/usr/bin/google-chrome'
     browser = await launch(
@@ -265,9 +274,26 @@ async def _scrape_all(store_urls: list) -> list:
     # タスクをバッチ単位で実行し、各バッチの間は2秒待機
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
+        batch_start = i + 1
+        batch_end = min(i + MAX_CONCURRENT_TASKS, len(tasks))
+        logger.info("バッチ処理中: %d〜%d店舗 / 合計%d店舗", batch_start, batch_end, len(store_urls))
+        
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
+        
+        # 例外の処理とログ
+        for j, result in enumerate(batch_results):
+            if isinstance(result, Exception):
+                store_idx = i + j
+                if store_idx < len(store_urls):
+                    logger.error("店舗処理エラー（URL: %s）: %s", 
+                               store_urls[store_idx], str(result))
+                    batch_results[j] = {}  # エラーの場合は空の辞書に置き換え
+                    
         results.extend(batch_results)
+        logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
         await asyncio.sleep(2)  # 待機時間を2秒に変更
+    
+    logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()
     await browser.close()
     return results
@@ -278,5 +304,30 @@ async def _scrape_all(store_urls: list) -> list:
 def scrape_store_data(store_urls: list) -> list:
     """
     非同期スクレイピング処理を同期的に実行するラッパー関数
+    マルチスレッド環境でも安全に動作するように修正
     """
+    try:
+        # メインスレッドから呼び出された場合
+        return asyncio.run(_scrape_all(store_urls))
+    except RuntimeError as e:
+        if "There is no current event loop in thread" in str(e):
+            # サブスレッドから呼び出された場合は新しいイベントループを作成
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(_scrape_all(store_urls))
+            finally:
+                loop.close()
+        elif "signal only works in main thread" in str(e):
+            # シグナルハンドリングの問題を回避する修正
+            import multiprocessing
+            # 別プロセスでスクレイピングを実行
+            ctx = multiprocessing.get_context('spawn')
+            with ctx.Pool(1) as pool:
+                return pool.apply(_scrape_subprocess, (store_urls,))
+        else:
+            raise
+
+def _scrape_subprocess(store_urls):
+    """サブプロセスで実行するためのヘルパー関数"""
     return asyncio.run(_scrape_all(store_urls))
