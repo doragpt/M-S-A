@@ -702,6 +702,7 @@
 
               const response = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
               const data = await response.json();
+              console.log("History API response:", data);
 
               if (selectedStore) {
                 // 単一店舗の場合は時間まで表示
@@ -710,8 +711,9 @@
                   return d.toLocaleDateString() + " " + d.toTimeString().substring(0, 5);
                 });
                 effectiveRates = data.map(record => 
-                  record.working_staff > 0 ? 
-                  ((record.working_staff - record.active_staff) / record.working_staff * 100).toFixed(1) : 0
+                  record.rate ? record.rate.toFixed(1) : 
+                  (record.working_staff > 0 ? 
+                  ((record.working_staff - record.active_staff) / record.working_staff * 100).toFixed(1) : 0)
                 );
               } else {
                 // 全店舗かつ期間指定の場合は日付で集計
@@ -725,8 +727,12 @@
                     dateMap.set(dateKey, { sum: 0, count: 0 });
                   }
 
-                  if (record.working_staff > 0) {
-                    const rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
+                  // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
+                  const rate = record.rate ? record.rate :
+                    (record.working_staff > 0 ? 
+                    ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+                    
+                  if (rate > 0) {
                     dateMap.get(dateKey).sum += rate;
                     dateMap.get(dateKey).count += 1;
                   }
@@ -745,6 +751,7 @@
               // 期間指定がなく全店舗の場合: 事前集計データを使用
               const response = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
               const data = await response.json();
+              console.log("Aggregated API response:", data);
 
               // 日付ごとに集計
               const dateMap = new Map();
@@ -843,6 +850,7 @@
             hideSpinner();
           } catch (error) {
             console.error("履歴グラフエラー:", error);
+            console.error(error.stack);
             hideSpinner();
           }
         }
@@ -913,20 +921,40 @@
          ***********************************************/
         async function fillHistoryStoreDropdown() {
           try {
+            showSpinner();
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
+            console.log("History store data:", data);
+            
             const storeSelect = document.getElementById("storeSelectHistory");
-            if (!storeSelect) return;
+            if (!storeSelect) {
+              hideSpinner();
+              return;
+            }
+            
             const stores = new Set();
-            data.forEach(item => { if (item.store_name) stores.add(item.store_name); });
+            data.forEach(item => { 
+              if (item.store_name) stores.add(item.store_name); 
+            });
+            
+            console.log(`Found ${stores.size} unique stores`);
             storeSelect.innerHTML = '<option value="">全店舗</option>';
-            stores.forEach(store => {
+            
+            const sortedStores = Array.from(stores).sort();
+            sortedStores.forEach(store => {
               storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
+            
             storeSelect.value = savedHistoryStore;
-            storeSelect.addEventListener("change", () => { localStorage.setItem("historyStoreFilter", storeSelect.value); });
+            storeSelect.addEventListener("change", () => { 
+              localStorage.setItem("historyStoreFilter", storeSelect.value); 
+            });
+            
+            hideSpinner();
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
+            console.error(err.stack);
+            hideSpinner();
           }
         }
 
@@ -935,8 +963,11 @@
          ***********************************************/
         async function updateHourlyAnalysis() {
           try {
+            showSpinner();
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
+            console.log("Hourly analysis data:", data);
+            
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if(hourlyStoreSelect) {
               hourlyStoreSelect.value = savedHourlyStore;
@@ -944,25 +975,32 @@
             }
             const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
             let filtered = selectedStore ? data.filter(record => record.store_name === selectedStore) : data;
+            
             const hourly = {};
             filtered.forEach(record => {
+              // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
               if (record.working_staff > 0) {
                 const d = new Date(record.timestamp);
                 const hour = d.getHours();
-                const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+                const rate = record.rate ? record.rate : 
+                  ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+                  
                 if (!hourly[hour]) hourly[hour] = { sum: 0, count: 0 };
                 hourly[hour].sum += rate;
                 hourly[hour].count += 1;
               }
             });
+            
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
               labels.push(`${h}:00`);
               avgRates.push(hourly[h] && hourly[h].count > 0 ? (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
             }
+            
             const ctx = document.getElementById("hourlyChart").getContext("2d");
             if (charts.hourly) charts.hourly.destroy();
+            
             charts.hourly = new Chart(ctx, {
               type: "line",
               data: {
@@ -992,8 +1030,11 @@
                 animation: { duration: 1000 }
               }
             });
+            hideSpinner();
           } catch (err) {
             console.error("時間帯別分析エラー:", err);
+            console.error(err.stack);
+            hideSpinner();
           }
         }
         document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
@@ -1003,17 +1044,36 @@
          ***********************************************/
         async function fillHourlyStoreDropdown() {
           try {
+            showSpinner();
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
+            console.log("Hourly store data:", data);
+            
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
-            if (!hourlyStoreSelect) return;
+            if (!hourlyStoreSelect) {
+              hideSpinner();
+              return;
+            }
+            
             const stores = new Set();
-            data.forEach(item => { if (item.store_name) stores.add(item.store_name); });
+            data.forEach(item => { 
+              if (item.store_name) stores.add(item.store_name); 
+            });
+            
+            console.log(`Found ${stores.size} unique stores for hourly dropdown`);
             hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
-            stores.forEach(store => { hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`; });
+            
+            const sortedStores = Array.from(stores).sort();
+            sortedStores.forEach(store => { 
+              hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`; 
+            });
+            
             hourlyStoreSelect.value = savedHourlyStore;
+            hideSpinner();
           } catch (err) {
             console.error("時間帯分析店舗リスト取得エラー:", err);
+            console.error(err.stack);
+            hideSpinner();
           }
         }
 
@@ -1024,39 +1084,64 @@
          ***********************************************/
         async function updateAreaStatistics() {
           try {
+            showSpinner();
             // /api/data から最新データを取得し、各エリアの店舗数をカウント
             const responseData = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const dataLatest = await responseData.json();
+            const responseJson = await responseData.json();
+            const dataLatest = responseJson.data || responseJson; // API形式に対応
+            console.log("Area stats data latest:", dataLatest);
+            
             const areaStoreCount = {};
             dataLatest.forEach(store => {
               const area = store.area || "不明";
               if (!areaStoreCount[area]) { areaStoreCount[area] = 0; }
               areaStoreCount[area]++;
             });
+            
             // /api/history から履歴データを取得し、各エリアの平均稼働率を計算
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
+            console.log("Area stats history data:", dataHistory);
+            
             const areaRateData = {};
             dataHistory.forEach(record => {
               const area = record.area || "不明";
-              if (record.working_staff > 0) {
+              
+              // 稼働率をレコードから取得または計算
+              let rate = 0;
+              if (record.rate) {
+                rate = record.rate; // API形式に対応
+              } else if (record.working_staff > 0) {
+                rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
+              }
+              
+              if (rate > 0) {
                 if (!areaRateData[area]) {
                   areaRateData[area] = { totalRate: 0, count: 0 };
                 }
-                areaRateData[area].totalRate += ((record.working_staff - record.active_staff) / record.working_staff * 100);
+                areaRateData[area].totalRate += rate;
                 areaRateData[area].count++;
               }
             });
+            
             // テーブル表示用に、両方のデータを統合
             const areaTable = document.getElementById("areaTable");
+            if (!areaTable) {
+              console.error("areaTable element not found");
+              hideSpinner();
+              return;
+            }
+            
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
             const allAreas = new Set([...Object.keys(areaStoreCount), ...Object.keys(areaRateData)]);
+            
             allAreas.forEach(area => {
               const storeCount = areaStoreCount[area] || 0;
               const rateData = areaRateData[area] || { totalRate: 0, count: 0 };
               const avgRate = rateData.count > 0 ? (rateData.totalRate / rateData.count).toFixed(1) : "0.0";
+              
               areaTable.insertAdjacentHTML("beforeend", `
                 <tr>
                   <td>${area}</td>
@@ -1064,11 +1149,20 @@
                   <td>${avgRate}</td>
                 </tr>
               `);
+              
               labels.push(area);
               avgRates.push(parseFloat(avgRate));
             });
+            
             const ctx = document.getElementById("areaChart").getContext("2d");
+            if (!ctx) {
+              console.error("areaChart canvas context not found");
+              hideSpinner();
+              return;
+            }
+            
             if (charts.area) charts.area.destroy();
+            
             charts.area = new Chart(ctx, {
               type: "bar",
               data: {
@@ -1083,13 +1177,20 @@
               },
               options: {
                 responsive: true,
+                plugins: {
+                  title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } }
+                },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "平均稼働率 (%)" } }
                 }
               }
             });
+            
+            hideSpinner();
           } catch (error) {
             console.error("エリア統計エラー:", error);
+            console.error(error.stack);
+            hideSpinner();
           }
         }
 

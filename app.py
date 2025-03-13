@@ -582,26 +582,17 @@ def api_history():
 
         # メタデータを含むレスポンス
         response = {
-            "items": data,
             "meta": {
                 **paginated_result['meta'],
                 "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
             }
         }
-        return jsonify(response)
+        return jsonify(data)
     else:
         # 従来通りすべての結果を返す場合
         results = query.all()
         data = [format_store_status(r, jst) for r in results]
-
-        response = {
-            "items": data,
-            "meta": {
-                "total_count": len(results),
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
-            }
-        }
-        return jsonify(response)
+        return jsonify(data)
 
 
 # ---------------------------------------------------------------------
