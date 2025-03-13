@@ -492,31 +492,29 @@
         async function fetchWithRetry(url, options = {}, maxRetries = 3, delay = 2000) {
           let currentRetry = 0;
 
-          return new Promise(async (resolve, reject) => {
-            while (currentRetry < maxRetries) {
-              try {
-                const response = await fetch(url, options);
-                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          while (currentRetry < maxRetries) {
+            try {
+              const response = await fetch(url, options);
+              if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-                // Check if response is JSON before parsing
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                  throw new Error(`Expected JSON but got ${contentType}`);
-                }
-
-                const data = await response.json();
-                return resolve(data);
-              } catch (error) {
-                currentRetry++;
-                console.error(`Fetch error (${url}), attempt ${currentRetry}: ${error}`);
-                if (currentRetry >= maxRetries) {
-                  return reject(error);
-                }
-                // Wait before retrying
-                await new Promise(r => setTimeout(r, delay));
+              // Check if response is JSON before parsing
+              const contentType = response.headers.get('content-type');
+              if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Expected JSON but got ${contentType}`);
               }
+
+              // データをパースして返す
+              return await response.json();
+            } catch (error) {
+              currentRetry++;
+              console.error(`Fetch error (${url}), attempt ${currentRetry}: ${error}`);
+              if (currentRetry >= maxRetries) {
+                throw error;
+              }
+              // Wait before retrying
+              await new Promise(r => setTimeout(r, delay));
             }
-          });
+          }
         }
 
         /***********************************************
