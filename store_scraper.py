@@ -11,27 +11,27 @@ import gc
 # 定数設定
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
-# ローカル環境の場合は負荷を下げる
-MAX_CONCURRENT_TASKS = 5  # ローカル環境での負荷を下げるため5に変更
+# 8GB/6コアVPSのリソースを活用
+MAX_CONCURRENT_TASKS = 20  # 並列処理数を増加（8GB/6コアに最適化）
 # 店舗情報が取得できなかった場合の再試行回数
-MAX_RETRIES_FOR_INFO = 2  # 再試行回数も2回に減らして高速化
+MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)
+PAGE_LOAD_TIMEOUT = 10000  # ページロードのタイムアウト(10秒)
 # メモリ管理
-FORCE_GC_AFTER_STORES = 20  # 20店舗処理後に強制GC実行
+FORCE_GC_AFTER_STORES = 50  # 50店舗処理後に強制GC実行
 
 # -------------------------------
 # fetch_page 関数
 # -------------------------------
-async def fetch_page(page, url, retries=3, timeout=20000):
+async def fetch_page(page, url, retries=2, timeout=10000):
     """
     指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する関数
     
     Parameters:
       - page: pyppeteer のページオブジェクト
       - url: アクセスするURL
-      - retries: リトライ回数（デフォルト3回）
-      - timeout: タイムアウト（ミリ秒単位、デフォルト20000ms=20秒）
+      - retries: リトライ回数（デフォルト2回に短縮）
+      - timeout: タイムアウト（ミリ秒単位、デフォルト10000ms=10秒に短縮）
     
     Returns:
       - True: ページの読み込みに成功した場合
@@ -86,13 +86,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         )
 
         logger.info("スクレイピング開始: %s", attend_url)
-        # 指定URLにアクセス。タイムアウト20秒、リトライ3回
-        success = await fetch_page(page, attend_url, retries=3, timeout=20000)
+        # 指定URLにアクセス。タイムアウト10秒、リトライ2回に短縮
+        success = await fetch_page(page, attend_url, retries=2, timeout=10000)
         if not success:
             await page.close()
             return {}
-        # ページ読み込み後、1秒待機
-        await asyncio.sleep(1)
+        # ページ読み込み後の待機時間を0.5秒に短縮
+        await asyncio.sleep(0.5)
         # ページコンテンツを取得し、BeautifulSoupでパース
         content = await page.content()
         soup = BeautifulSoup(content, "html.parser")
@@ -271,7 +271,7 @@ async def _scrape_all(store_urls: list) -> list:
     # 各店舗URLに対するスクレイピングタスクを作成
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # タスクをバッチ単位で実行し、各バッチの間は2秒待機
+    # タスクをバッチ単位で実行し、各バッチの間の待機時間を短縮
     for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
         batch = tasks[i:i+MAX_CONCURRENT_TASKS]
         batch_start = i + 1
@@ -291,7 +291,8 @@ async def _scrape_all(store_urls: list) -> list:
                     
         results.extend(batch_results)
         logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
-        await asyncio.sleep(2)  # 待機時間を2秒に変更
+        # 待機時間を0.5秒に短縮
+        await asyncio.sleep(0.5)
     
     logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()
