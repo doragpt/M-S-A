@@ -715,7 +715,7 @@ if __name__ == '__main__':
 
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
-@cache.cached(timeout=600)  # キャッシュ：10分間有効
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
 def api_average_ranking():
     """
     店舗の平均稼働率ランキングを返すエンドポイント
@@ -779,6 +779,94 @@ def api_average_ranking():
     except Exception as e:
         app.logger.error(f"平均稼働ランキング取得エラー: {e}")
         return jsonify({"error": "ランキングの取得中にエラーが発生しました"}), 500
+
+# 業種内ジャンルランキングのAPIエンドポイント
+@app.route('/api/ranking/genre')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_genre_ranking():
+    """
+    業種内のジャンル別平均稼働率ランキングを返すエンドポイント
+
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング（必須）
+    """
+    biz_type = request.args.get('biz_type')
+    if not biz_type:
+        return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
+
+    try:
+        # 直接SQLクエリを実行
+        # 業種内のジャンル別平均稼働率とサンプル数を計算
+        query = db.session.query(
+            StoreStatus.genre,
+            func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate')
+        ).filter(
+            StoreStatus.biz_type == biz_type,
+            StoreStatus.working_staff > 0
+        ).group_by(
+            StoreStatus.genre
+        ).order_by(
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).desc()
+        )
+
+        results = query.all()
+
+        # 結果が空の場合は空のリストを返す
+        if not results:
+            return jsonify([])
+
+        data = [{
+            "genre": r.genre if r.genre else "不明",
+            "store_count": r.store_count,
+            "avg_rate": round(float(r.avg_rate), 1)
+        } for r in results]
+
+        return jsonify(data)
+    except Exception as e:
+        app.logger.error(f"ジャンルランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "ジャンルランキングの取得中にエラーが発生しました"}), 500
+
+# 集計済みデータを提供するエンドポイント
+@app.route('/api/aggregated')
+@cache.memoize(timeout=3600)  # キャッシュ：1時間有効
+def api_aggregated_data():
+    """
+    日付ごとに集計された平均稼働率データを返すエンドポイント
+    """
+    # 日付ごとの集計クエリ
+    query = db.session.query(
+        func.date(StoreStatus.timestamp).label('date'),
+        func.avg(
+            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+            func.nullif(StoreStatus.working_staff, 0)
+        ).label('avg_rate'),
+        func.count().label('sample_count')
+    ).filter(
+        StoreStatus.working_staff > 0
+    ).group_by(
+        func.date(StoreStatus.timestamp)
+    ).order_by(
+        func.date(StoreStatus.timestamp)
+    )
+
+    results = query.all()
+
+    # 結果を整形
+    data = [{
+        'date': r.date.isoformat(),
+        'avg_rate': float(r.avg_rate),
+        'sample_count': r.sample_count
+    } for r in results]
+
+    return jsonify(data)
 
 # 集計済みデータを提供するエンドポイント（日付ごとの平均稼働率など）
 @app.route('/api/aggregated')
