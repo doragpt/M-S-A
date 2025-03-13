@@ -715,7 +715,7 @@ if __name__ == '__main__':
 
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
-@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+@cache.memoize(timeout=600)  # キャッシュ：10分間間有効
 def api_average_ranking():
     """
     店舗の平均稼働率ランキングを返すエンドポイント
