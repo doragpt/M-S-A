@@ -82,7 +82,7 @@ def format_store_status(item, timezone=None):
     # 結果を辞書にまとめる
     return {
         "id": item.id,
-        "timestamp": timestamp.strftime('%Y-%m-%d %H:%M:%S %Z%z'),  # タイムゾーン情報を含めた形式
+        "timestamp": timestamp.isoformat(),  # ISO8601形式 (JavaScript の Date で正しく解析できる)
         "store_name": item.store_name,
         "biz_type": item.biz_type,
         "genre": item.genre,

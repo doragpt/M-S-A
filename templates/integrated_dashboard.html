@@ -271,6 +271,12 @@
           <div class="chart-container">
             <canvas id="hourlyChart"></canvas>
           </div>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">集計結果</h5>
+              <p id="hourlyStats" class="mb-0">--</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -307,17 +313,23 @@
               <label for="industrySelectType" class="form-label">業種を選択</label>
               <select id="industrySelectType" class="form-select"></select>
             </div>
+            <div class="col-md-6">
+              <div class="spinner-border text-primary" role="status" style="display:none;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
           </div>
           <div class="table-responsive mb-3">
             <table id="typeTable" class="table table-bordered table-striped">
               <thead>
                 <tr>
+                  <th>順位</th>
                   <th>ジャンル</th>
                   <th>店舗数</th>
                   <th>平均稼働率 (%)</th>
                 </tr>
               </thead>
-              <tbody id="typeTable"></tbody>
+              <tbody id="typeTableBody"></tbody>
             </table>
           </div>
           <div class="card">
@@ -345,9 +357,14 @@
               <select id="industrySelectRanking" class="form-select">
                 <!-- JSで動的に追加 -->
               </select>
+              <div class="spinner-border text-primary" role="status" style="display:none;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
             </div>
           </div>
-          <button id="updateRankingBtn" class="btn btn-primary mb-3">ランキング更新</button>
+          <div class="col-md-6 mb-3">
+            <button id="updateRankingBtn" class="btn btn-primary">ランキング更新</button>
+          </div>
           <div class="table-responsive">
             <table id="rankingTable" class="table table-bordered table-striped">
               <thead>
@@ -713,7 +730,7 @@
                 effectiveRates = data.map(record => 
                   record.rate ? record.rate.toFixed(1) : 
                   (record.working_staff > 0 ? 
-                  ((record.working_staff - record.active_staff) / record.working_staff * 100).toFixed(1) : 0)
+                  ((record.working_staff - record.active_staff) / record.working_staff* 100).toFixed(1) : 0)
                 );
               } else {
                 // 全店舗かつ期間指定の場合は日付で集計
@@ -731,7 +748,7 @@
                   const rate = record.rate ? record.rate :
                     (record.working_staff > 0 ? 
                     ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
-                    
+
                   if (rate > 0) {
                     dateMap.get(dateKey).sum += rate;
                     dateMap.get(dateKey).count += 1;
@@ -925,31 +942,31 @@
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
             console.log("History store data:", data);
-            
+
             const storeSelect = document.getElementById("storeSelectHistory");
             if (!storeSelect) {
               hideSpinner();
               return;
             }
-            
+
             const stores = new Set();
             data.forEach(item => { 
               if (item.store_name) stores.add(item.store_name); 
             });
-            
+
             console.log(`Found ${stores.size} unique stores`);
             storeSelect.innerHTML = '<option value="">全店舗</option>';
-            
+
             const sortedStores = Array.from(stores).sort();
             sortedStores.forEach(store => {
               storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
-            
+
             storeSelect.value = savedHistoryStore;
             storeSelect.addEventListener("change", () => { 
               localStorage.setItem("historyStoreFilter", storeSelect.value); 
             });
-            
+
             hideSpinner();
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
@@ -967,7 +984,7 @@
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
             console.log("Hourly analysis data:", data);
-            
+
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if(hourlyStoreSelect) {
               hourlyStoreSelect.value = savedHourlyStore;
@@ -975,7 +992,7 @@
             }
             const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
             let filtered = selectedStore ? data.filter(record => record.store_name === selectedStore) : data;
-            
+
             const hourly = {};
             filtered.forEach(record => {
               // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
@@ -984,23 +1001,23 @@
                 const hour = d.getHours();
                 const rate = record.rate ? record.rate : 
                   ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-                  
+
                 if (!hourly[hour]) hourly[hour] = { sum: 0, count: 0 };
                 hourly[hour].sum += rate;
                 hourly[hour].count += 1;
               }
             });
-            
+
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
               labels.push(`${h}:00`);
               avgRates.push(hourly[h] && hourly[h].count > 0 ? (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
             }
-            
+
             const ctx = document.getElementById("hourlyChart").getContext("2d");
             if (charts.hourly) charts.hourly.destroy();
-            
+
             charts.hourly = new Chart(ctx, {
               type: "line",
               data: {
@@ -1048,26 +1065,26 @@
             const response = await fetchWithRetry("/api/history", {}, 3, 2000);
             const data = await response.json();
             console.log("Hourly store data:", data);
-            
+
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if (!hourlyStoreSelect) {
               hideSpinner();
               return;
             }
-            
+
             const stores = new Set();
             data.forEach(item => { 
               if (item.store_name) stores.add(item.store_name); 
             });
-            
+
             console.log(`Found ${stores.size} unique stores for hourly dropdown`);
             hourlyStoreSelect.innerHTML = '<option value="">全店舗</option>';
-            
+
             const sortedStores = Array.from(stores).sort();
             sortedStores.forEach(store => { 
               hourlyStoreSelect.innerHTML += `<option value="${store}">${store}</option>`; 
             });
-            
+
             hourlyStoreSelect.value = savedHourlyStore;
             hideSpinner();
           } catch (err) {
@@ -1090,23 +1107,23 @@
             const responseJson = await responseData.json();
             const dataLatest = responseJson.data || responseJson; // API形式に対応
             console.log("Area stats data latest:", dataLatest);
-            
+
             const areaStoreCount = {};
             dataLatest.forEach(store => {
               const area = store.area || "不明";
               if (!areaStoreCount[area]) { areaStoreCount[area] = 0; }
               areaStoreCount[area]++;
             });
-            
+
             // /api/history から履歴データを取得し、各エリアの平均稼働率を計算
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
             console.log("Area stats history data:", dataHistory);
-            
+
             const areaRateData = {};
             dataHistory.forEach(record => {
               const area = record.area || "不明";
-              
+
               // 稼働率をレコードから取得または計算
               let rate = 0;
               if (record.rate) {
@@ -1114,7 +1131,7 @@
               } else if (record.working_staff > 0) {
                 rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
               }
-              
+
               if (rate > 0) {
                 if (!areaRateData[area]) {
                   areaRateData[area] = { totalRate: 0, count: 0 };
@@ -1123,7 +1140,7 @@
                 areaRateData[area].count++;
               }
             });
-            
+
             // テーブル表示用に、両方のデータを統合
             const areaTable = document.getElementById("areaTable");
             if (!areaTable) {
@@ -1131,17 +1148,17 @@
               hideSpinner();
               return;
             }
-            
+
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
             const allAreas = new Set([...Object.keys(areaStoreCount), ...Object.keys(areaRateData)]);
-            
+
             allAreas.forEach(area => {
               const storeCount = areaStoreCount[area] || 0;
               const rateData = areaRateData[area] || { totalRate: 0, count: 0 };
               const avgRate = rateData.count > 0 ? (rateData.totalRate / rateData.count).toFixed(1) : "0.0";
-              
+
               areaTable.insertAdjacentHTML("beforeend", `
                 <tr>
                   <td>${area}</td>
@@ -1149,20 +1166,20 @@
                   <td>${avgRate}</td>
                 </tr>
               `);
-              
+
               labels.push(area);
               avgRates.push(parseFloat(avgRate));
             });
-            
+
             const ctx = document.getElementById("areaChart").getContext("2d");
             if (!ctx) {
               console.error("areaChart canvas context not found");
               hideSpinner();
               return;
             }
-            
+
             if (charts.area) charts.area.destroy();
-            
+
             charts.area = new Chart(ctx, {
               type: "bar",
               data: {
@@ -1185,7 +1202,7 @@
                 }
               }
             });
-            
+
             hideSpinner();
           } catch (error) {
             console.error("エリア統計エラー:", error);
@@ -1510,6 +1527,767 @@
         updateHistoryChart();
         await fillHourlyStoreDropdown();
         updateHourlyAnalysis();
+        // タブ切り替え処理
+        document.querySelectorAll('.nav-link').forEach(button => {
+          button.addEventListener('click', function() {
+            // すべてのタブボタンから active クラスを削除
+            document.querySelectorAll('.nav-link').forEach(btn => {
+              btn.classList.remove('active');
+            });
+
+            // クリックされたボタンに active クラスを追加
+            this.classList.add('active');
+
+            // すべてのタブコンテンツを非表示
+            document.querySelectorAll('.tab-pane').forEach(content => {
+              content.classList.remove('show', 'active');
+            });
+
+            // クリックされたボタンのターゲットコンテンツを表示
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).classList.add('show', 'active');
+
+            // 業種内ジャンルランキングのタブが選択された場合
+            if (targetId === '#type') {
+              loadBusinessTypes('industrySelectType');
+              updateTypeRanking();
+            }
+
+            // 平均稼働ランキングのタブが選択された場合
+            if (targetId === '#ranking') {
+              loadBusinessTypes('industrySelectRanking');
+              updateRanking();
+            }
+          });
+        });
+
+        // 業種データをロードして選択ボックスに反映する共通関数
+        function loadBusinessTypes(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select.options.length) {
+            // 業種データが未読み込みの場合のみ実行
+            fetch('/api/data')
+              .then(response => response.json())
+              .then(data => {
+                // 重複のないbiz_typeリストを作成
+                const bizTypes = [...new Set(data.data.map(item => item.biz_type))].filter(Boolean);
+                bizTypes.sort();
+
+                // 選択肢をクリア
+                select.innerHTML = '';
+
+                // 業種選択肢を追加
+                bizTypes.forEach(type => {
+                  const option = document.createElement('option');
+                  option.value = type;
+                  option.textContent = type;
+                  select.appendChild(option);
+                });
+
+                // デフォルト値を選択
+                if (bizTypes.length > 0) {
+                  select.value = bizTypes[0];
+                }
+              })
+              .catch(error => console.error('業種データ取得エラー:', error));
+          }
+        }
+
+        // 業種内ジャンルランキング更新
+        function updateTypeRanking() {
+          const selectedBizType = document.getElementById('industrySelectType').value;
+          if (!selectedBizType) return;
+
+          const tableBody = document.getElementById('typeTableBody');
+          const chartCanvas = document.getElementById('typeChart');
+          const loadingSpinner = document.querySelector('#type .spinner-border');
+
+          // ローディング表示
+          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+
+          // APIからデータを取得
+          fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
+            .then(response => response.json())
+            .then(data => {
+              // テーブル表示
+              tableBody.innerHTML = '';
+
+              if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">該当するデータがありません</td></tr>';
+              } else {
+                data.forEach((item, index) => {
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.genre}</td>
+                    <td>${item.store_count}</td>
+                    <td>${item.avg_rate}%</td>
+                  `;
+                  tableBody.appendChild(row);
+                });
+              }
+
+              // グラフ表示
+              if (charts.type) charts.type.destroy();
+
+              const ctx = chartCanvas.getContext('2d');
+              charts.type = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: data.map(item => item.genre),
+                  datasets: [{
+                    label: '平均稼働率 (%)',
+                    data: data.map(item => item.avg_rate),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  },
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: `「${selectedBizType}」業種内ジャンルの平均稼働率`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }
+              });
+            })
+            .catch(error => {
+              console.error('ジャンルランキング取得エラー:', error);
+              tableBody.innerHTML = '<tr><td colspan="3" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+            })
+            .finally(() => {
+              // ローディング非表示
+              if (loadingSpinner) loadingSpinner.style.display = 'none';
+            });
+        }
+
+        // 業種選択変更時のイベント
+        document.getElementById('industrySelectType')?.addEventListener('change', updateTypeRanking);
+
+
+        /***********************************************
+         * updateAverageRanking: 平均稼働ランキング更新 (/api/ranking/average)
+         ***********************************************/
+        async function updateAverageRanking() {
+          try {
+            showSpinner();
+            const rankingType = document.getElementById("rankingTypeSelect").value;
+            let apiUrl = "/api/ranking/average";
+
+            if (rankingType === "industry") {
+              const selectedIndustry = document.getElementById("industrySelectRanking").value;
+              apiUrl += `?biz_type=${encodeURIComponent(selectedIndustry)}`;
+            }
+
+            const response = await fetchWithRetry(apiUrl, {}, 3, 2000);
+            const rankingData = await response.json();
+
+            // 前処理済みデータをそのまま使用
+            const tbody = document.getElementById("rankingTableBody");
+            tbody.innerHTML = "";
+
+            rankingData.forEach((store, index) => {
+              const rowHtml = `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${store.store_name}</td>
+                  <td>${store.biz_type}</td>
+                  <td>${store.genre}</td>
+                  <td>${store.area}</td>
+                  <td>${store.avg_rate.toFixed(1)}</td>
+                </tr>
+              `;
+              tbody.insertAdjacentHTML("beforeend", rowHtml);
+            });
+            hideSpinner();
+          } catch (error) {
+            console.error("平均稼働ランキングエラー:", error);
+            hideSpinner();
+          }
+        }
+
+        /***********************************************
+         * fillIndustryDropdownForRanking: 業種別ランキング用ドロップダウン更新
+         ***********************************************/
+        async function fillIndustryDropdownForRanking() {
+          try {
+            // 最適化: 現在のデータから業種を取得（履歴全件不要）
+            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const data = await response.json();
+            const industries = new Set();
+
+            data.forEach(record => { 
+              if (record.biz_type) industries.add(record.biz_type); 
+            });
+
+            const industrySelect = document.getElementById("industrySelectRanking");
+            industrySelect.innerHTML = "";
+
+            // 業種でソート
+            const sortedIndustries = Array.from(industries).sort();
+            sortedIndustries.forEach(ind => { 
+              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`; 
+            });
+
+            // ローカルストレージから前回の選択を復元
+            const savedIndustryRanking = localStorage.getItem("industryRankingFilter");
+            if (savedIndustryRanking && sortedIndustries.includes(savedIndustryRanking)) {
+              industrySelect.value = savedIndustryRanking;
+            }
+
+            // 選択変更時の保存処理
+            industrySelect.addEventListener("change", () => {
+              localStorage.setItem("industryRankingFilter", industrySelect.value);
+            });
+          } catch (err) {
+            console.error("ランキング業種ドロップダウン取得エラー:", err);
+          }
+        }
+
+        // ランキングタイプ変更イベント
+        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
+          if (this.value === "industry") {
+            document.getElementById("industryFilterDiv").style.display = "";
+            await fillIndustryDropdownForRanking();
+          } else {
+            document.getElementById("industryFilterDiv").style.display = "none";
+          }
+        });
+        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
+
+        /***********************************************
+         * Socket.IOによるリアルタイム更新とトースト通知
+         ***********************************************/
+        const socket = io();
+        socket.on("update", (msg) => {
+          console.log("Socket update received:", msg.data);
+          updateDashboard();
+          updateTop10Chart();
+          updateAreaStatistics();
+          updateIndustryRanking();
+          const toastEl = document.getElementById("updateToast");
+          const toast = new bootstrap.Toast(toastEl);
+          toast.show();
+        });
+
+        /***********************************************
+         * 初期ロード処理
+         ***********************************************/
+        updateDashboard();
+        updateTop10Chart();
+        updateAreaStatistics();
+        await fillIndustryDropdown();
+        updateIndustryRanking();
+        await fillHistoryStoreDropdown();
+        updateHistoryChart();
+        await fillHourlyStoreDropdown();
+        updateHourlyAnalysis();
+        // タブ切り替え処理
+        document.querySelectorAll('.nav-link').forEach(button => {
+          button.addEventListener('click', function() {
+            // すべてのタブボタンから active クラスを削除
+            document.querySelectorAll('.nav-link').forEach(btn => {
+              btn.classList.remove('active');
+            });
+
+            // クリックされたボタンに active クラスを追加
+            this.classList.add('active');
+
+            // すべてのタブコンテンツを非表示
+            document.querySelectorAll('.tab-pane').forEach(content => {
+              content.classList.remove('show', 'active');
+            });
+
+            // クリックされたボタンのターゲットコンテンツを表示
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).classList.add('show', 'active');
+
+            // 業種内ジャンルランキングのタブが選択された場合
+            if (targetId === '#type') {
+              loadBusinessTypes('industrySelectType');
+              updateTypeRanking();
+            }
+
+            // 平均稼働ランキングのタブが選択された場合
+            if (targetId === '#ranking') {
+              loadBusinessTypes('industrySelectRanking');
+              updateRanking();
+            }
+          });
+        });
+
+        // 業種内ジャンルランキング更新
+        function updateTypeRanking() {
+          const selectedBizType = document.getElementById('industrySelectType').value;
+          if (!selectedBizType) return;
+
+          const tableBody = document.getElementById('typeTableBody');
+          const chartCanvas = document.getElementById('typeChart');
+          const loadingSpinner = document.querySelector('#type .spinner-border');
+
+          // ローディング表示
+          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+
+          // APIからデータを取得
+          fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
+            .then(response => response.json())
+            .then(data => {
+              // テーブル表示
+              tableBody.innerHTML = '';
+
+              if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">該当するデータがありません</td></tr>';
+              } else {
+                data.forEach((item, index) => {
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.genre}</td>
+                    <td>${item.store_count}</td>
+                    <td>${item.avg_rate}%</td>
+                  `;
+                  tableBody.appendChild(row);
+                });
+              }
+
+              // グラフ表示
+              if (charts.type) charts.type.destroy();
+
+              const ctx = chartCanvas.getContext('2d');
+              charts.type = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: data.map(item => item.genre),
+                  datasets: [{
+                    label: '平均稼働率 (%)',
+                    data: data.map(item => item.avg_rate),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  },
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: `「${selectedBizType}」業種内ジャンルの平均稼働率`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }
+              });
+            })
+            .catch(error => {
+              console.error('ジャンルランキング取得エラー:', error);
+              tableBody.innerHTML = '<tr><td colspan="3" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+            })
+            .finally(() => {
+              // ローディング非表示
+              if (loadingSpinner) loadingSpinner.style.display = 'none';
+            });
+        }
+
+        // 業種選択変更時のイベント
+        document.getElementById('industrySelectType')?.addEventListener('change', updateTypeRanking);
+
+        // 平均稼働ランキング更新
+        function updateRanking() {
+          const rankingType = document.getElementById('rankingTypeSelect').value;
+          const industryFilter = document.getElementById('industrySelectRanking');
+          const tableBody = document.getElementById('rankingTable').querySelector('tbody');
+          const loadingSpinner = document.querySelector('#ranking .spinner-border');
+
+          // ローディング表示
+          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+
+          // APIリクエストURL構築
+          let url = '/api/ranking/average';
+          if (rankingType === 'industry' && industryFilter.value) {
+            url += `?biz_type=${encodeURIComponent(industryFilter.value)}`;
+          }
+
+          // データ取得
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              // テーブル更新
+              tableBody.innerHTML = '';
+
+              if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">該当するデータがありません</td></tr>';
+              } else {
+                data.forEach((item, index) => {
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.store_name}</td>
+                    <td>${item.biz_type || '-'}</td>
+                    <td>${item.genre || '-'}</td>
+                    <td>${item.area || '-'}</td>
+                    <td>${item.avg_rate.toFixed(1)}%</td>
+                  `;
+                  tableBody.appendChild(row);
+                });
+              }
+            })
+            .catch(error => {
+              console.error('ランキングデータ取得エラー:', error);
+              tableBody.innerHTML = '<tr><td colspan="6" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+            })
+            .finally(() => {
+              // ローディング非表示
+              if (loadingSpinner) loadingSpinner.style.display = 'none';
+            });
+        }
+
+        // ランキングタイプ変更時のイベント
+        document.getElementById('rankingTypeSelect')?.addEventListener('change', function() {
+          // 業種フィルタの表示/非表示切替
+          const industryFilterDiv = document.getElementById('industryFilterDiv');
+          if (this.value === 'industry') {
+            industryFilterDiv.style.display = 'block';
+          } else {
+            industryFilterDiv.style.display = 'none';
+          }
+        });
+
+        // ランキング更新ボタンのイベント
+        document.getElementById('updateRankingBtn')?.addEventListener('click', updateRanking);
+
+        function updateHistoryChart() {
+          const storeId = document.getElementById('storeSelectHistory').value;
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+          const historyStats = document.getElementById('historyStats');
+          const spinner = document.querySelector('#history .spinner-border');
+
+          // ローディング表示
+          spinner.style.display = 'inline-block';
+          historyStats.textContent = '読み込み中...';
+
+          // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
+          let url;
+          if (storeId || startDate || endDate) {
+            // 特定店舗や期間指定の場合はフィルタリングしたデータを使用
+            url = '/api/history?';
+            if (storeId) {
+              url += `store=${encodeURIComponent(storeId)}&`;
+            }
+            if (startDate) {
+              url += `start_date=${encodeURIComponent(startDate)}&`;
+            }
+            if (endDate) {
+              url += `end_date=${encodeURIComponent(endDate)}&`;
+            }
+            // サンプル数を制限してパフォーマンス改善
+            url += 'limit=2000';
+          } else {
+            // 期間指定なしの場合は集計済みデータを使用
+            url = '/api/aggregated';
+          }
+
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              // 集計データの場合の処理
+              if (url.includes('/api/aggregated')) {
+                processAggregatedData(data);
+                return;
+              }
+
+              // 通常データの場合の処理
+              if (!data.length) {
+                historyStats.textContent = '該当データがありません';
+                spinner.style.display = 'none';
+                return;
+              }
+
+              // データが存在する場合の処理
+              const filteredData = data.filter(record =>
+                record.working_staff > 0
+              );
+
+              if (filteredData.length === 0) {
+                historyStats.textContent = '有効なデータがありません（出勤スタッフ0人の記録のみ）';
+                spinner.style.display = 'none';
+                return;
+              }
+
+              // 時系列データの作成 - ISO8601形式のタイムスタンプが正しく解析できる
+              const labels = filteredData.map(record => new Date(record.timestamp));
+              const effectiveRates = filteredData.map(record => {
+                if (record.working_staff === 0) return null;
+                return ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+              });
+
+              // サンプル数と平均値の計算
+              const validRates = effectiveRates.filter(rate => rate !== null);
+              const overallAvg = validRates.length > 0
+                ? validRates.reduce((sum, rate) => sum + rate, 0) / validRates.length
+                : 0;
+
+              historyStats.textContent = `期間内サンプル数: ${validRates.length}件, 平均稼働率: ${overallAvg.toFixed(1)}%`;
+
+              // グラフの描画
+              const ctx = document.getElementById('historyChart').getContext('2d');
+
+              // 既存のグラフがあれば破棄
+              if (charts.history) {
+                charts.history.destroy();
+              }
+
+              charts.history = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: labels,
+                  datasets: [{
+                    label: '稼働率 (%)',
+                    data: effectiveRates,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1,
+                    pointRadius: 1,
+                    borderWidth: 2
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: {
+                      type: 'time',
+                      time: {
+                        unit: 'day',
+                        tooltipFormat: 'yyyy/MM/dd HH:mm',
+                        displayFormats: {
+                          hour: 'MM/dd HH:mm'
+                        }
+                      },
+                      title: {
+                        display: true,
+                        text: '日時'
+                      }
+                    },
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      title: {
+                        display: true,
+                        text: '稼働率 (%)'
+                      }
+                    }
+                  },
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: storeId ? `店舗「${storeId}」の稼働率推移` : '全店舗の平均稼働率推移',
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }
+              });
+
+              spinner.style.display = 'none';
+            })
+            .catch(error => {
+              console.error('履歴データ取得エラー:', error);
+              historyStats.textContent = 'データ取得中にエラーが発生しました';
+              spinner.style.display = 'none';
+            });
+        }
+
+        function updateHourlyAnalysis() {
+          const storeId = document.getElementById('hourlyStoreSelect').value;
+          const hourlyStats = document.getElementById('hourlyStats');
+          const spinner = document.querySelector('#hourly .spinner-border');
+
+          // ローディング表示
+          spinner.style.display = 'inline-block';
+          hourlyStats.textContent = '読み込み中...';
+
+          // データ取得URL
+          let url = '/api/history';
+          if (storeId) {
+            url += `?store=${encodeURIComponent(storeId)}`;
+          }
+
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              if (!data.length) {
+                hourlyStats.textContent = '該当データがありません';
+                spinner.style.display = 'none';
+                return;
+              }
+
+              // 時間帯ごとのデータ集計
+              const hourly = {};
+
+              // 0-23時の初期化
+              for (let h = 0; h < 24; h++) {
+                hourly[h] = {
+                  totalRate: 0,
+                  count: 0
+                };
+              }
+
+              // データ集計
+              data.forEach(record => {
+                if (record.working_staff <= 0) return;
+
+                try {
+                  const d = new Date(record.timestamp);
+                  const hour = d.getHours();
+                  const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+
+                  if (!isNaN(hour) && hour >= 0 && hour < 24) {
+                    hourly[hour].totalRate += rate;
+                    hourly[hour].count++;
+                  }
+                } catch (e) {
+                  console.error('時間帯データ処理エラー:', e, record);
+                }
+              });
+
+              // 平均計算
+              const labels = [];
+              const avgRates = [];
+
+              for (let h = 0; h < 24; h++) {
+                labels.push(`${h}:00`);
+
+                if (hourly[h].count > 0) {
+                  avgRates.push(hourly[h].totalRate / hourly[h].count);
+                } else {
+                  avgRates.push(0);
+                }
+              }
+
+              // 平均稼働率の計算
+              const totalSamples = Object.values(hourly).reduce((sum, h) => sum + h.count, 0);
+
+              hourlyStats.textContent = `分析対象サンプル数: ${totalSamples}件`;
+              spinner.style.display = 'none';
+
+              // チャート描画
+              const ctx = document.getElementById('hourlyChart').getContext('2d');
+
+              // 既存のグラフがあれば破棄
+              if (charts.hourly) {
+                charts.hourly.destroy();
+              }
+
+              charts.hourly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: labels,
+                  datasets: [{
+                    label: '平均稼働率 (%)',
+                    data: avgRates,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      title: {
+                        display: true,
+                        text: '稼働率 (%)'
+                      }
+                    },
+                    x: {
+                      title: {
+                        display: true,
+                        text: '時間帯'
+                      }
+                    }
+                  },
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: storeId ? `店舗「${storeId}」の時間帯別稼働率` : '全店舗の時間帯別平均稼働率',
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }
+              });
+            })
+            .catch(error => {
+              console.error('時間帯データ取得エラー:', error);
+              hourlyStats.textContent = 'データ取得中にエラーが発生しました';
+              spinner.style.display = 'none';
+            });
+        }
+
+        // 時間帯別分析の更新ボタンにイベントリスナーを追加
+        document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
+
+        // ページ読み込み時のイベント
+        document.addEventListener('DOMContentLoaded', function() {
+          // グローバルエラーハンドリング
+          window.addEventListener('error', function(e) {
+            console.error('グローバルエラー:', e.message);
+          });
+
+          // 初期表示タブはタブ1
+          document.getElementById('dashboard').classList.add('show', 'active');
+          //document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
+
+          // 店舗リストの読み込み
+          loadStoreList();
+
+          // 現在の稼働状況を読み込み
+          fetchCurrentData();
+
+          // 更新ボタンのイベントリスナーが設定されていることを確認
+          console.log("イベントハンドラ設定確認:");
+          const updateButtons = {
+            "historyBtn": document.getElementById("updateHistoryBtn"),
+            "hourlyBtn": document.getElementById("updateHourlyBtn"),
+            "areaBtn": document.getElementById("updateAreaBtn"),
+            "typeBtn": document.getElementById("industrySelectType"),
+            "rankingBtn": document.getElementById("updateRankingBtn")
+          };
+
+          for (const [key, btn] of Object.entries(updateButtons)) {
+            console.log(`${key}: ${btn ? "OK" : "未設定"}`);
+            if (!btn && key !== "typeBtn") { // typeBtn はオプション
+              console.warn(`警告: ${key} が見つかりません`);
+            }
+          }
+        });
       });
     })();
   </script>

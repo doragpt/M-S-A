@@ -899,6 +899,33 @@ def api_store_averages():
 
     return jsonify(data)
 
+@app.route('/api/ranking/genre')
+@cache.cached(timeout=600)  # キャッシュ：10分間有効
+def api_genre_ranking():
+    """
+    業種内のジャンル別平均稼働率ランキングを返すエンドポイント
+    
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング（必須）
+    """
+    from aggregated_data import AggregatedData
+    
+    biz_type = request.args.get('biz_type')
+    if not biz_type:
+        return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
+        
+    # データベース接続を取得
+    with db.engine.connect() as conn:
+        results = AggregatedData.calculate_genre_ranking(conn, biz_type)
+    
+    data = [{
+        "genre": r['genre'],
+        "store_count": r['store_count'],
+        "avg_rate": round(r['avg_rate'], 1)
+    } for r in results]
+    
+    return jsonify(data)
+
 @app.route('/api/history/optimized')
 @cache.cached(timeout=300)  # キャッシュ：5分間有効
 def api_history_optimized():
