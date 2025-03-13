@@ -497,12 +497,6 @@
               const response = await fetch(url, options);
               if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-              // Check if response is JSON before parsing
-              const contentType = response.headers.get('content-type');
-              if (!contentType || !contentType.includes('application/json')) {
-                throw new Error(`Expected JSON but got ${contentType}`);
-              }
-
               // データをパースして返す
               return await response.json();
             } catch (error) {
@@ -681,12 +675,6 @@
             // Handle both formats - direct array or { data: [...] } object
             const data = Array.isArray(responseJson) ? responseJson : (responseJson.data || []);
 
-            // データが配列でなければ配列に変換
-            if (!Array.isArray(data)) {
-              console.warn('Data is not an array, converting:', data);
-              data = data && typeof data === 'object' ? [data] : [];
-            }
-
             data.forEach(store => {
               store.currentRate = store.working_staff > 0 ? ((store.working_staff - store.active_staff) / store.working_staff * 100).toFixed(1) : 0;
             });
@@ -736,7 +724,8 @@
             });
           } catch (error) {
             console.error("トップ10店舗グラフエラー:", error);
-            handleError(error, "updateTop10Chart");} finally {
+            handleError(error, "updateTop10Chart");
+          } finally {
             loadingElement.style.display = 'none';
             containerElement.style.display = 'block';
           }
@@ -761,8 +750,12 @@
 
           try {
             const storeSelect = document.getElementById("storeSelectHistory");
-            if(storeSelect) { storeSelect.value = savedHistoryStore; }
-            const selectedStore = storeSelect ? selectedStore : "";
+            if (storeSelect) { 
+              storeSelect.value = savedHistoryStore; 
+            }
+
+            // 修正: 変数参照のミスを修正
+            const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
 
@@ -793,9 +786,7 @@
               // サンプル数を制限してパフォーマンス改善
               params.append("limit", "2000");
 
-              const response = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
-              const data = await response.json();
-              console.log("History API response:", data);
+              const data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
 
               if (selectedStore) {
                 // 単一店舗の場合は時間まで表示
@@ -808,7 +799,8 @@
                   (record.working_staff > 0 ? 
                   ((record.working_staff - record.active_staff) / record.working_staff* 100).toFixed(1) : 0)
                 );
-              } else {                // 全店舗かつ期間指定の場合は日付で集計
+              } else {                
+                // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
 
                 data.forEach(record => {
@@ -841,40 +833,75 @@
               }
             } else {
               // 期間指定がなく全店舗の場合: 事前集計データを使用
-              const response = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
-              const data = await response.json();
-              console.log("Aggregated API response:", data);
+              try {
+                const data = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
 
-              // 日付ごとに集計
-              const dateMap = new Map();
+                // 日付ごとに集計
+                const dateMap = new Map();
 
-              data.forEach(entry => {
-                const dateKey = entry.date;
+                data.forEach(entry => {
+                  const dateKey = entry.date;
 
-                if (!dateMap.has(dateKey)) {
-                  dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
-                }
+                  if (!dateMap.has(dateKey)) {
+                    dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
+                  }
 
-                const mapEntry = dateMap.get(dateKey);
-                mapEntry.sum += entry.avg_rate * entry.sample_count; // 加重平均のため
-                mapEntry.count += entry.sample_count;
-                mapEntry.rateSum += entry.avg_rate;
-                mapEntry.rateSamples += 1;
-              });
+                  const mapEntry = dateMap.get(dateKey);
+                  mapEntry.sum += entry.avg_rate * entry.sample_count; // 加重平均のため
+                  mapEntry.count += entry.sample_count;
+                  mapEntry.rateSum += entry.avg_rate;
+                  mapEntry.rateSamples += 1;
+                });
 
-              // 日付でソート
-              const sortedDates = Array.from(dateMap.keys()).sort();
+                // 日付でソート
+                const sortedDates = Array.from(dateMap.keys()).sort();
 
-              labels = sortedDates.map(date => {
-                const d = new Date(date);
-                return d.toLocaleDateString();
-              });
+                labels = sortedDates.map(date => {
+                  const d = new Date(date);
+                  return d.toLocaleDateString();
+                });
 
-              effectiveRates = sortedDates.map(date => {
-                const entry = dateMap.get(date);
-                // 加重平均を使用（サンプル数で重み付け）
-                return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
-              });
+                effectiveRates = sortedDates.map(date => {
+                  const entry = dateMap.get(date);
+                  // 加重平均を使用（サンプル数で重み付け）
+                  return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
+                });
+              } catch (aggregatedError) {
+                // 集計APIがない場合はhistoryから全データ取得（フォールバック）
+                console.warn("集計APIが利用できません。フォールバックを使用します。:", aggregatedError);
+                const data = await fetchWithRetry("/api/history?limit=1000", {}, 3, 2000);
+
+                // 日付ごとに集計
+                const dateMap = new Map();
+
+                data.forEach(record => {
+                  const d = new Date(record.timestamp);
+                  const dateKey = d.toLocaleDateString();
+
+                  if (!dateMap.has(dateKey)) {
+                    dateMap.set(dateKey, { sum: 0, count: 0 });
+                  }
+
+                  // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
+                  const rate = record.rate ? record.rate :
+                    (record.working_staff > 0 ? 
+                    ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+
+                  if (rate > 0) {
+                    dateMap.get(dateKey).sum += rate;
+                    dateMap.get(dateKey).count += 1;
+                  }
+                });
+
+                // 日付でソート
+                const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
+
+                labels = sortedDates;
+                effectiveRates = sortedDates.map(date => {
+                  const entry = dateMap.get(date);
+                  return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
+                });
+              }
             }
 
             // キャッシュに保存
@@ -1014,8 +1041,7 @@
 
           try {
             showSpinner();
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const data = await fetchWithRetry("/api/history", {}, 3, 2000);
             console.log("Hourly analysis data:", data);
 
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
@@ -1139,7 +1165,7 @@
          ***********************************************/
         async function updateAreaStatistics() {
           try {
-            showSpinner("areaSpinner");
+            showSpinner();
 
             // エリア統計データを取得
             const areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
@@ -1217,8 +1243,9 @@
           try {
             // 最新データ取得
             const latestData = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const data = Array.isArray(latestData) ? latestData : (latestData.data || []);
             const industries = new Set();
-            latestData.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
+            data.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
             const industrySelect = document.getElementById("industrySelectType");
             if (!industrySelect) return;
             industrySelect.innerHTML = "";
@@ -1236,17 +1263,19 @@
 
         async function updateIndustryRanking(industry = null) {
           try {
-            showSpinner("industryRankingSpinner");
+            showSpinner();
 
             if (!industry) {
-              industry = document.getElementById("industrySelector")?.value || null;
+              // 修正: ID名の不一致を修正
+              const industrySelector = document.getElementById("industrySelectType");
+              industry = industrySelector ? industrySelector.value : null;
             }
 
             // API呼び出し
             const latestData = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const latestStoreNames = new Set(latestData.map(store => store.store_name));
-            const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const dataHistory = await responseHistory.json();
+            const data = Array.isArray(latestData) ? latestData : (latestData.data || []);
+            const latestStoreNames = new Set(data.map(store => store.store_name));
+            const dataHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const filtered = dataHistory.filter(record => latestStoreNames.has(record.store_name) &&
               (industry ? record.biz_type === industry : true));
             const genreData = {};
@@ -1259,24 +1288,33 @@
                 genreData[genre].rateCount += 1;
               }
             });
-            const typeTable = document.getElementById("typeTable");
-            typeTable.innerHTML = "";
+            const typeTableBody = document.getElementById("typeTableBody");
+            typeTableBody.innerHTML = "";
             const labels = [];
             const avgRates = [];
-            for (const g in genreData) {
-              const { stores, totalRate, rateCount } = genreData[g];
-              const storeCount = stores.size;
-              const avgRate = rateCount > 0 ? (totalRate / rateCount).toFixed(1) : "0.0";
-              typeTable.insertAdjacentHTML("beforeend", `
+            let rank = 1;
+
+            // ジャンルを平均稼働率で降順ソート
+            const sortedGenres = Object.entries(genreData)
+              .map(([genre, data]) => {
+                const avgRate = data.rateCount > 0 ? data.totalRate / data.rateCount : 0;
+                return { genre, storeCount: data.stores.size, avgRate };
+              })
+              .sort((a, b) => b.avgRate - a.avgRate);
+
+            sortedGenres.forEach(item => {
+              typeTableBody.insertAdjacentHTML("beforeend", `
                 <tr>
-                  <td>${g}</td>
-                  <td>${storeCount}</td>
-                  <td>${avgRate}</td>
+                  <td>${rank++}</td>
+                  <td>${item.genre}</td>
+                  <td>${item.storeCount}</td>
+                  <td>${item.avgRate.toFixed(1)}</td>
                 </tr>
               `);
-              labels.push(g);
-              avgRates.push(parseFloat(avgRate));
-            }
+              labels.push(item.genre);
+              avgRates.push(item.avgRate.toFixed(1));
+            });
+
             const ctx = document.getElementById("typeChart").getContext("2d");
             if (charts.type) charts.type.destroy();
             charts.type = new Chart(ctx, {
@@ -1298,9 +1336,11 @@
                 }
               }
             });
+            hideSpinner();
           } catch (error) {
             console.error("業種内ジャンルランキングエラー:", error);
             handleError(error, "updateIndustryRanking");
+            hideSpinner();
           }
         }
 
@@ -1309,8 +1349,7 @@
          ***********************************************/
         async function updateDetailHistoryChart(storeName) {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const data = await fetchWithRetry("/api/history", {}, 3, 2000);
             const filtered = data.filter(record => record.store_name === storeName)
                                  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             const labels = filtered.map(record => {
@@ -1364,8 +1403,7 @@
          ***********************************************/
         async function updateDetailHourlyChart(storeName) {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
-            const data = await response.json();
+            const data = await fetchWithRetry("/api/history", {}, 3, 2000);
             const filtered = data.filter(record => record.store_name === storeName);
             const hourly = {};
             filtered.forEach(record => {
@@ -1435,9 +1473,19 @@
           if (loadingEl) loadingEl.style.display = 'block';
           if (containerEl) containerEl.style.display = 'none';
 
-          // APIが実装されていない場合のフォールバック
-          const handleRankingData = (data) => {
-            // 以下は既存の処理を続行
+          try {
+            // ランキングタイプと業種フィルターを取得
+            const rankingType = document.getElementById('rankingTypeSelect').value;
+            const industryFilter = document.getElementById('industrySelectRanking');
+            let url = '/api/ranking/average';
+
+            // 業種別フィルターが選択されている場合
+            if (rankingType === 'industry' && industryFilter && industryFilter.value) {
+              url += `?biz_type=${encodeURIComponent(industryFilter.value)}`;
+            }
+
+            // API呼び出し
+            const data = await fetchWithRetry(url, {}, 3, 2000);
             const tbody = document.getElementById("rankingTableBody");
             tbody.innerHTML = "";
 
@@ -1446,44 +1494,79 @@
                 <tr>
                   <td>${index + 1}</td>
                   <td>${store.store_name}</td>
-                  <td>${store.biz_type}</td>
-                  <td>${store.genre}</td>
-                  <td>${store.area}</td>
+                  <td>${store.biz_type || '-'}</td>
+                  <td>${store.genre || '-'}</td>
+                  <td>${store.area || '-'}</td>
                   <td>${store.avg_rate.toFixed(1)}</td>
                 </tr>
               `;
               tbody.insertAdjacentHTML("beforeend", rowHtml);
             });
+          } catch (error) {
+            console.error('平均稼働ランキングエラー:', error);
+
+            // APIが404の場合はローカルデータから平均を計算
+            if (error.toString().includes('HTTP error 404')) {
+              try {
+                // 最新データからランキングを計算
+                const data = await fetchWithRetry('/api/data', {}, 3, 2000);
+                const storeData = Array.isArray(data) ? data : (data.data || []);
+
+                // 平均稼働率計算のためのモックデータ
+                const mockRankingData = storeData.map(store => {
+                  const rate = store.working_staff > 0 
+                    ? ((store.working_staff - store.active_staff) / store.working_staff * 100) 
+                    : 0;
+
+                  return {
+                    store_name: store.store_name,
+                    biz_type: store.biz_type || '-',
+                    genre: store.genre || '-',
+                    area: store.area || '-',
+                    avg_rate: rate
+                  };
+                }).sort((a, b) => b.avg_rate - a.avg_rate);
+
+                // ランキングタイプに応じた表示
+                const rankingType = document.getElementById('rankingTypeSelect').value;
+                const industryFilter = document.getElementById('industrySelectRanking');
+
+                let filteredData = mockRankingData;
+                if (rankingType === 'industry' && industryFilter && industryFilter.value) {
+                  filteredData = mockRankingData.filter(store => 
+                    store.biz_type === industryFilter.value
+                  );
+                }
+
+                const tbody = document.getElementById("rankingTableBody");
+                tbody.innerHTML = "";
+
+                filteredData.forEach((store, index) => {
+                  const rowHtml = `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td>${store.store_name}</td>
+                      <td>${store.biz_type}</td>
+                      <td>${store.genre}</td>
+                      <td>${store.area}</td>
+                      <td>${store.avg_rate.toFixed(1)}</td>
+                    </tr>
+                  `;
+                  tbody.insertAdjacentHTML("beforeend", rowHtml);
+                });
+              } catch (fallbackError) {
+                console.error('フォールバック処理エラー:', fallbackError);
+                document.getElementById("rankingTableBody").innerHTML = 
+                  '<tr><td colspan="6" class="text-center">データ取得エラー</td></tr>';
+              }
+            } else {
+              document.getElementById("rankingTableBody").innerHTML = 
+                '<tr><td colspan="6" class="text-center">データ取得エラー</td></tr>';
+            }
+          } finally {
             if (loadingEl) loadingEl.style.display = 'none';
             if (containerEl) containerEl.style.display = 'block';
-          };
-
-          fetchWithRetry('/api/ranking/average', {}, 3, 2000)
-            .then(data => {
-              handleRankingData(data);
-            })
-            .catch(error => {
-              console.warn('Average ranking endpoint not available:', error);
-              // APIが404の場合はローカルデータから平均を計算
-              if (error.toString().includes('HTTP error 404')) {
-                // APIが未実装の場合、最新データからランキングを計算
-                fetch('/api/data')
-                  .then(response => response.json())
-                  .then(data => {
-                    const mockData = Array.isArray(data) ? data : (data.data || []);
-                    handleRankingData(mockData);
-                  })
-                  .catch(err => {
-                    console.error('平均稼働ランキングエラー:', err);
-                    if (loadingEl) loadingEl.style.display = 'none';
-                    if (containerEl) containerEl.style.display = 'block';
-                  });
-              } else {
-                console.error('平均稼働ランキングエラー:', error);
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (containerEl) containerEl.style.display = 'block';
-              }
-            });
+          }
         }
 
         /***********************************************
@@ -1501,6 +1584,11 @@
             });
 
             const industrySelect = document.getElementById("industrySelectRanking");
+            if (!industrySelect) {
+              console.error("industrySelectRanking element not found");
+              return;
+            }
+
             industrySelect.innerHTML = "";
 
             // 業種でソート
@@ -1526,34 +1614,178 @@
         }
 
         // ランキングタイプ変更イベント
-        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
+        document.getElementById("rankingTypeSelect")?.addEventListener("change", async function() {
           if (this.value === "industry") {
-            document.getElementById("industryFilterDiv").style.display = "";
+            document.getElementById("industryFilterDiv").style.display = "block";
             await fillIndustryDropdownForRanking();
           } else {
             document.getElementById("industryFilterDiv").style.display = "none";
           }
         });
-        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
+        document.getElementById("updateRankingBtn")?.addEventListener("click", updateAverageRanking);
 
-        /***********************************************
-         * Socket.IOによるリアルタイム更新とトースト通知
-         ***********************************************/
-        // socketはすでに下部で宣言されているため削除
-        // Socket更新イベントのリスナーは初期ロード処理の後に設定
+        // 比較分析ボタンクリック時の処理
+        document.getElementById('compareBtn')?.addEventListener("click", function() {
+          const checkedStores = Array.from(document.querySelectorAll('.compare-checkbox:checked')).map(checkbox => checkbox.dataset.storeName);
+          if (checkedStores.length < 2) {
+            alert('比較分析には2店舗以上を選択してください。');
+            return;
+          }
+
+          // 比較分析モーダル表示とグラフ描画処理
+          const modal = new bootstrap.Modal(document.getElementById('compareModal'));
+          modal.show();
+
+          // 比較チャート描画
+          fetchWithRetry("/api/history", {}, 3, 2000)
+            .then(data => {
+              const datasets = [];
+              const storeData = {};
+
+              // 各店舗のデータを集計
+              checkedStores.forEach(storeName => {
+                const storeRecords = data.filter(record => record.store_name === storeName);
+                if (storeRecords.length === 0) return;
+
+                // データを日付でグループ化
+                const dateData = {};
+                storeRecords.forEach(record => {
+                  const date = new Date(record.timestamp).toLocaleDateString();
+                  if (!dateData[date]) {
+                    dateData[date] = { sum: 0, count: 0 };
+                  }
+                  if (record.working_staff > 0) {
+                    const rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
+                    dateData[date].sum += rate;
+                    dateData[date].count += 1;
+                  }
+                });
+
+                // 日付ごとの平均を計算
+                storeData[storeName] = { dates: [], rates: [] };
+                Object.entries(dateData)
+                  .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+                  .forEach(([date, data]) => {
+                    storeData[storeName].dates.push(date);
+                    storeData[storeName].rates.push(
+                      data.count > 0 ? data.sum / data.count : 0
+                    );
+                  });
+
+                // データセット作成
+                const colors = [
+                  'rgba(255, 99, 132, 0.7)',
+                  'rgba(54, 162, 235, 0.7)',
+                  'rgba(255, 206, 86, 0.7)',
+                  'rgba(75, 192, 192, 0.7)',
+                  'rgba(153, 102, 255, 0.7)'
+                ];
+
+                datasets.push({
+                  label: storeName,
+                  data: storeData[storeName].rates,
+                  borderColor: colors[datasets.length % colors.length],
+                  backgroundColor: colors[datasets.length % colors.length].replace('0.7', '0.1'),
+                  fill: false,
+                  tension: 0.3
+                });
+              });
+
+              // 共通の日付ラベルを作成
+              const allDates = new Set();
+              Object.values(storeData).forEach(data => {
+                data.dates.forEach(date => allDates.add(date));
+              });
+              const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
+
+              // チャート描画
+              const ctx = document.getElementById('compareChart').getContext('2d');
+              if (charts.compare) charts.compare.destroy();
+
+              charts.compare = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: sortedDates,
+                  datasets: datasets
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: '店舗比較分析 - 日別平均稼働率',
+                      font: { size: 18 }
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
+                      }
+                    },
+                    zoom: {
+                      pan: { enabled: true, mode: 'xy' },
+                      zoom: { 
+                        wheel: { enabled: true },
+                        drag: { enabled: true },
+                        mode: 'xy'
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      title: { display: true, text: '稼働率 (%)' }
+                    },
+                    x: {
+                      title: { display: true, text: '日付' }
+                    }
+                  }
+                }
+              });
+            })
+            .catch(error => {
+              console.error('比較分析データ取得エラー:', error);
+              handleError(error, "compareChartData");
+            });
+        });
 
         /***********************************************
          * 初期ロード処理
          ***********************************************/
-        updateDashboard();
-        updateTop10Chart();
-        updateAreaStatistics();
-        await fillIndustryDropdown();
-        updateIndustryRanking();
-        await fillHistoryStoreDropdown();
-        updateHistoryChart();
-        await fillHourlyStoreDropdown();
-        updateHourlyAnalysis();
+        function init() {
+          updateDashboard();
+          updateTop10Chart();
+          updateAreaStatistics();
+          fillIndustryDropdown();
+          updateIndustryRanking();
+          fillHistoryStoreDropdown();
+          updateHistoryChart();
+          fillHourlyStoreDropdown();
+          updateHourlyAnalysis();
+          updateAverageRanking();
+        }
+
+        /***********************************************
+         * グローバルエラーハンドリング
+         ***********************************************/
+        function handleError(error, context) {
+          console.error(`エラー (${context}):`, error);
+          // エラー表示用の要素があれば利用する
+          const errorContainer = document.getElementById('errorContainer');
+          if (errorContainer) {
+            errorContainer.textContent = `エラーが発生しました (${context}): ${error.message || error}`;
+            errorContainer.style.display = 'block';
+            // 5秒後に非表示
+            setTimeout(() => {
+              errorContainer.style.display = 'none';
+            }, 5000);
+          }
+        }
+
+        window.addEventListener('error', function(event) {
+          handleError(event.error, 'global');
+        });
+
         // タブ切り替え処理
         document.querySelectorAll('.nav-link').forEach(button => {
           button.addEventListener('click', function() {
@@ -1573,822 +1805,11 @@
             // クリックされたボタンのターゲットコンテンツを表示
             const targetId = this.getAttribute('href');
             document.querySelector(targetId).classList.add('show', 'active');
-
-            // 業種内ジャンルランキングのタブが選択された場合
-            if (targetId === '#type') {
-              loadBusinessTypes('industrySelectType');
-              updateTypeRanking();
-            }
-
-            // 平均稼働ランキングのタブが選択された場合
-            if (targetId === '#ranking') {
-              loadBusinessTypes('industrySelectRanking');
-              updateRanking();
-            }
           });
         });
 
-        // 業種データをロードして選択ボックスに反映する共通関数
-        function loadBusinessTypes(selectId) {
-          const select = document.getElementById(selectId);
-          if (!select) {
-            console.error(`Select element with ID ${selectId} not found`);
-            return;
-          }
-
-          if (!select.options.length) {
-            // 業種データが未読み込みの場合のみ実行
-            fetch('/api/data')
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`HTTP error ${response.status}`);
-                }
-                return response.json();
-              })
-              .then(responseData => {
-                const data = Array.isArray(responseData) ? responseData : (responseData.data || []);
-                // 重複のないbiz_typeリストを作成
-                const bizTypes = [...new Set(data.map(item => item.biz_type))].filter(Boolean);
-                bizTypes.sort();
-
-                // 選択肢をクリア
-                select.innerHTML = '';
-
-                // 業種選択肢を追加
-                bizTypes.forEach(type => {
-                  const option = document.createElement('option');
-                  option.value = type;
-                  option.textContent = type;
-                  select.appendChild(option);
-                });
-
-                // デフォルト値を選択
-                if (bizTypes.length > 0) {
-                  select.value = bizTypes[0];
-                }
-              })
-              .catch(error => console.error('業種データ取得エラー:', error));
-          }
-        }
-
-        // 業種内ジャンルランキング更新
-        function updateTypeRanking() {
-          const selectedBizType = document.getElementById('industrySelectType').value;
-          if (!selectedBizType) return;
-
-          const tableBody = document.getElementById('typeTableBody');
-          const chartCanvas = document.getElementById('typeChart');
-          const loadingSpinner = document.querySelector('#type .spinner-border');
-
-          // ローディング表示
-          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
-
-          // APIからデータを取得
-          fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
-            .then(response => {
-              if (!response.ok) {
-                if (response.status === 404) {
-                  console.warn(`API未実装 (${selectedBizType}) - モックデータを使用します`);
-                  return { data: [] };
-                }
-                throw new Error(`API応答エラー: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log('業種内ジャンルランキングデータ:', data);
-
-              // テーブル表示
-              tableBody.innerHTML = '';
-
-              if (!Array.isArray(data) || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">該当するデータがありません</td></tr>';
-                return;
-              }
-
-              data.forEach((item, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${index + 1}</td>
-                  <td>${item.genre || '不明'}</td>
-                  <td>${item.store_count}</td>
-                  <td>${item.avg_rate}%</td>
-                `;
-                tableBody.appendChild(row);
-              });
-
-              // グラフ表示
-              if (charts.type) charts.type.destroy();
-
-              const ctx = chartCanvas.getContext('2d');
-              charts.type = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: data.map(item => item.genre || '不明'),
-                  datasets: [{
-                    label: '平均稼働率 (%)',
-                    data: data.map(item => item.avg_rate),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100
-                    }
-                  },
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: `「${selectedBizType}」業種内ジャンルの平均稼働率`,
-                      font: {
-                        size: 16
-                      }
-                    }
-                  }
-                }
-              });
-            })
-            .catch(error => {
-              console.error('ジャンルランキング取得エラー:', error);
-              tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
-              // エラーの詳細をコンソールに出力
-              console.error('エラー詳細:', error.stack);
-              handleError(error, "updateTypeRanking");
-            })
-            .finally(() => {
-              // ローディング非表示
-              if (loadingSpinner) loadingSpinner.style.display = 'none';
-            });
-        }
-
-        // 業種選択変更時のイベント
-        document.getElementById('industrySelectType')?.addEventListener('change', updateTypeRanking);
-
-
-        // 平均稼働ランキング更新
-        function updateRanking() {
-          const rankingType = document.getElementById('rankingTypeSelect').value;
-          const industryFilter = document.getElementById('industrySelectRanking');
-          const tableBody = document.getElementById('rankingTable').querySelector('tbody');
-          const loadingSpinner = document.querySelector('#ranking .spinner-border');
-
-          // ローディング表示
-          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
-
-          // APIリクエストURL構築
-          let url = '/api/ranking/average';
-          if (rankingType === 'industry' && industryFilter.value) {
-            url += `?biz_type=${encodeURIComponent(industryFilter.value)}`;
-          }
-
-          // データ取得
-          fetch(url)
-            .then(response => response.json())
-            .then(data => {
-              // テーブル更新
-              tableBody.innerHTML = '';
-
-              if (data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">該当するデータがありません</td></tr>';
-              } else {
-                data.forEach((item, index) => {
-                  const row = document.createElement('tr');
-                  row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${item.store_name}</td>
-                    <td>${item.biz_type || '-'}</td>
-                    <td>${item.genre || '-'}</td>
-                    <td>${item.area || '-'}</td>
-                    <td>${item.avg_rate.toFixed(1)}%</td>
-                  `;
-                  tableBody.appendChild(row);
-                });
-              }
-            })
-            .catch(error => {
-              console.error('ランキングデータ取得エラー:', error);
-              tableBody.innerHTML = '<tr><td colspan="6" class="text-center">データ取得中にエラーが発生しました</td></tr>';
-              handleError(error, "updateRanking");
-            })
-            .finally(() => {
-              // ローディング非表示
-              if (loadingSpinner) loadingSpinner.style.display = 'none';
-            });
-        }
-
-        // ランキングタイプ変更時のイベント
-        document.getElementById('rankingTypeSelect')?.addEventListener('change', function() {
-          // 業種フィルタの表示/非表示切替
-          const industryFilterDiv = document.getElementById('industryFilterDiv');
-          if (this.value === 'industry') {
-            industryFilterDiv.style.display = 'block';
-          } else {
-            industryFilterDiv.style.display = 'none';
-          }
-        });
-
-        // ランキング更新ボタンのイベント
-        document.getElementById('updateRankingBtn')?.addEventListener('click', updateRanking);
-
-        function updateHistoryChart() {
-          const storeId = document.getElementById('storeSelectHistory').value;
-          const startDate = document.getElementById('startDate').value;
-          const endDate = document.getElementById('endDate').value;
-          const historyStats = document.getElementById('historyStats');
-          const loadingElement = document.getElementById('historyChartLoading');
-          const containerElement = document.getElementById('historyChartContainer');
-
-          if (!loadingElement || !containerElement) {
-            console.error('History chart elements not found in the DOM');
-            return;
-          }
-
-          loadingElement.style.display = 'block';
-          containerElement.style.display = 'none';
-          historyStats.textContent = '読み込み中...';
-
-
-          // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
-          let url;
-          if (storeId || startDate || endDate) {
-            // 特定店舗や期間指定の場合はフィルタリングしたデータを使用
-            url = '/api/history?';
-            if (storeId) {
-              url += `store=${encodeURIComponent(storeId)}&`;
-            }
-            if (startDate) {
-              url += `start_date=${encodeURIComponent(startDate)}&`;
-            }
-            if (endDate) {
-              url += `end_date=${encodeURIComponent(endDate)}&`;
-            }
-            // サンプル数を制限してパフォーマンス改善
-            url += 'limit=2000';
-          } else {
-            // 期間指定なしの場合は集計済みデータを使用
-            url = '/api/aggregated';
-          }
-
-          fetch(url)
-            .then(response => response.json())
-            .then(data => {
-              // 集計データの場合の処理
-              if (url.includes('/api/aggregated')) {
-                processAggregatedData(data);
-                return;
-              }
-
-              // 通常データの場合の処理
-              if (!data.length) {
-                historyStats.textContent = '該当データがありません';
-                loadingElement.style.display = 'none';
-                containerElement.style.display = 'block';
-                return;
-              }
-
-              // データが存在する場合の処理
-              const filteredData = data.filter(record =>
-                record.working_staff > 0
-              );
-
-              if (filteredData.length === 0) {
-                historyStats.textContent = '有効なデータがありません（出勤スタッフ0人の記録のみ）';
-                loadingElement.style.display = 'none';
-                containerElement.style.display = 'block';
-                return;
-              }
-
-              // 時系列データの作成 - ISO8601形式のタイムスタンプが正しく解析できる
-              const labels = filteredData.map(record => {
-                try {
-                  // JavaScriptが正しく解析できる形式かチェック
-                  const timestamp = record.timestamp;
-                  console.log('パース対象のタイムスタンプ:', timestamp);
-
-                  // タイムスタンプの前処理（必要に応じて形式を修正）
-                  let cleanTimestamp = timestamp;
-
-                  // JST+0900 形式の場合は対応
-                  if (timestamp.includes('JST')) {
-                    cleanTimestamp = timestamp.replace(' JST', '');
-                  }
-
-                  const date = new Date(cleanTimestamp);
-
-                  // 正しく解析できたかチェック
-                  if (isNaN(date.getTime())) {
-                    throw new Error('Invalid date format');
-                  }
-
-                  return date;
-                } catch (e) {
-                  console.error('タイムスタンプ解析エラー:', record.timestamp, e);
-                  return null;
-                }
-              }).filter(date => date !== null);
-
-              const effectiveRates = filteredData.map(record => {
-                if (record.working_staff === 0) return null;
-                // APIがrate値を直接提供している場合はそれを使用
-                if (record.rate !== undefined) return record.rate;
-                return ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-              });
-
-              // サンプル数と平均値の計算
-              const validRates = effectiveRates.filter(rate => rate !== null);
-              const overallAvg = validRates.length > 0
-                ? validRates.reduce((sum, rate) => sum + rate, 0) / validRates.length
-                : 0;
-
-              historyStats.textContent = `期間内サンプル数: ${validRates.length}件, 平均稼働率: ${overallAvg.toFixed(1)}%`;
-
-              // グラフの描画
-              const ctx = document.getElementById('historyChart').getContext('2d');
-
-              // 既存のグラフがあれば破棄
-              if (charts.history) {
-                charts.history.destroy();
-              }
-
-              charts.history = new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: '稼働率 (%)',
-                    data: effectiveRates,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1,
-                    pointRadius: 1,
-                    borderWidth: 2
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: {
-                      type: 'time',
-                      time: {
-                        unit: 'day',
-                        tooltipFormat: 'yyyy/MM/dd HH:mm',
-                        displayFormats: {
-                          hour: 'MM/dd HH:mm'
-                        }
-                      },
-                      title: {
-                        display: true,
-                        text: '日時'
-                      }
-                    },
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      title: {
-                        display: true,
-                        text: '稼働率 (%)'
-                      }
-                    }
-                  },
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: storeId ? `店舗「${storeId}」の稼働率推移` : '全店舗の平均稼働率推移',
-                      font: {
-                        size: 16
-                      }
-                    },
-                    zoom: {
-                      pan: { enabled: true, mode: 'xy' },
-                      zoom: {
-                        wheel: { enabled: true },
-                        drag: { enabled: true },
-                        mode: 'xy'
-                      }
-                    }
-                  }
-                }
-              });
-
-              loadingElement.style.display = 'none';
-              containerElement.style.display = 'block';
-            })
-            .catch(error => {
-              console.error('履歴データ取得エラー:', error);
-              historyStats.textContent = 'データ取得中にエラーが発生しました';
-              loadingElement.style.display = 'none';
-              containerElement.style.display = 'block';
-              handleError(error, "updateHistoryChart");
-            });
-        }
-
-        function updateHourlyAnalysis() {
-          const storeId = document.getElementById('hourlyStoreSelect').value;
-          const hourlyStats = document.getElementById('hourlyStats');
-          const loadingElement = document.getElementById('hourlyAnalysisLoading');
-          const containerElement = document.getElementById('hourlyAnalysisContainer');
-
-          if (!loadingElement || !containerElement) {
-            console.error('Hourly analysis elements not found in the DOM');
-            return;
-          }
-
-          loadingElement.style.display = 'block';
-          containerElement.style.display = 'none';
-          hourlyStats.textContent = '読み込み中...';
-
-          // データ取得URL
-          let url = '/api/history';
-          if (storeId) {
-            url += `?store=${encodeURIComponent(storeId)}`;
-          }
-
-          fetch(url)
-            .then(response => response.json())
-            .then(data => {
-              if (!data.length) {
-                hourlyStats.textContent = '該当データがありません';
-                loadingElement.style.display = 'none';
-                containerElement.style.display = 'block';
-                return;
-              }
-
-              // 時間帯ごとのデータ集計
-              const hourly = {};
-
-              // 0-23時の初期化
-              for (let h = 0; h < 24; h++) {
-                hourly[h] = {
-                  totalRate: 0,
-                  count: 0
-                };
-              }
-
-              // データ集計
-              data.forEach(record => {
-                if (record.working_staff <= 0) return;
-
-                try {
-                  const d = new Date(record.timestamp);
-                  const hour = d.getHours();
-                  const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-
-                  if (!isNaN(hour) && hour >= 0 && hour < 24) {
-                    hourly[hour].totalRate += rate;
-                    hourly[hour].count++;
-                  }
-                } catch (e) {
-                  console.error('時間帯データ処理エラー:', e, record);
-                }
-              });
-
-              // 平均計算
-              const labels = [];
-              const avgRates = [];
-
-              for (let h = 0; h < 24; h++) {
-                labels.push(`${h}:00`);
-
-                if (hourly[h].count > 0) {
-                  avgRates.push(hourly[h].totalRate / hourly[h].count);
-                } else {
-                  avgRates.push(0);
-                }
-              }
-
-              // 平均稼働率の計算
-              const totalSamples = Object.values(hourly).reduce((sum, h) => sum + h.count, 0);
-
-              hourlyStats.textContent = `分析対象サンプル数: ${totalSamples}件`;
-              loadingElement.style.display = 'none';
-              containerElement.style.display = 'block';
-
-              // チャート描画
-              const ctx = document.getElementById('hourlyChart').getContext('2d');
-
-              // 既存のグラフがあれば破棄
-              if (charts.hourly) {
-                charts.hourly.destroy();
-              }
-
-              charts.hourly = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: '平均稼働率 (%)',
-                    data: avgRates,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      title: {
-                        display: true,
-                        text: '稼働率 (%)'
-                      }
-                    },
-                    x: {
-                      title: {
-                        display: true,
-                        text: '時間帯'
-                      }
-                    }
-                  },
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: storeId ? `店舗「${storeId}」の時間帯別稼働率` : '全店舗の時間帯別平均稼働率',
-                      font: {
-                        size: 16
-                      }
-                    },
-                    zoom: {
-                      pan: { enabled: true, mode: 'xy' },
-                      zoom: {
-                        wheel: { enabled: true },
-                        drag: { enabled: true },
-                        mode: 'xy'
-                      }
-                    }
-                  }
-                }
-              });
-            })
-            .catch(error => {
-              console.error('時間帯データ取得エラー:', error);
-              hourlyStats.textContent = 'データ取得中にエラーが発生しました';
-              loadingElement.style.display = 'none';
-              containerElement.style.display = 'block';
-              handleError(error, "updateHourlyAnalysis");
-            });
-        }
-
-        // 時間別分析の更新ボタンにイベントリスナーを追加
-        document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
-
-        // ページ読み込み時のイベント
-        document.addEventListener('DOMContentLoaded', function() {
-          // グローバルエラーハンドリング
-          window.addEventListener('error', function(e) {
-            console.error('グローバルエラー:', e.message);
-            handleError(e, "global");
-          });
-
-          // 初期表示タブはタブ1
-          document.getElementById('dashboard').classList.add('show', 'active');
-          //document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
-
-          // 店舗リストの読み込み
-          loadStoreList();
-
-          // 現在の稼働状況を読み込み
-          fetchCurrentData();
-
-          // 更新ボタンのイベントリスナーが設定されていることを確認
-          console.log("イベントハンドラ設定確認:");
-          const updateButtons = {
-            "historyBtn": document.getElementById("updateHistoryBtn"),            "hourlyBtn": document.getElementById("updateHourlyBtn"),
-            "areaBtn": document.getElementById("updateAreaBtn"),
-            "typeBtn":document.getElementById("industrySelectType"),
-            "rankingBtn": document.getElementById("updateRankingBtn")
-          };
-
-          for (const [key, btn] of Object.entries(updateButtons)) {
-            console.log(`${key}: ${btn ? "OK" : "未設定"}`);
-            if (!btn && key !== "typeBtn") { // typeBtn はオプション
-              console.warn(`警告: ${key} が見つかりません`);
-            }
-          }
-        });
-
-        // グローバルエラーハンドリング関数
-        function handleError(error, context) {
-          console.error(`エラー (${context}):`, error);
-          // アラートの代わりにコンソールに出力するだけにして、UXを向上
-          const errorMsg = `エラーが発生しました (${context}): ${error.message || error}`;
-          console.error(errorMsg);
-
-          // エラー表示用の要素があれば利用する
-          const errorContainer = document.getElementById('errorContainer');
-          if (errorContainer) {
-            errorContainer.textContent = errorMsg;
-            errorContainer.style.display = 'block';
-            // 5秒後に非表示
-            setTimeout(() => {
-              errorContainer.style.display = 'none';
-            }, 5000);
-          }
-        }
-
-        async function fetchCurrentData() {
-          try {
-            const response = await fetchWithRetry('/api/data');
-            const data = await response.json();
-            dataLatest = Array.isArray(data) ? data : (data.data || []);
-            fillIndustryDropdown(dataLatest);
-          } catch (error) {
-            console.error('現在のデータ取得エラー:', error);
-            handleError(error, 'fetchCurrentData');
-          }
-        }
-
-        async function loadStoreList() {
-          try {
-            const response = await fetchWithRetry('/api/data', {}, 3, 2000);
-            const stores = Array.isArray(response) ? response : (response.data || []);
-            const storeSelectHistory = document.getElementById('storeSelectHistory');
-            const storeSelectHourly = document.getElementById('hourlyStoreSelect');
-
-            // ドロップダウンオプションの作成
-            storeSelectHistory.innerHTML = '<option value="">全店舗</option>';
-            storeSelectHourly.innerHTML = '<option value="">全店舗</option>';
-
-            const uniqueStoreNames = [...new Set(stores.map(store => store.store_name))].sort();
-            uniqueStoreNames.forEach(storeName => {
-              const option = document.createElement('option');
-              option.value = storeName;
-              option.text = storeName;
-
-              storeSelectHistory.appendChild(option.cloneNode(true));
-              storeSelectHourly.appendChild(option.cloneNode(true));
-            });
-          } catch (error) {
-            console.error('店舗リスト読み込みエラー:', error);
-            handleError(error, 'loadStoreList');
-          }
-        }
-
-        // 集計データ処理関数
-        function processAggregatedData(data) {
-          const labels = data.map(item => item.date);
-          const effectiveRates = data.map(item => item.avg_rate);
-
-          // サンプル数と平均値の計算
-          const overallAvg = effectiveRates.reduce((sum, rate) => sum + rate, 0) / effectiveRates.length;
-
-          document.getElementById('historyStats').textContent = `期間内サンプル数: ${effectiveRates.length}件, 平均稼働率: ${overallAvg.toFixed(1)}%`;
-
-          // グラフの描画
-          const ctx = document.getElementById('historyChart').getContext('2d');
-
-          if (charts.history) {
-            charts.history.destroy();
-          }
-
-          charts.history = new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: '稼働率 (%)',
-                data: effectiveRates,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1,
-                pointRadius: 1,
-                borderWidth: 2
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  type: 'time',
-                  time: {
-                    unit: 'day',
-                    tooltipFormat: 'yyyy/MM/dd',
-                    displayFormats: {
-                      day: 'MM/dd'
-                    }
-                  },
-                  title: {
-                    display: true,
-                    text: '日付'
-                  }
-                },
-                y: {
-                  beginAtZero: true,
-                  max: 100,
-                  title: {
-                    display: true,
-                    text: '稼働率 (%)'
-                  }
-                }
-              },
-              plugins: {
-                title: {
-                  display: true,
-                  text: '全店舗の平均稼働率推移',
-                  font: {
-                    size: 16
-                  }
-                },
-                zoom: {
-                  pan: { enabled: true, mode: 'xy' },
-                  zoom: {
-                    wheel: { enabled: true },
-                    drag: { enabled: true },
-                    mode: 'xy'
-                  }
-                }
-              }
-            }
-          });
-
-          document.getElementById('historyChartLoading').style.display = 'none';
-          document.getElementById('historyChartContainer').style.display = 'block';
-        }
-
-        // 比較分析ボタンクリック時の処理
-        document.getElementById('compareBtn').addEventListener('click', function() {
-          const checkedStores = Array.from(document.querySelectorAll('.compare-checkbox:checked')).map(checkbox => checkbox.dataset.storeName);
-          if (checkedStores.length < 2) {
-            alert('比較分析には2店舗以上を選択してください。');
-            return;
-          }
-
-          // 比較分析モーダル表示とグラフ描画処理（仮）
-          const modal = new bootstrap.Modal(document.getElementById('compareModal'));
-          modal.show();
-
-          // TODO: /api/compare エンドポイントにリクエストを送信し、データを取得する
-          const ctx = document.getElementById('compareChart').getContext('2d');
-          if (charts.compare) charts.compare.destroy();
-          charts.compare = new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: ['日1', '日2', '日3'], // 仮データ
-              datasets: [
-                { label: checkedStores[0], data: [80, 70, 90] }, // 仮データ
-                { label: checkedStores[1], data: [75, 85, 70] }  // 仮データ
-              ]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                title: { display: true, text: '店舗比較分析', font: { size: 18 } }
-              }
-            }
-          });
-        });
-
-
-        //ダークモードトグル
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        darkModeToggle.addEventListener('click', function() {
-          document.body.classList.toggle('dark');
-          document.getElementById('pageHeader').classList.toggle('dark');
-        });
-
-        //お気に入りトグル
-        const favoritesToggle = document.getElementById('favoritesToggle');
-        favoritesToggle.addEventListener('click', function() {
-          favoritesFilterActive = !favoritesFilterActive;
-          const rows = document.querySelectorAll('#storeTable tbody tr');
-          rows.forEach(row => {
-            const storeName = row.cells[1].innerText.trim();
-            row.style.display = favoritesFilterActive && !favorites.includes(storeName) ? 'none' : '';
-          });
-          favoritesToggle.textContent = favoritesFilterActive ? 'すべて表示' : 'お気に入りのみ表示';
-        });
-
-
-        //初期化処理
-        function init() {
-          updateDashboard();
-          updateTop10Chart();
-          updateAreaStatistics();
-          fillIndustryDropdown();
-          updateIndustryRanking();
-          fillHistoryStoreDropdown();
-          updateHistoryChart();
-          fillHourlyStoreDropdown();
-          updateHourlyAnalysis();
-          updateRanking();
-        }
-
+        // 初期処理実行
         init();
-
-        //グローバルエラーハンドリング
-
-        window.addEventListener('error', function(event) {
-          handleError(event.error, 'global');
-        });
-
       });
     })();
   </script>
