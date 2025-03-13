@@ -732,8 +732,7 @@
                   (record.working_staff > 0 ? 
                   ((record.working_staff - record.active_staff) / record.working_staff* 100).toFixed(1) : 0)
                 );
-              } else {
-                // 全店舗かつ期間指定の場合は日付で集計
+              } else {                // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
 
                 data.forEach(record => {
@@ -1607,25 +1606,33 @@
 
           // APIからデータを取得
           fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`API応答エラー: ${response.status}`);
+              }
+              return response.json();
+            })
             .then(data => {
+              console.log('業種内ジャンルランキングデータ:', data);
+
               // テーブル表示
               tableBody.innerHTML = '';
 
-              if (data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">該当するデータがありません</td></tr>';
-              } else {
-                data.forEach((item, index) => {
-                  const row = document.createElement('tr');
-                  row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${item.genre}</td>
-                    <td>${item.store_count}</td>
-                    <td>${item.avg_rate}%</td>
-                  `;
-                  tableBody.appendChild(row);
-                });
+              if (!Array.isArray(data) || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">該当するデータがありません</td></tr>';
+                return;
               }
+
+              data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${index + 1}</td>
+                  <td>${item.genre || '不明'}</td>
+                  <td>${item.store_count}</td>
+                  <td>${item.avg_rate}%</td>
+                `;
+                tableBody.appendChild(row);
+              });
 
               // グラフ表示
               if (charts.type) charts.type.destroy();
@@ -1634,7 +1641,7 @@
               charts.type = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                  labels: data.map(item => item.genre),
+                  labels: data.map(item => item.genre || '不明'),
                   datasets: [{
                     label: '平均稼働率 (%)',
                     data: data.map(item => item.avg_rate),
@@ -1666,7 +1673,9 @@
             })
             .catch(error => {
               console.error('ジャンルランキング取得エラー:', error);
-              tableBody.innerHTML = '<tr><td colspan="3" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+              tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+              // エラーの詳細をコンソールに出力
+              console.error('エラー詳細:', error.stack);
             })
             .finally(() => {
               // ローディング非表示
@@ -1843,25 +1852,33 @@
 
           // APIからデータを取得
           fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`API応答エラー: ${response.status}`);
+              }
+              return response.json();
+            })
             .then(data => {
+              console.log('業種内ジャンルランキングデータ:', data);
+
               // テーブル表示
               tableBody.innerHTML = '';
 
-              if (data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">該当するデータがありません</td></tr>';
-              } else {
-                data.forEach((item, index) => {
-                  const row = document.createElement('tr');
-                  row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${item.genre}</td>
-                    <td>${item.store_count}</td>
-                    <td>${item.avg_rate}%</td>
-                  `;
-                  tableBody.appendChild(row);
-                });
+              if (!Array.isArray(data) || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">該当するデータがありません</td></tr>';
+                return;
               }
+
+              data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${index + 1}</td>
+                  <td>${item.genre || '不明'}</td>
+                  <td>${item.store_count}</td>
+                  <td>${item.avg_rate}%</td>
+                `;
+                tableBody.appendChild(row);
+              });
 
               // グラフ表示
               if (charts.type) charts.type.destroy();
@@ -1870,7 +1887,7 @@
               charts.type = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                  labels: data.map(item => item.genre),
+                  labels: data.map(item => item.genre || '不明'),
                   datasets: [{
                     label: '平均稼働率 (%)',
                     data: data.map(item => item.avg_rate),
@@ -1902,7 +1919,9 @@
             })
             .catch(error => {
               console.error('ジャンルランキング取得エラー:', error);
-              tableBody.innerHTML = '<tr><td colspan="3" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+              tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
+              // エラーの詳細をコンソールに出力
+              console.error('エラー詳細:', error.stack);
             })
             .finally(() => {
               // ローディング非表示
@@ -2037,9 +2056,22 @@
               }
 
               // 時系列データの作成 - ISO8601形式のタイムスタンプが正しく解析できる
-              const labels = filteredData.map(record => new Date(record.timestamp));
+              const labels = filteredData.map(record => {
+                try {
+                  // JavaScriptが正しく解析できる形式かチェック
+                  const timestamp = record.timestamp;
+                  // console.log('パース対象のタイムスタンプ:', timestamp);
+                  return new Date(timestamp);
+                } catch (e) {
+                  console.error('タイムスタンプ解析エラー:', record.timestamp, e);
+                  return null;
+                }
+              }).filter(date => date !== null);
+
               const effectiveRates = filteredData.map(record => {
                 if (record.working_staff === 0) return null;
+                // APIがrate値を直接提供している場合はそれを使用
+                if (record.rate !== undefined) return record.rate;
                 return ((record.working_staff - record.active_staff) / record.working_staff) * 100;
               });
 
