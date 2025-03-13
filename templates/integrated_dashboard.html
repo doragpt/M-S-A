@@ -965,7 +965,8 @@
         async function fillHistoryStoreDropdown() {
           try {
             showSpinner();
-            const stores = await fetchWithRetry("/api/stores", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const stores = Array.isArray(response) ? response : (response.data || []);
             console.log("History store data:", stores);
 
             const storeSelect = document.getElementById("storeSelectHistory");
@@ -1103,7 +1104,8 @@
         async function fillHourlyStoreDropdown() {
           try {
             showSpinner();
-            const stores = await fetchWithRetry("/api/stores", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const stores = Array.isArray(response) ? response : (response.data || []);
             console.log("Hourly store data:", stores);
 
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
@@ -1215,7 +1217,7 @@
         async function fillIndustryDropdown() {
           try {
             // 最新データ取得
-            const latestData = await fetchWithRetry("/api/data/latest", {}, 3, 2000);
+            const latestData = await fetchWithRetry("/api/data", {}, 3, 2000);
             const industries = new Set();
             latestData.forEach(item => { if(item.biz_type && item.biz_type !== "不明") industries.add(item.biz_type); });
             const industrySelect = document.getElementById("industrySelectType");
@@ -1242,7 +1244,7 @@
             }
 
             // API呼び出し
-            const latestData = await fetchWithRetry("/api/data/latest", {}, 3, 2000);
+            const latestData = await fetchWithRetry("/api/data", {}, 3, 2000);
             const latestStoreNames = new Set(latestData.map(store => store.store_name));
             const responseHistory = await fetchWithRetry("/api/history", {}, 3, 2000);
             const dataHistory = await responseHistory.json();
@@ -1423,312 +1425,6 @@
             handleError(err, "updateDetailHourlyChart");
           }
         }
-
-        /***********************************************
-         * updateAverageRanking: 平均稼働ランキング更新 (/api/ranking/average)
-         ***********************************************/
-        async function updateAverageRanking() {
-          const loadingEl = document.getElementById('averageRankingLoading');
-          const containerEl = document.getElementById('averageRankingContainer');
-
-          if (loadingEl) loadingEl.style.display = 'block';
-          if (containerEl) containerEl.style.display = 'none';
-
-          // APIが実装されていない場合のフォールバック
-          const handleRankingData = (data) => {
-            // 以下は既存の処理を続行
-            const tbody = document.getElementById("rankingTableBody");
-            tbody.innerHTML = "";
-
-            data.forEach((store, index) => {
-              const rowHtml = `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${store.store_name}</td>
-                  <td>${store.biz_type}</td>
-                  <td>${store.genre}</td>
-                  <td>${store.area}</td>
-                  <td>${store.avg_rate.toFixed(1)}</td>
-                </tr>
-              `;
-              tbody.insertAdjacentHTML("beforeend", rowHtml);
-            });
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (containerEl) containerEl.style.display = 'block';
-          };
-
-          fetchWithRetry('/api/ranking/average', {}, 3, 2000)
-            .then(data => {
-              handleRankingData(data);
-            })
-            .catch(error => {
-              console.warn('Average ranking endpoint not available:', error);
-              // APIが404の場合はローカルデータから平均を計算
-              if (error.toString().includes('HTTP error 404')) {
-                // APIが未実装の場合、最新データからランキングを計算
-                fetch('/api/data')
-                  .then(response => response.json())
-                  .then(data => {
-                    const mockData = Array.isArray(data) ? data : (data.data || []);
-                    handleRankingData(mockData);
-                  })
-                  .catch(err => {
-                    console.error('平均稼働ランキングエラー:', err);
-                    if (loadingEl) loadingEl.style.display = 'none';
-                    if (containerEl) containerEl.style.display = 'block';
-                  });
-              } else {
-                console.error('平均稼働ランキングエラー:', error);
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (containerEl) containerEl.style.display = 'block';
-              }
-            });
-        }
-
-        /***********************************************
-         * fillIndustryDropdownForRanking: 業種別ランキング用ドロップダウン更新
-         ***********************************************/
-        async function fillIndustryDropdownForRanking() {
-          try {
-            // 最適化: 現在のデータから業種を取得（履歴全件不要）
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
-            const data = Array.isArray(response) ? response : (response.data || []);
-            const industries = new Set();
-
-            data.forEach(record => { 
-              if (record.biz_type) industries.add(record.biz_type); 
-            });
-
-            const industrySelect = document.getElementById("industrySelectRanking");
-            industrySelect.innerHTML = "";
-
-            // 業種でソート
-            const sortedIndustries = Array.from(industries).sort();
-            sortedIndustries.forEach(ind => { 
-              industrySelect.innerHTML += `<option value="${ind}">${ind}</option>`; 
-            });
-
-            // ローカルストレージから前回の選択を復元
-            const savedIndustryRanking = localStorage.getItem("industryRankingFilter");
-            if (savedIndustryRanking && sortedIndustries.includes(savedIndustryRanking)) {
-              industrySelect.value = savedIndustryRanking;
-            }
-
-            // 選択変更時の保存処理
-            industrySelect.addEventListener("change", () => {
-              localStorage.setItem("industryRankingFilter", industrySelect.value);
-            });
-          } catch (err) {
-            console.error("ランキング業種ドロップダウン取得エラー:", err);
-            handleError(err, "fillIndustryDropdownForRanking");
-          }
-        }
-
-        // ランキングタイプ変更イベント
-        document.getElementById("rankingTypeSelect").addEventListener("change", async function() {
-          if (this.value === "industry") {
-            document.getElementById("industryFilterDiv").style.display = "";
-            await fillIndustryDropdownForRanking();
-          } else {
-            document.getElementById("industryFilterDiv").style.display = "none";
-          }
-        });
-        document.getElementById("updateRankingBtn").addEventListener("click", updateAverageRanking);
-
-        /***********************************************
-         * Socket.IOによるリアルタイム更新とトースト通知
-         ***********************************************/
-        // socketはすでに下部で宣言されているため削除
-        // Socket更新イベントのリスナーは初期ロード処理の後に設定
-
-        /***********************************************
-         * 初期ロード処理
-         ***********************************************/
-        updateDashboard();
-        updateTop10Chart();
-        updateAreaStatistics();
-        await fillIndustryDropdown();
-        updateIndustryRanking();
-        await fillHistoryStoreDropdown();
-        updateHistoryChart();
-        await fillHourlyStoreDropdown();
-        updateHourlyAnalysis();
-        // タブ切り替え処理
-        document.querySelectorAll('.nav-link').forEach(button => {
-          button.addEventListener('click', function() {
-            // すべてのタブボタンから active クラスを削除
-            document.querySelectorAll('.nav-link').forEach(btn => {
-              btn.classList.remove('active');
-            });
-
-            // クリックされたボタンに active クラスを追加
-            this.classList.add('active');
-
-            // すべてのタブコンテンツを非表示
-            document.querySelectorAll('.tab-pane').forEach(content => {
-              content.classList.remove('show', 'active');
-            });
-
-            // クリックされたボタンのターゲットコンテンツを表示
-            const targetId = this.getAttribute('href');
-            document.querySelector(targetId).classList.add('show', 'active');
-
-            // 業種内ジャンルランキングのタブが選択された場合
-            if (targetId === '#type') {
-              loadBusinessTypes('industrySelectType');
-              updateTypeRanking();
-            }
-
-            // 平均稼働ランキングのタブが選択された場合
-            if (targetId === '#ranking') {
-              loadBusinessTypes('industrySelectRanking');
-              updateRanking();
-            }
-          });
-        });
-
-        // 業種データをロードして選択ボックスに反映する共通関数
-        function loadBusinessTypes(selectId) {
-          const select = document.getElementById(selectId);
-          if (!select) {
-            console.error(`Select element with ID ${selectId} not found`);
-            return;
-          }
-
-          if (!select.options.length) {
-            // 業種データが未読み込みの場合のみ実行
-            fetch('/api/data')
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`HTTP error ${response.status}`);
-                }
-                return response.json();
-              })
-              .then(responseData => {
-                const data = Array.isArray(responseData) ? responseData : (responseData.data || []);
-                // 重複のないbiz_typeリストを作成
-                const bizTypes = [...new Set(data.map(item => item.biz_type))].filter(Boolean);
-                bizTypes.sort();
-
-                // 選択肢をクリア
-                select.innerHTML = '';
-
-                // 業種選択肢を追加
-                bizTypes.forEach(type => {
-                  const option = document.createElement('option');
-                  option.value = type;
-                  option.textContent = type;
-                  select.appendChild(option);
-                });
-
-                // デフォルト値を選択
-                if (bizTypes.length > 0) {
-                  select.value = bizTypes[0];
-                }
-              })
-              .catch(error => console.error('業種データ取得エラー:', error));
-          }
-        }
-
-        // 業種内ジャンルランキング更新
-        function updateTypeRanking() {
-          const selectedBizType = document.getElementById('industrySelectType').value;
-          if (!selectedBizType) return;
-
-          const tableBody = document.getElementById('typeTableBody');
-          const chartCanvas = document.getElementById('typeChart');
-          const loadingSpinner = document.querySelector('#type .spinner-border');
-
-          // ローディング表示
-          if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
-
-          // APIからデータを取得
-          fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(selectedBizType)}`)
-            .then(response => {
-              if (!response.ok) {
-                if (response.status === 404) {
-                  console.warn(`API未実装 (${selectedBizType}) - モックデータを使用します`);
-                  return { data: [] };
-                }
-                throw new Error(`API応答エラー: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log('業種内ジャンルランキングデータ:', data);
-
-              // テーブル表示
-              tableBody.innerHTML = '';
-
-              if (!Array.isArray(data) || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">該当するデータがありません</td></tr>';
-                return;
-              }
-
-              data.forEach((item, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${index + 1}</td>
-                  <td>${item.genre || '不明'}</td>
-                  <td>${item.store_count}</td>
-                  <td>${item.avg_rate}%</td>
-                `;
-                tableBody.appendChild(row);
-              });
-
-              // グラフ表示
-              if (charts.type) charts.type.destroy();
-
-              const ctx = chartCanvas.getContext('2d');
-              charts.type = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: data.map(item => item.genre || '不明'),
-                  datasets: [{
-                    label: '平均稼働率 (%)',
-                    data: data.map(item => item.avg_rate),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100
-                    }
-                  },
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: `「${selectedBizType}」業種内ジャンルの平均稼働率`,
-                      font: {
-                        size: 16
-                      }
-                    }
-                  }
-                }
-              });
-            })
-            .catch(error => {
-              console.error('ジャンルランキング取得エラー:', error);
-              tableBody.innerHTML = '<tr><td colspan="4" class="text-center">データ取得中にエラーが発生しました</td></tr>';
-              // エラーの詳細をコンソールに出力
-              console.error('エラー詳細:', error.stack);
-              handleError(error, "updateTypeRanking");
-            })
-            .finally(() => {
-              // ローディング非表示
-              if (loadingSpinner) loadingSpinner.style.display = 'none';
-            });
-        }
-
-        // 業種選択変更時のイベント
-        document.getElementById('industrySelectType')?.addEventListener('change', updateTypeRanking);
-
 
         /***********************************************
          * updateAverageRanking: 平均稼働ランキング更新 (/api/ranking/average)
