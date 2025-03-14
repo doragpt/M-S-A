@@ -881,18 +881,41 @@ def api_aggregated_data():
         for r in results:
             # date属性がNoneの場合はスキップ
             if r.date is None:
+                app.logger.warning(f"日付が未設定のレコードをスキップします: {r}")
                 continue
                 
             try:
+                # 日付フォーマットのチェック
+                if hasattr(r.date, 'isoformat'):
+                    date_str = r.date.isoformat()
+                else:
+                    date_str = str(r.date)
+                    app.logger.warning(f"日付フォーマットが予期しないタイプでした: {type(r.date)}")
+                
+                # 平均稼働率と件数のチェック
+                avg_rate = 0.0
+                if r.avg_rate is not None:
+                    try:
+                        avg_rate = float(r.avg_rate)
+                    except (ValueError, TypeError):
+                        app.logger.warning(f"平均稼働率の変換に失敗しました: {r.avg_rate}")
+                
+                sample_count = r.sample_count or 0
+                
                 data.append({
-                    'date': r.date.isoformat(),
-                    'avg_rate': float(r.avg_rate) if r.avg_rate is not None else 0.0,
-                    'sample_count': r.sample_count
+                    'date': date_str,
+                    'avg_rate': avg_rate,
+                    'sample_count': sample_count
                 })
             except (AttributeError, TypeError, ValueError) as e:
                 app.logger.error(f"データ変換エラー: {e}, レコード: {r}")
+                app.logger.error(traceback.format_exc())
                 continue
 
+        # 空のレスポンス対策
+        if not data:
+            app.logger.warning("集計データが空でした")
+            
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"API集計データ取得エラー: {e}")

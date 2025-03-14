@@ -6,91 +6,18 @@
   <title>統合ダッシュボード</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script>
-    // Chart.jsのアダプタとプラグインを明示的に登録
+    // Chart.jsのデータラベルプラグインを登録
     Chart.register(ChartDataLabels);
     
-    // Luxonのアダプターを手動で登録
+    // Luxon のDateTime オブジェクトを便宜上グローバル変数として保持
     const DateTime = window.luxon.DateTime;
     
-    const FORMATS = {
-      datetime: 'yyyy-MM-dd HH:mm:ss',
-      millisecond: 'HH:mm:ss.SSS',
-      second: 'HH:mm:ss',
-      minute: 'HH:mm',
-      hour: 'HH:mm',
-      day: 'yyyy-MM-dd',
-      week: 'yyyy-MM-dd',
-      month: 'yyyy-MM',
-      quarter: 'yyyy-Q',
-      year: 'yyyy'
-    };
-    
-    // Chart.jsに日付アダプタを明示的に登録
-    Chart.register({
-      id: 'luxon',
-      _date: DateTime,
-      _adapter: {
-        parse: function(value) {
-          if (value === null || value === undefined) {
-            return null;
-          }
-          if (typeof value === 'string') {
-            return DateTime.fromISO(value);
-          }
-          if (value instanceof Date) {
-            return DateTime.fromJSDate(value);
-          }
-          if (typeof value === 'number') {
-            return DateTime.fromMillis(value);
-          }
-          return value;
-        },
-        format: function(time, format) {
-          if (!time) {
-            return null;
-          }
-          return time.toFormat(format);
-        },
-        startOf: function(time, unit, weekday) {
-          if (unit === 'week' && weekday !== undefined) {
-            return time.startOf('week').plus({ days: weekday });
-          }
-          return time.startOf(unit);
-        },
-        endOf: function(time, unit) {
-          return time.endOf(unit);
-        },
-        add: function(time, amount, unit) {
-          return time.plus({ [unit]: amount });
-        },
-        diff: function(max, min, unit) {
-          return max.diff(min).as(unit);
-        },
-        _create: function(time) {
-          if (time instanceof DateTime) {
-            return time;
-          }
-          if (typeof time === 'string') {
-            return DateTime.fromISO(time);
-          }
-          if (typeof time === 'number') {
-            return DateTime.fromMillis(time);
-          }
-          if (time instanceof Date) {
-            return DateTime.fromJSDate(time);
-          }
-          return null;
-        },
-        formats: function() {
-          return FORMATS;
-        }
-      }
-    });
+    // Chart.js は chartjs-adapter-luxon によって自動的に日付アダプターが設定されます
   </script>
   <style>
     :root {
@@ -1903,10 +1830,10 @@
           // タイムスタンプの処理（ISO文字列からDateオブジェクトへ変換）
           let date;
           if (typeof record.timestamp === 'string') {
-            // 日付文字列を Luxon の DateTime に変換
-            date = DateTime.fromISO(record.timestamp);
+            // 日付文字列を日付オブジェクトに変換
+            date = new Date(record.timestamp);
           } else {
-            date = DateTime.fromJSDate(new Date(record.timestamp));
+            date = new Date(record.timestamp);
           }
           
           // working_staffが0の場合は稼働率0%とする
@@ -1976,11 +1903,6 @@
           scales: {
             x: {
               type: 'time',
-              adapters: {
-                date: {
-                  locale: 'ja'
-                }
-              },
               time: {
                 unit: 'day',
                 displayFormats: {
@@ -2047,6 +1969,9 @@
             }
           }
         };
+
+        // デバッグ情報を出力
+        console.log("Chart作成: データ件数=", rateData.length);
 
         // 新しいチャートを作成
         charts.history = new Chart(ctx, {
