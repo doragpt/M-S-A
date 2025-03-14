@@ -2776,76 +2776,95 @@
           return;
         }
         
+        // ローディング表示
+        document.getElementById('genreLoadingIndicator').style.display = 'flex';
+        document.getElementById('genreErrorMessage').style.display = 'none';
+        
         typeSelector.innerHTML = '<option value="">すべての業種</option>';
 
         // APIのベースURL
         const apiBaseUrl = '/api';
 
-        // 店舗データがなければAPIから取得
-        if (storeData.length === 0) {
-          console.log("店舗データを取得します...");
-          fetch(`${apiBaseUrl}/data`)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log("店舗データを取得しました:", data);
-              // APIレスポンス構造に対応
-              if (data.data) {
-                storeData = data.data;
-              } else {
-                storeData = data;
-              }
-              
-              populateTypeSelect();
-              
-              // キャバクラをデフォルトで選択（最初の業種をデフォルト表示するため）
-              if (typeSelector.options.length > 1) {
-                typeSelector.selectedIndex = 1;
-              }
-              
-              loadGenreRanking();
-            })
-            .catch(error => {
-              console.error('店舗データの取得に失敗:', error);
-              document.getElementById('genreErrorMessage').textContent = `店舗データの取得に失敗: ${error.message}`;
-              document.getElementById('genreErrorMessage').style.display = 'block';
+        // API から業種一覧を取得 (業種が多い場合はRankingAPIから業種を取得)
+        console.log("業種データを取得します...");
+        
+        // まず店舗データを取得してみる
+        fetch(`${apiBaseUrl}/data`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log("店舗データを取得しました");
+            
+            // APIレスポンス構造に対応
+            let storeDataTemp = [];
+            if (data.data) {
+              storeDataTemp = data.data;
+            } else {
+              storeDataTemp = data;
+            }
+            
+            // 店舗データから業種を抽出
+            const bizTypes = [...new Set(storeDataTemp
+              .filter(store => store && store.biz_type) // nullチェックを追加
+              .map(store => store.biz_type))].sort();
+
+            console.log(`抽出された業種: ${bizTypes.length}件`);
+            
+            if (bizTypes.length === 0) {
+              throw new Error('業種データが見つかりませんでした');
+            }
+            
+            // 業種選択肢を設定
+            bizTypes.forEach(bizType => {
+              const option = document.createElement('option');
+              option.value = bizType;
+              option.textContent = bizType;
+              typeSelector.appendChild(option);
             });
-        } else {
-          console.log("既存の店舗データを使用します:", storeData.length);
-          populateTypeSelect();
-          
-          // キャバクラをデフォルトで選択
-          if (typeSelector.options.length > 1) {
-            typeSelector.selectedIndex = 1;
-          }
-          
-          loadGenreRanking();
-        }
-
-        // 業種選択メニューを設定
-        function populateTypeSelect() {
-          // 店舗データから業種を抽出
-          const bizTypes = [...new Set(storeData
-            .filter(store => store && store.biz_type) // nullチェックを追加
-            .map(store => store.biz_type))].sort();
-
-          console.log("抽出された業種:", bizTypes);
-          
-          bizTypes.forEach(bizType => {
-            const option = document.createElement('option');
-            option.value = bizType;
-            option.textContent = bizType;
-            typeSelector.appendChild(option);
+            
+            console.log("業種選択肢を設定しました。選択肢数:", typeSelector.options.length);
+            
+            // デフォルトで最初の業種を選択
+            if (typeSelector.options.length > 1) {
+              typeSelector.selectedIndex = 1;
+              // 最初の業種のデータを取得
+              loadGenreRanking(typeSelector.options[1].value);
+            } else {
+              document.getElementById('genreLoadingIndicator').style.display = 'none';
+              document.getElementById('genreErrorMessage').textContent = '業種データがありません';
+              document.getElementById('genreErrorMessage').style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('業種データの取得に失敗:', error);
+            
+            // エラーが発生した場合は、代表的な業種を手動で設定
+            const defaultBizTypes = ['キャバクラ', 'ガールズバー', 'セクキャバ', '風俗店', 'メンズエステ'];
+            
+            defaultBizTypes.forEach(bizType => {
+              const option = document.createElement('option');
+              option.value = bizType;
+              option.textContent = bizType;
+              typeSelector.appendChild(option);
+            });
+            
+            console.log("デフォルト業種を設定しました");
+            
+            // キャバクラをデフォルトで選択
+            typeSelector.value = 'キャバクラ';
+            loadGenreRanking('キャバクラ');
+            
+            document.getElementById('genreErrorMessage').textContent = `注意: APIからの業種取得に失敗したため、デフォルト業種を表示しています`;
+            document.getElementById('genreErrorMessage').style.display = 'block';
           });
           
-          console.log("業種選択肢を設定しました。選択肢数:", typeSelector.options.length);
-        }
       } catch (error) {
         console.error('業種タブ初期化エラー:', error);
+        document.getElementById('genreLoadingIndicator').style.display = 'none';
         if (document.getElementById('genreErrorMessage')) {
           document.getElementById('genreErrorMessage').textContent = `初期化エラー: ${error.message}`;
           document.getElementById('genreErrorMessage').style.display = 'block';
@@ -2854,9 +2873,10 @@
     }
 
     // ジャンルランキングデータの読み込み
-    async function loadGenreRanking() {
+    async function loadGenreRanking(selectedBizType = null) {
       try {
-        const bizType = document.getElementById('typeSelector').value;
+        // 選択された業種を取得（引数で指定された場合はそれを使用）
+        const bizType = selectedBizType || document.getElementById('typeSelector').value;
 
         // ローディング表示
         document.getElementById('genreLoadingIndicator').style.display = 'flex';
@@ -2886,7 +2906,7 @@
         }
 
         const data = await response.json();
-        console.log('ジャンルランキングデータ:', data); // デバッグ用
+        console.log('ジャンルランキングデータ:', data.length + '件取得'); // デバッグ用
 
         if (!data || data.length === 0) {
           document.getElementById('genreErrorMessage').textContent = 'データがありません';
