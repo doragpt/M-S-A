@@ -259,9 +259,17 @@
           </div>
           <div class="card mb-3">
             <div class="card-body">
-              <div id="historyChartLoading" style="display: none;">読み込み中...</div>
+              <div id="historyChartLoading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary mb-3" role="status">
+                  <span class="visually-hidden">読み込み中...</span>
+                </div>
+                <p>データを読み込み中です...</p>
+              </div>
               <div id="historyChartContainer">
                 <canvas id="historyChart"></canvas>
+              </div>
+              <div id="historyChartError" class="alert alert-danger mt-3" style="display: none;">
+                データの読み込み中にエラーが発生しました。もう一度お試しください。
               </div>
             </div>
           </div>
@@ -269,6 +277,9 @@
             <div class="card-body">
               <h5 class="card-title">集計結果</h5>
               <p id="historyStats" class="mb-0">--</p>
+              <div class="d-flex justify-content-end mt-3">
+                <button id="historyResetZoomBtn" class="btn btn-sm btn-outline-secondary" style="display: none;">ズームリセット</button>
+              </div>
             </div>
           </div>
         </div>
@@ -288,17 +299,36 @@
             <div class="col-md-4 d-flex align-items-end">
               <button id="updateHourlyBtn" class="btn btn-primary w-100">更新</button>
             </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showPeakHours">
+                <label class="form-check-label" for="showPeakHours">
+                  ピーク時間帯をハイライト
+                </label>
+              </div>
+            </div>
           </div>
           <div class="chart-container">
-            <div id="hourlyAnalysisLoading" style="display: none;">読み込み中...</div>
+            <div id="hourlyAnalysisLoading" class="text-center py-5" style="display: none;">
+              <div class="spinner-border text-success mb-3" role="status">
+                <span class="visually-hidden">読み込み中...</span>
+              </div>
+              <p>時間帯別データを分析中...</p>
+            </div>
             <div id="hourlyAnalysisContainer">
               <canvas id="hourlyChart"></canvas>
             </div>
+            <div id="hourlyAnalysisError" class="alert alert-danger mt-3" style="display: none;">
+              データの分析中にエラーが発生しました。もう一度お試しください。
+            </div>
           </div>
-          <div class="card">
+          <div class="card mt-3">
             <div class="card-body">
               <h5 class="card-title">集計結果</h5>
               <p id="hourlyStats" class="mb-0">--</p>
+              <div id="peakHoursInfo" class="mt-2 small text-muted" style="display: none;">
+                ピーク時間帯: <span id="peakHoursRange">--</span>
+              </div>
             </div>
           </div>
         </div>
@@ -743,14 +773,19 @@
         async function updateHistoryChart() {
           const loadingElement = document.getElementById('historyChartLoading');
           const containerElement = document.getElementById('historyChartContainer');
+          const errorElement = document.getElementById('historyChartError');
+          const resetZoomBtn = document.getElementById('historyResetZoomBtn');
 
           if (!loadingElement || !containerElement) {
-            console.error('History chart elements not found in theDOM');
+            console.error('History chart elements not found in the DOM');
             return;
           }
 
+          // 表示状態の初期化
           loadingElement.style.display = 'block';
           containerElement.style.display = 'none';
+          if (errorElement) errorElement.style.display = 'none';
+          if (resetZoomBtn) resetZoomBtn.style.display = 'none';
 
           try {
             const storeSelect = document.getElementById("storeSelectHistory");
@@ -769,7 +804,7 @@
             // キャッシュがあれば使用
             if (historyChartCache[cacheKey]) {
               const cachedData = historyChartCache[cacheKey];
-              updateHistoryChartDisplay(cachedData.labels, cachedData.effectiveRates);
+              updateHistoryChartDisplay(cachedData.labels, cachedData.effectiveRates, selectedStore);
               loadingElement.style.display = 'none';
               containerElement.style.display = 'block';
               return;
@@ -777,6 +812,7 @@
 
             let labels = [];
             let effectiveRates = [];
+            let rawData = [];
 
             // 最適化: 集計済みデータを使用するかフィルタリングしたデータを使用するか決定
             if (selectedStore || (startDate && endDate)) {
@@ -791,6 +827,7 @@
               params.append("limit", "2000");
 
               const data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
+              rawData = data;
 
               if (selectedStore) {
                 // 単一店舗の場合は時間まで表示
@@ -843,6 +880,7 @@
               // 期間指定がなく全店舗の場合: 事前集計データを使用
               try {
                 const data = await fetchWithRetry("/api/aggregated", {}, 3, 2000);
+                rawData = data;
 
                 // 日付ごとに集計
                 const dateMap = new Map();
@@ -879,6 +917,7 @@
                 console.warn("集計APIが利用できません。フォールバックを使用します。:", aggregatedError);
                 try {
                   const data = await fetchWithRetry("/api/history?limit=1000", {}, 3, 2000);
+                  rawData = data;
 
                   // データが配列であることを確認
                   if (!Array.isArray(data)) {
@@ -925,20 +964,36 @@
                 } catch (historyFallbackError) {
                   console.error("履歴データ取得エラー(フォールバック):", historyFallbackError);
                   handleError(historyFallbackError, "updateHistoryChart-fallback");
+                  throw historyFallbackError; // 再スロー
                 }
               }
             }
 
+            // データが存在するか確認
+            if (labels.length === 0 || effectiveRates.length === 0) {
+              throw new Error("該当するデータが見つかりませんでした");
+            }
+
             // キャッシュに保存
-            historyChartCache[cacheKey] = { labels, effectiveRates };
+            historyChartCache[cacheKey] = { 
+              labels, 
+              effectiveRates,
+              rawData 
+            };
 
             // チャート更新処理
-            updateHistoryChartDisplay(labels, effectiveRates);
+            updateHistoryChartDisplay(labels, effectiveRates, selectedStore);
 
           } catch (error) {
             console.error("履歴グラフエラー:", error);
             console.error(error.stack);
             handleError(error, "updateHistoryChart");
+
+            // エラー表示
+            if (errorElement) {
+              errorElement.textContent = `データ取得中にエラーが発生しました: ${error.message || "不明なエラー"}`;
+              errorElement.style.display = 'block';
+            }
 
             // エラー時のフォールバック表示
             if (document.getElementById("historyStats")) {
@@ -982,28 +1037,80 @@
         }
 
         // チャート表示処理を別関数に分離
-        function updateHistoryChartDisplay(labels, effectiveRates) {
+        function updateHistoryChartDisplay(labels, effectiveRates, selectedStore) {
             const ctx = document.getElementById("historyChart").getContext("2d");
+            const resetZoomBtn = document.getElementById('historyResetZoomBtn');
+            
             if (charts.history) charts.history.destroy();
+
+            // データの最大値・最小値に基づいてラインカラーを決定
+            const numericRates = effectiveRates.map(Number);
+            const maxRate = Math.max(...numericRates);
+            const minRate = Math.min(...numericRates);
+            const avgRate = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
+            
+            // トレンドラインの作成（移動平均）
+            let trendlineData = [];
+            if (numericRates.length > 5) {
+              const windowSize = Math.min(5, Math.floor(numericRates.length / 3));
+              for (let i = 0; i < numericRates.length; i++) {
+                if (i < windowSize - 1) {
+                  // 最初のデータポイントはそのまま
+                  trendlineData.push(numericRates[i]);
+                } else {
+                  // 移動平均を計算
+                  let sum = 0;
+                  for (let j = 0; j < windowSize; j++) {
+                    sum += numericRates[i - j];
+                  }
+                  trendlineData.push(sum / windowSize);
+                }
+              }
+            }
+
+            // 特定店舗か全体かによってスタイルを変更
+            const borderColor = selectedStore ? "rgba(33, 150, 243, 1)" : "rgba(76, 175, 80, 1)";
+            const backgroundColor = selectedStore ? "rgba(33, 150, 243, 0.1)" : "rgba(76, 175, 80, 0.1)";
+
+            // データセット定義
+            const datasets = [
+              {
+                label: "実働率 (%)",
+                data: effectiveRates,
+                borderColor: borderColor,
+                backgroundColor: backgroundColor,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.2,
+                pointRadius: labels.length > 100 ? 0 : 2,
+                pointHoverRadius: 6,
+                pointBackgroundColor: borderColor,
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2
+              }
+            ];
+
+            // トレンドラインをデータセットに追加（データが十分にある場合）
+            if (trendlineData.length > 5) {
+              datasets.push({
+                label: "トレンド",
+                data: trendlineData,
+                borderColor: "rgba(255, 159, 64, 0.8)",
+                backgroundColor: "rgba(255, 159, 64, 0)",
+                borderWidth: 1.5,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 0
+              });
+            }
 
             charts.history = new Chart(ctx, {
               type: "line",
               data: {
                 labels: labels,
-                datasets: [{
-                  label: "実働率 (%)",
-                  data: effectiveRates,
-                  borderColor: "rgba(33, 150, 243, 1)",
-                  backgroundColor: "rgba(33, 150, 243, 0.1)",
-                  borderWidth: 2,
-                  fill: true,
-                  tension: 0.2,
-                  pointRadius: labels.length > 100 ? 0 : 2,
-                  pointHoverRadius: 6,
-                  pointBackgroundColor: "rgba(33, 150, 243, 1)",
-                  pointBorderColor: "#fff",
-                  pointBorderWidth: 2
-                }]
+                datasets: datasets
               },
               options: {
                 responsive: true,
@@ -1015,9 +1122,9 @@
                 plugins: {
                   title: {
                     display: true,
-                    text: (document.getElementById("storeSelectHistory")?.value === "") 
+                    text: (selectedStore === "") 
                           ? "全店舗の平均稼働率（期間指定）"
-                          : `店舗(${document.getElementById("storeSelectHistory")?.value})の履歴グラフ`,
+                          : `店舗「${selectedStore}」の履歴グラフ`,
                     font: { size: 20, weight: 'bold' }
                   },
                   tooltip: { 
@@ -1028,6 +1135,21 @@
                     callbacks: { 
                       label: context => `稼働率: ${context.parsed.y}%` 
                     } 
+                  },
+                  zoom: {
+                    pan: { 
+                      enabled: true,
+                      mode: 'xy',
+                      threshold: 5
+                    },
+                    zoom: { 
+                      wheel: { enabled: true },
+                      pinch: { enabled: true },
+                      mode: 'xy',
+                      onZoomComplete: function() {
+                        if (resetZoomBtn) resetZoomBtn.style.display = 'block';
+                      }
+                    }
                   },
                   crosshair: {
                     line: {
@@ -1046,7 +1168,7 @@
                 scales: {
                   y: { 
                     beginAtZero: true, 
-                    max: 100, 
+                    max: Math.min(Math.ceil(maxRate * 1.1), 100), // データに応じたスケール
                     title: { 
                       display: true, 
                       text: "実働率 (%)",
@@ -1082,7 +1204,7 @@
                       drawTicks: true
                     },
                     ticks: {
-                      maxTicksLimit: Math.min(labels.length, 15),
+                      maxTicksLimit: Math.min(Math.ceil(labels.length / 5), 15),
                       font: { size: 11 },
                       padding: 5,
                       maxRotation: 45,
@@ -1099,14 +1221,36 @@
               }
             });
 
-            // ズーム機能を無効化したため、リセットボタンは不要
+            // ズームリセットボタンのイベントハンドラ
+            if (resetZoomBtn) {
+              resetZoomBtn.style.display = 'none'; // 初期状態は非表示
+              resetZoomBtn.addEventListener('click', function() {
+                if (charts.history) {
+                  charts.history.resetZoom();
+                  resetZoomBtn.style.display = 'none';
+                }
+              });
+            }
 
+            // 統計情報の表示
             const historyStats = document.getElementById("historyStats");
-            if (effectiveRates.length > 0) {
-              const numericRates = effectiveRates.map(Number);
-              const overallAvg = numericRates.reduce((a, b) => a + b, 0) / numericRates.length;
-              historyStats.textContent = `期間内サンプル数: ${numericRates.length} / 平均稼働率: ${overallAvg.toFixed(1)}%`;
-            } else {
+            if (historyStats && effectiveRates.length > 0) {
+              const overallAvg = avgRate;
+              const maxRateValue = maxRate;
+              const minRateValue = minRate;
+              const latestRate = numericRates[numericRates.length - 1];
+              
+              // 詳細な統計情報
+              historyStats.innerHTML = `
+                <div class="d-flex flex-wrap justify-content-between">
+                  <div><strong>期間内サンプル数:</strong> ${numericRates.length}</div>
+                  <div><strong>平均稼働率:</strong> ${overallAvg.toFixed(1)}%</div>
+                  <div><strong>最高稼働率:</strong> ${maxRateValue.toFixed(1)}%</div>
+                  <div><strong>最低稼働率:</strong> ${minRateValue.toFixed(1)}%</div>
+                  <div><strong>最新稼働率:</strong> ${latestRate.toFixed(1)}%</div>
+                </div>
+              `;
+            } else if (historyStats) {
               historyStats.textContent = "該当データなし";
             }
         }
@@ -1157,19 +1301,23 @@
         async function updateHourlyAnalysis() {
           const loadingElement = document.getElementById('hourlyAnalysisLoading');
           const containerElement = document.getElementById('hourlyAnalysisContainer');
+          const errorElement = document.getElementById('hourlyAnalysisError');
+          const peakHoursInfo = document.getElementById('peakHoursInfo');
 
           if (!loadingElement || !containerElement) {
             console.error('Hourly analysis elements not found in the DOM');
             return;
           }
 
+          // 表示状態の初期化
           loadingElement.style.display = 'block';
           containerElement.style.display = 'none';
+          if (errorElement) errorElement.style.display = 'none';
+          if (peakHoursInfo) peakHoursInfo.style.display = 'none';
 
           try {
             showSpinner();
             const data = await fetchWithRetry("/api/history", {}, 3, 2000);
-            console.log("Hourly analysis data:", data);
 
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if(hourlyStoreSelect) {
@@ -1179,6 +1327,10 @@
             const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
             let filtered = selectedStore ? data.filter(record => record.store_name === selectedStore) : data;
 
+            // ピーク時間帯をハイライトするオプション
+            const showPeakHours = document.getElementById('showPeakHours')?.checked || false;
+
+            // 時間帯ごとのデータを集計
             const hourly = {};
             filtered.forEach(record => {
               // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
@@ -1188,40 +1340,146 @@
                 const rate = record.rate ? record.rate : 
                   ((record.working_staff - record.active_staff) / record.working_staff) * 100;
 
-                if (!hourly[hour]) hourly[hour] = { sum: 0, count: 0 };
+                if (!hourly[hour]) hourly[hour] = { sum: 0, count: 0, samples: [] };
                 hourly[hour].sum += rate;
                 hourly[hour].count += 1;
+                hourly[hour].samples.push({
+                  timestamp: record.timestamp,
+                  rate: rate,
+                  working_staff: record.working_staff,
+                  active_staff: record.active_staff
+                });
               }
             });
 
+            // 時間帯ごとの平均稼働率を計算
             const labels = [];
             const avgRates = [];
             for (let h = 0; h < 24; h++) {
               labels.push(`${h}:00`);
-              avgRates.push(hourly[h] && hourly[h].count > 0 ? (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
+              avgRates.push(hourly[h] && hourly[h].count > 0 ? 
+                (hourly[h].sum / hourly[h].count).toFixed(1) : "0");
             }
 
+            // ピーク時間帯の検出（数値化して、最大値を持つ時間を中心に連続する高稼働時間帯）
+            const numericRates = avgRates.map(r => parseFloat(r));
+            
+            // ピーク時間帯を検出
+            let peakHour = numericRates.indexOf(Math.max(...numericRates));
+            let peakHours = [peakHour];
+            
+            // ピーク時間帯の前後も検出（閾値：最大値の85%以上）
+            const threshold = Math.max(...numericRates) * 0.85;
+            
+            // 前の時間帯をチェック
+            let prevHour = (peakHour - 1 + 24) % 24; // 24時間制で循環
+            while (numericRates[prevHour] >= threshold) {
+              peakHours.unshift(prevHour);
+              prevHour = (prevHour - 1 + 24) % 24;
+              if (peakHours.length >= 8) break; // 無限ループ防止
+            }
+            
+            // 後の時間帯をチェック
+            let nextHour = (peakHour + 1) % 24;
+            while (numericRates[nextHour] >= threshold) {
+              peakHours.push(nextHour);
+              nextHour = (nextHour + 1) % 24;
+              if (peakHours.length >= 8) break; // 無限ループ防止
+            }
+            
+            // ピーク時間帯の情報を表示
+            const peakHoursRange = document.getElementById('peakHoursRange');
+            if (peakHoursRange && peakHoursInfo) {
+              // ピーク時間帯を時刻表示に変換
+              const peakHoursText = peakHours
+                .sort((a, b) => a - b)
+                .map(h => `${h}:00`)
+                .join('〜');
+              
+              peakHoursRange.textContent = peakHoursText;
+              peakHoursInfo.style.display = 'block';
+            }
+
+            // バックグラウンドカラーのグラデーション設定
+            const backgroundColors = [];
+            for (let h = 0; h < 24; h++) {
+              // 深夜時間帯（22時～6時）は薄い青、それ以外は薄い緑
+              const isNightTime = (h >= 22 || h <= 6);
+              // ピーク時間帯の判定
+              const isPeakHour = peakHours.includes(h) && showPeakHours;
+              
+              if (isPeakHour) {
+                // ピーク時間帯
+                backgroundColors.push('rgba(255, 193, 7, 0.2)');
+              } else if (isNightTime) {
+                // 深夜時間帯
+                backgroundColors.push('rgba(33, 150, 243, 0.1)');
+              } else {
+                // 通常時間帯
+                backgroundColors.push('rgba(76, 175, 80, 0.1)');
+              }
+            }
+
+            // チャートの作成
             const ctx = document.getElementById("hourlyChart").getContext("2d");
             if (charts.hourly) charts.hourly.destroy();
+
+            // 時間帯別平均稼働率データセット
+            const datasets = [
+              {
+                label: "平均実働率 (%)",
+                data: avgRates,
+                borderColor: "rgba(76, 175, 80, 1)",
+                borderWidth: 2.5,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+                pointBackgroundColor: avgRates.map((rate, index) => 
+                  peakHours.includes(index) && showPeakHours ? 
+                    "rgba(255, 193, 7, 1)" : "rgba(76, 175, 80, 1)"),
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                fill: true,
+                segment: {
+                  borderColor: ctx => {
+                    // 時間帯によって線の色を変更
+                    const index = ctx.p0DataIndex;
+                    if (peakHours.includes(index) && showPeakHours) {
+                      return "rgba(255, 193, 7, 0.8)"; // ピーク時間帯
+                    } else if (index >= 22 || index <= 6) {
+                      return "rgba(33, 150, 243, 0.8)"; // 深夜時間帯
+                    }
+                    return "rgba(76, 175, 80, 1)"; // 通常時間帯
+                  }
+                },
+                backgroundColor: backgroundColors
+              }
+            ];
+
+            // 最大値と最小値を計算
+            const maxRate = Math.max(...numericRates);
+            const minRate = Math.min(...numericRates);
+            // 平均稼働率の計算
+            const avgRate = numericRates.reduce((sum, rate) => sum + rate, 0) / numericRates.length;
+
+            // 平均値のデータセット追加（横線）
+            datasets.push({
+              label: "全体平均",
+              data: Array(24).fill(avgRate.toFixed(1)),
+              borderColor: "rgba(150, 150, 150, 0.7)",
+              borderWidth: 1,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 0,
+              tension: 0
+            });
 
             charts.hourly = new Chart(ctx, {
               type: "line",
               data: {
                 labels: labels,
-                datasets: [{
-                  label: "平均実働率 (%)",
-                  data: avgRates,
-                  borderColor: "rgba(76, 175, 80, 1)",
-                  backgroundColor: "rgba(76, 175, 80, 0.1)",
-                  borderWidth: 2.5,
-                  fill: true,
-                  tension: 0.4,
-                  pointRadius: 4,
-                  pointHoverRadius: 7,
-                  pointBackgroundColor: "rgba(76, 175, 80, 1)",
-                  pointBorderColor: "#fff",
-                  pointBorderWidth: 2
-                }]
+                datasets: datasets
               },
               options: {
                 responsive: true,
@@ -1233,7 +1491,9 @@
                 plugins: {
                   title: { 
                     display: true, 
-                    text: "時間帯別分析", 
+                    text: selectedStore ? 
+                      `「${selectedStore}」の時間帯別分析` : 
+                      "全店舗の時間帯別分析", 
                     font: { 
                       size: 20,
                       weight: 'bold'
@@ -1245,9 +1505,33 @@
                     bodyFont: { size: 14 },
                     padding: 10,
                     callbacks: { 
-                      label: context => `稼働率: ${context.parsed.y}%`,
+                      label: context => {
+                        if (context.dataset.label === "全体平均") {
+                          return `全体平均: ${context.parsed.y}%`;
+                        }
+                        return `稼働率: ${context.parsed.y}%`;
+                      },
                       title: (items) => {
-                        return `${items[0].label} の統計`;
+                        const hour = parseInt(items[0].label);
+                        // 時間帯の特徴を追加
+                        let timeDesc = "";
+                        if (hour >= 22 || hour <= 5) {
+                          timeDesc = "（深夜時間帯）";
+                        } else if (hour >= 17 && hour <= 21) {
+                          timeDesc = "（夕方〜夜）";
+                        } else if (hour >= 12 && hour <= 16) {
+                          timeDesc = "（昼〜午後）";
+                        } else if (hour >= 6 && hour <= 11) {
+                          timeDesc = "（朝〜昼）";
+                        }
+                        return `${items[0].label} ${timeDesc}`;
+                      },
+                      afterBody: (items) => {
+                        const hour = parseInt(items[0].label);
+                        if (hourly[hour] && hourly[hour].count > 0) {
+                          return [`サンプル数: ${hourly[hour].count}件`];
+                        }
+                        return [];
                       }
                     } 
                   },
@@ -1263,12 +1547,36 @@
                     zoom: {
                       enabled: true
                     }
+                  },
+                  annotation: {
+                    annotations: showPeakHours ? {
+                      peakBox: {
+                        type: 'box',
+                        xMin: Math.min(...peakHours) - 0.5,
+                        xMax: Math.max(...peakHours) + 0.5,
+                        yMin: 0,
+                        yMax: 100,
+                        backgroundColor: 'rgba(255, 193, 7, 0.05)',
+                        borderColor: 'rgba(255, 193, 7, 0.3)',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        label: {
+                          display: true,
+                          content: 'ピーク時間帯',
+                          position: 'start',
+                          backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                          font: {
+                            size: 10
+                          }
+                        }
+                      }
+                    } : {}
                   }
                 },
                 scales: {
                   y: { 
                     beginAtZero: true, 
-                    max: 100, 
+                    max: Math.min(Math.ceil(maxRate * 1.1), 100), 
                     title: { 
                       display: true, 
                       text: "実働率 (%)",
@@ -1286,7 +1594,7 @@
                     ticks: {
                       font: { size: 12 },
                       padding: 5,
-                      // 0,25,50,75,100のtickに特別スタイルを適用
+                      // 特定の値に特別スタイルを適用
                       callback: function(value) {
                         if ([0, 25, 50, 75, 100].includes(value)) {
                           return value + '%';
@@ -1309,47 +1617,21 @@
                       lineWidth: 1,
                       drawBorder: true,
                       drawTicks: true,
-                      // 深夜と日中で背景色を少し変える
                       z: -1,
                       drawOnChartArea: true
                     },
                     ticks: {
                       font: { size: 12 },
-                      padding: 8
-                    },
-                    afterDraw: function(chart) {
-                      // 深夜時間帯（22時～6時）をハイライト
-                      const meta = chart.getDatasetMeta(0);
-                      const xScale = chart.scales.x;
-                      const yScale = chart.scales.y;
-                      const ctx = chart.ctx;
-
-                      ctx.save();
-                      ctx.fillStyle = 'rgba(200, 200, 200, 0.05)';
-
-                      for (let i = 22; i <= 23; i++) {
-                        if (xScale.getPixelForValue(i) !== undefined) {
-                          ctx.fillRect(
-                            xScale.getPixelForValue(i),
-                            yScale.top,
-                            xScale.getPixelForValue(i+1) - xScale.getPixelForValue(i),
-                            yScale.height
-                          );
-                        }
+                      padding: 8,
+                      callback: function(value) {
+                        // 時刻表示をカスタマイズ
+                        const hour = parseInt(value);
+                        if (hour === 0) return "0:00 (深夜)";
+                        if (hour === 6) return "6:00 (朝)";
+                        if (hour === 12) return "12:00 (昼)";
+                        if (hour === 18) return "18:00 (夜)";
+                        return `${hour}:00`;
                       }
-
-                      for (let i = 0; i <= 5; i++) {
-                        if (xScale.getPixelForValue(i) !== undefined) {
-                          ctx.fillRect(
-                            xScale.getPixelForValue(i),
-                            yScale.top,
-                            xScale.getPixelForValue(i+1) - xScale.getPixelForValue(i),
-                            yScale.height
-                          );
-                        }
-                      }
-
-                      ctx.restore();
                     }
                   }
                 },
@@ -1362,12 +1644,41 @@
               }
             });
 
-            // ズーム機能を無効化したため、リセットボタンは不要
+            // 統計情報の表示
+            const hourlyStats = document.getElementById("hourlyStats");
+            if (hourlyStats) {
+              // 統計情報を計算
+              const sampleCount = Object.values(hourly).reduce((sum, h) => sum + (h.count || 0), 0);
+              
+              // より詳細な統計情報
+              hourlyStats.innerHTML = `
+                <div class="d-flex flex-wrap justify-content-between">
+                  <div><strong>総サンプル数:</strong> ${sampleCount}件</div>
+                  <div><strong>平均稼働率:</strong> ${avgRate.toFixed(1)}%</div>
+                  <div><strong>最高稼働率:</strong> ${maxRate.toFixed(1)}% (${labels[numericRates.indexOf(maxRate)]})</div>
+                  <div><strong>最低稼働率:</strong> ${minRate.toFixed(1)}% (${labels[numericRates.indexOf(minRate)]})</div>
+                </div>
+              `;
+            }
+
+            // ピークハイライトのイベントハンドラ設定
+            const showPeakHoursCheckbox = document.getElementById('showPeakHours');
+            if (showPeakHoursCheckbox) {
+              showPeakHoursCheckbox.addEventListener('change', updateHourlyAnalysis);
+            }
+
             hideSpinner();
           } catch (err) {
             console.error("時間帯別分析エラー:", err);
             console.error(err.stack);
             handleError(err, "updateHourlyAnalysis");
+            
+            // エラー表示
+            if (errorElement) {
+              errorElement.textContent = `データ分析中にエラーが発生しました: ${err.message || "不明なエラー"}`;
+              errorElement.style.display = 'block';
+            }
+            
             hideSpinner();
           } finally {
             // 要素が存在する場合のみ表示状態を変更
