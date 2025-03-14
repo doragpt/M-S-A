@@ -53,41 +53,115 @@ def format_store_status(item, timezone=None):
     """
     StoreStatusモデルのレコードをAPIレスポンス用に整形する関数
     timezonがNoneの場合はタイムゾーンを考慮しない
+    
+    エラーが発生した場合も有効なデータを返す（例外を発生させない）
     """
+    if not item:
+        logging.warning("format_store_status: 入力アイテムがNoneです")
+        return {
+            'id': None,
+            'timestamp': None,
+            'store_name': '不明',
+            'biz_type': '不明',
+            'genre': '不明',
+            'area': '不明',
+            'total_staff': 0,
+            'working_staff': 0,
+            'active_staff': 0,
+            'rate': 0,
+            'url': '',
+            'shift_time': ''
+        }
+        
     try:
         # タイムスタンプにタイムゾーン情報を追加してJSTにする
-        timestamp = item.timestamp
-        if timestamp and timezone and timestamp.tzinfo is None:
-            timestamp = timezone.localize(timestamp)
-
-        formatted_timestamp = timestamp.isoformat() if timestamp else None
+        timestamp = getattr(item, 'timestamp', None)
+        formatted_timestamp = None
+        
+        if timestamp:
+            try:
+                if timezone and timestamp.tzinfo is None:
+                    timestamp = timezone.localize(timestamp)
+                formatted_timestamp = timestamp.isoformat()
+            except Exception as ts_err:
+                logging.error(f"タイムスタンプ変換エラー: {ts_err}, 原値: {timestamp}")
+                # フォールバック: 文字列化
+                formatted_timestamp = str(timestamp)
 
         # 稼働率の計算 - ゼロ除算エラー対策を追加
         rate = 0
-        working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
-        active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
+        working_staff = getattr(item, 'working_staff', 0)
+        active_staff = getattr(item, 'active_staff', 0)
+        
+        # None値の処理
+        working_staff = 0 if working_staff is None else working_staff
+        active_staff = 0 if active_staff is None else active_staff
 
         if working_staff > 0:
-            rate = ((working_staff - active_staff) / working_staff) * 100
+            try:
+                rate = ((working_staff - active_staff) / working_staff) * 100
+            except (ZeroDivisionError, TypeError) as calc_err:
+                logging.warning(f"稼働率計算エラー: {calc_err}, working_staff={working_staff}, active_staff={active_staff}")
+                rate = 0
 
+        # 安全に属性を取得
+        store_name = getattr(item, 'store_name', '不明')
+        biz_type = getattr(item, 'biz_type', '不明') or '不明'
+        genre = getattr(item, 'genre', '不明') or '不明'
+        area = getattr(item, 'area', '不明') or '不明'
+        item_id = getattr(item, 'id', None)
+        url = getattr(item, 'url', '') or ''
+        shift_time = getattr(item, 'shift_time', '') or ''
+        
         # 結果を辞書にまとめる
         return {
-            'id': item.id,
+            'id': item_id,
             'timestamp': formatted_timestamp,
-            'store_name': item.store_name,
-            'biz_type': item.biz_type if hasattr(item, 'biz_type') and item.biz_type else '不明',
-            'genre': item.genre if hasattr(item, 'genre') and item.genre else '不明',
-            'area': item.area if hasattr(item, 'area') and item.area else '不明',
+            'store_name': store_name,
+            'biz_type': biz_type,
+            'genre': genre,
+            'area': area,
             'total_staff': working_staff + active_staff,
             'working_staff': working_staff,
             'active_staff': active_staff,
             'rate': round(rate, 1),
-            'url': item.url if hasattr(item, 'url') and item.url else '',
-            'shift_time': item.shift_time if hasattr(item, 'shift_time') and item.shift_time else ''
+            'url': url,
+            'shift_time': shift_time
         }
     except Exception as e:
         logging.error(f"形式化エラー: {e}, item: {item}")
-        return None
+        # 最低限のデータを返す
+        try:
+            return {
+                'id': getattr(item, 'id', None),
+                'timestamp': str(getattr(item, 'timestamp', None)),
+                'store_name': getattr(item, 'store_name', '不明'),
+                'biz_type': '不明',
+                'genre': '不明',
+                'area': '不明',
+                'total_staff': 0,
+                'working_staff': 0,
+                'active_staff': 0,
+                'rate': 0,
+                'url': '',
+                'shift_time': ''
+            }
+        except:
+            # 完全にフォールバック
+            return {
+                'id': None,
+                'timestamp': None,
+                'store_name': '不明',
+                'biz_type': '不明',
+                'genre': '不明',
+                'area': '不明',
+                'total_staff': 0,
+                'working_staff': 0,
+                'active_staff': 0,
+                'rate': 0,
+                'url': '',
+                'shift_time': ''
+            }
 
 def prepare_data_for_integrated_dashboard():
     """統合ダッシュボード用のデータを準備"""
