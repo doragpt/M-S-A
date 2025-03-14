@@ -227,9 +227,23 @@
         <!-- トップ10店舗グラフ -->
         <div class="row my-3">
           <div class="col">
-            <div id="top10ChartLoading" style="display: none;">読み込み中...</div>
-            <div id="top10ChartContainer">
-              <canvas id="currentRateChart"></canvas>
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">トップ10店舗の現在稼働率</h5>
+                <div id="top10ChartLoading" class="text-center py-3" style="display: none;">
+                  <div class="spinner-border text-primary mb-2" role="status">
+                    <span class="visually-hidden">読み込み中...</span>
+                  </div>
+                  <p>データを読み込み中です...</p>
+                </div>
+                <div id="top10ChartContainer">
+                  <canvas id="currentRateChart"></canvas>
+                </div>
+              </div>
+              <div class="card-footer text-end">
+                <button id="exportCSV" class="btn btn-secondary">CSVエクスポート</button>
+                <button id="refreshDashboardBtn" class="btn btn-primary ms-2">データ更新</button>
+              </div>
             </div>
           </div>
         </div>
@@ -361,20 +375,72 @@
       <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
         <div class="my-4">
           <h2 class="mb-4 text-center">エリア統計</h2>
+          
+          <!-- エリア選択フィルター -->
+          <div class="row mb-4">
+            <div class="col-md-6 mx-auto">
+              <div class="input-group">
+                <span class="input-group-text">エリア検索</span>
+                <input type="text" id="areaSearchInput" class="form-control" placeholder="エリア名で検索...">
+                <button class="btn btn-outline-secondary" id="areaResetFilter">リセット</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- データローディング -->
+          <div id="areaStatsLoading" class="text-center py-3" style="display: none;">
+            <div class="spinner-border text-primary mb-2" role="status">
+              <span class="visually-hidden">読み込み中...</span>
+            </div>
+            <p>エリアデータを読み込み中です...</p>
+          </div>
+          
+          <!-- エリアサマリー -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4 text-center border-end">
+                  <h5>エリア総数</h5>
+                  <h3 id="totalAreaCount">--</h3>
+                </div>
+                <div class="col-md-4 text-center border-end">
+                  <h5>最高稼働エリア</h5>
+                  <h3 id="topRateArea">--</h3>
+                  <p id="topRateAreaValue" class="text-success">--</p>
+                </div>
+                <div class="col-md-4 text-center">
+                  <h5>最多店舗エリア</h5>
+                  <h3 id="topStoreArea">--</h3>
+                  <p id="topStoreCount" class="text-primary">--</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- エリアテーブル -->
           <div class="table-responsive mb-3">
-            <table class="table table-bordered table-striped">
+            <table id="areaStatsTable" class="table table-bordered table-striped">
               <thead>
                 <tr>
                   <th>エリア</th>
                   <th>店舗数</th>
                   <th>平均稼働率 (%)</th>
+                  <th>詳細</th>
                 </tr>
               </thead>
               <tbody id="areaTable"></tbody>
             </table>
           </div>
+          
+          <!-- エリアグラフ -->
           <div class="card">
             <div class="card-body">
+              <div class="mb-3">
+                <select id="areaChartType" class="form-select form-select-sm w-auto">
+                  <option value="rate">平均稼働率</option>
+                  <option value="store">店舗数</option>
+                </select>
+              </div>
               <canvas id="areaChart"></canvas>
             </div>
           </div>
@@ -385,18 +451,50 @@
       <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
         <div class="my-4">
           <h2 class="mb-4 text-center">業種内ジャンルランキング</h2>
-          <div class="row mb-3">
+          
+          <!-- 業種選択 -->
+          <div class="row mb-4">
             <div class="col-md-6">
               <label for="industrySelectType" class="form-label">業種を選択</label>
               <select id="industrySelectType" class="form-select"></select>
             </div>
-            <div class="col-md-6">
-              <div class="spinner-border text-primary" role="status" style="display:none;">
+            <div class="col-md-6 d-flex align-items-end">
+              <button id="updateIndustryBtn" class="btn btn-primary me-2">更新</button>
+              <div id="industryLoadingSpinner" class="spinner-border text-primary" role="status" style="display:none;">
                 <span class="visually-hidden">Loading...</span>
               </div>
             </div>
           </div>
-          <div class="table-responsive mb-3">
+          
+          <!-- 業種サマリー -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4 text-center border-end">
+                  <h5>ジャンル総数</h5>
+                  <h3 id="totalGenreCount">--</h3>
+                </div>
+                <div class="col-md-4 text-center border-end">
+                  <h5>トップジャンル</h5>
+                  <h3 id="topGenre">--</h3>
+                  <p id="topGenreRate" class="text-success">--</p>
+                </div>
+                <div class="col-md-4 text-center">
+                  <h5>店舗数トップ</h5>
+                  <h3 id="topGenreByStores">--</h3>
+                  <p id="topGenreStoreCount" class="text-primary">--</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- データなし表示 -->
+          <div id="noGenreDataAlert" class="alert alert-warning" style="display:none;">
+            選択された業種のジャンルデータがありません。別の業種を選択してください。
+          </div>
+          
+          <!-- ジャンルテーブル -->
+          <div id="genreTableContainer" class="table-responsive mb-3">
             <table id="typeTable" class="table table-bordered table-striped">
               <thead>
                 <tr>
@@ -404,14 +502,35 @@
                   <th>ジャンル</th>
                   <th>店舗数</th>
                   <th>平均稼働率 (%)</th>
+                  <th>対平均比</th>
                 </tr>
               </thead>
               <tbody id="typeTableBody"></tbody>
             </table>
           </div>
+          
+          <!-- ジャンルグラフ -->
           <div class="card">
             <div class="card-body">
-              <canvas id="typeChart"></canvas>
+              <div class="mb-3">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="chartViewType" id="rateView" value="rate" checked>
+                  <label class="form-check-label" for="rateView">稼働率表示</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="chartViewType" id="storeView" value="store">
+                  <label class="form-check-label" for="storeView">店舗数表示</label>
+                </div>
+              </div>
+              <div id="typeChartLoading" class="text-center py-3" style="display: none;">
+                <div class="spinner-border text-primary mb-2" role="status">
+                  <span class="visually-hidden">読み込み中...</span>
+                </div>
+                <p>データを読み込み中です...</p>
+              </div>
+              <div id="typeChartContainer">
+                <canvas id="typeChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -421,43 +540,130 @@
       <div class="tab-pane fade" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
         <div class="my-4">
           <h2 class="mb-4 text-center">平均稼働ランキング</h2>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="rankingTypeSelect" class="form-label">ランキングタイプ</label>
-              <select id="rankingTypeSelect" class="form-select">
-                <option value="all" selected>全店舗</option>
-                <option value="industry">業種別</option>
-              </select>
-            </div>
-            <div class="col-md-6" id="industryFilterDiv" style="display: none;">
-              <label for="industrySelectRanking" class="form-label">業種を選択</label>
-              <select id="industrySelectRanking" class="form-select">
-                <!-- JSで動的に追加 -->
-              </select>
-              <div class="spinner-border text-primary" role="status" style="display:none;">
-                <span class="visually-hidden">Loading...</span>
+          
+          <!-- フィルター設定エリア -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <div class="row g-3">
+                <!-- ランキングタイプ -->
+                <div class="col-md-4">
+                  <label for="rankingTypeSelect" class="form-label">ランキングタイプ</label>
+                  <select id="rankingTypeSelect" class="form-select">
+                    <option value="all" selected>全店舗</option>
+                    <option value="industry">業種別</option>
+                    <option value="area">エリア別</option>
+                  </select>
+                </div>
+                
+                <!-- 業種フィルター -->
+                <div class="col-md-4" id="industryFilterDiv" style="display: none;">
+                  <label for="industrySelectRanking" class="form-label">業種を選択</label>
+                  <select id="industrySelectRanking" class="form-select">
+                    <!-- JSで動的に追加 -->
+                  </select>
+                </div>
+                
+                <!-- エリアフィルター -->
+                <div class="col-md-4" id="areaFilterDiv" style="display: none;">
+                  <label for="areaSelectRanking" class="form-label">エリアを選択</label>
+                  <select id="areaSelectRanking" class="form-select">
+                    <!-- JSで動的に追加 -->
+                  </select>
+                </div>
+                
+                <!-- 表示件数 -->
+                <div class="col-md-4">
+                  <label for="rankingLimitSelect" class="form-label">表示件数</label>
+                  <select id="rankingLimitSelect" class="form-select">
+                    <option value="10">TOP 10</option>
+                    <option value="20">TOP 20</option>
+                    <option value="50" selected>TOP 50</option>
+                    <option value="100">TOP 100</option>
+                    <option value="0">全件表示</option>
+                  </select>
+                </div>
+                
+                <!-- 更新ボタン -->
+                <div class="col-md-12 text-end">
+                  <button id="updateRankingBtn" class="btn btn-primary">
+                    <i class="bi bi-arrow-repeat me-1"></i>ランキング更新
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-          <div class="col-md-6 mb-3">
-            <button id="updateRankingBtn" class="btn btn-primary">ランキング更新</button>
+          
+          <!-- サマリーカード -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="card-title">集計店舗数</h5>
+                  <h3 id="rankingTotalStores" class="mb-0">--</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="card-title">平均稼働率</h5>
+                  <h3 id="rankingAvgRate" class="mb-0">--</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="card-title">トップ店舗の稼働率</h5>
+                  <h3 id="rankingTopRate" class="mb-0">--</h3>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="table-responsive">
-            <div id="averageRankingLoading" style="display: none;">読み込み中...</div>
-            <div id="averageRankingContainer">
-              <table id="rankingTable" class="table table-bordered table-striped">
-                <thead>
-                  <tr>
-                    <th>順位</th>
-                    <th>店舗名</th>
-                    <th>業種</th>
-                    <th>ジャンル</th>
-                    <th>エリア</th>
-                    <th>平均稼働率 (%)</th>
-                  </tr>
-                </thead>
-                <tbody id="rankingTableBody"></tbody>
-              </table>
+          
+          <!-- ランキングテーブル -->
+          <div class="card">
+            <div class="card-body">
+              <div id="averageRankingLoading" class="text-center py-3" style="display: none;">
+                <div class="spinner-border text-primary mb-2" role="status">
+                  <span class="visually-hidden">読み込み中...</span>
+                </div>
+                <p>ランキングデータを読み込み中です...</p>
+              </div>
+              <div id="averageRankingContainer">
+                <!-- 検索・フィルター -->
+                <div class="mb-3">
+                  <div class="input-group">
+                    <span class="input-group-text">検索</span>
+                    <input type="text" id="rankingSearchInput" class="form-control" placeholder="店舗名・ジャンル・エリアで検索...">
+                  </div>
+                </div>
+                
+                <!-- テーブル -->
+                <div class="table-responsive">
+                  <table id="rankingTable" class="table table-bordered table-striped table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>順位</th>
+                        <th>店舗名</th>
+                        <th>業種</th>
+                        <th>ジャンル</th>
+                        <th>エリア</th>
+                        <th>平均稼働率 (%)</th>
+                        <th>サンプル数</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rankingTableBody"></tbody>
+                  </table>
+                </div>
+                
+                <!-- ページネーション -->
+                <nav aria-label="ランキングページネーション" id="rankingPagination" class="mt-3">
+                  <ul class="pagination justify-content-center">
+                    <!-- JSで動的に生成 -->
+                  </ul>
+                </nav>
+              </div>
             </div>
           </div>
         </div>
@@ -2594,6 +2800,226 @@
           handleError(event.error, 'global');
         });
 
+        // 店舗稼働状況タブ機能強化
+        document.getElementById("refreshDashboardBtn")?.addEventListener("click", () => {
+          updateDashboard();
+          updateTop10Chart();
+        });
+        
+        // エリア統計タブ機能強化
+        function enhanceAreaStatistics() {
+          // エリア検索フィルタリング
+          const areaSearchInput = document.getElementById("areaSearchInput");
+          if (areaSearchInput) {
+            areaSearchInput.addEventListener("input", function() {
+              const searchTerm = this.value.toLowerCase();
+              const rows = document.querySelectorAll("#areaTable tr");
+              
+              rows.forEach(row => {
+                const areaName = row.cells[0].textContent.toLowerCase();
+                if (areaName.includes(searchTerm)) {
+                  row.style.display = "";
+                } else {
+                  row.style.display = "none";
+                }
+              });
+            });
+          }
+          
+          // エリア検索リセットボタン
+          document.getElementById("areaResetFilter")?.addEventListener("click", function() {
+            if (areaSearchInput) areaSearchInput.value = "";
+            document.querySelectorAll("#areaTable tr").forEach(row => {
+              row.style.display = "";
+            });
+          });
+          
+          // グラフ表示切替
+          document.getElementById("areaChartType")?.addEventListener("change", function() {
+            updateAreaChart(this.value);
+          });
+        }
+        
+        // エリアチャート更新
+        function updateAreaChart(chartType = 'rate') {
+          if (!charts.area) return;
+          
+          const areaData = charts.area.data.labels.map((label, index) => {
+            return {
+              area: label,
+              rate: charts.area.data.datasets[0].data[index],
+              storeCount: parseInt(document.querySelector(`#areaTable tr:nth-child(${index+1}) td:nth-child(2)`).textContent)
+            };
+          });
+          
+          if (chartType === 'store') {
+            // 店舗数でソート
+            areaData.sort((a, b) => b.storeCount - a.storeCount);
+            
+            charts.area.data.labels = areaData.map(d => d.area);
+            charts.area.data.datasets[0].data = areaData.map(d => d.storeCount);
+            charts.area.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.7)';
+            charts.area.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
+            charts.area.data.datasets[0].label = '店舗数';
+            charts.area.options.plugins.title.text = 'エリア別 店舗数';
+            charts.area.options.scales.y.title.text = '店舗数';
+            charts.area.options.scales.y.max = Math.max(...areaData.map(d => d.storeCount)) * 1.1;
+          } else {
+            // 稼働率でソート
+            areaData.sort((a, b) => b.rate - a.rate);
+            
+            charts.area.data.labels = areaData.map(d => d.area);
+            charts.area.data.datasets[0].data = areaData.map(d => d.rate);
+            charts.area.data.datasets[0].backgroundColor = 'rgba(153, 102, 255, 0.7)';
+            charts.area.data.datasets[0].borderColor = 'rgba(153, 102, 255, 1)';
+            charts.area.data.datasets[0].label = '平均稼働率 (%)';
+            charts.area.options.plugins.title.text = 'エリア別 平均稼働率';
+            charts.area.options.scales.y.title.text = '平均稼働率 (%)';
+            charts.area.options.scales.y.max = 100;
+          }
+          
+          charts.area.update();
+        }
+        
+        // 業種内ジャンルランキング強化
+        function enhanceIndustryRanking() {
+          // 更新ボタン
+          document.getElementById("updateIndustryBtn")?.addEventListener("click", function() {
+            const industrySelector = document.getElementById("industrySelectType");
+            if (industrySelector) updateIndustryRanking(industrySelector.value);
+          });
+          
+          // グラフ表示切替
+          document.querySelectorAll('input[name="chartViewType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+              updateGenreChart(this.value);
+            });
+          });
+        }
+        
+        // ジャンルグラフ更新
+        function updateGenreChart(chartType = 'rate') {
+          if (!charts.type) return;
+          
+          const genreData = charts.type.data.labels.map((label, index) => {
+            return {
+              genre: label,
+              rate: parseFloat(charts.type.data.datasets[0].data[index]),
+              storeCount: parseInt(document.querySelector(`#typeTableBody tr:nth-child(${index+1}) td:nth-child(3)`).textContent)
+            };
+          });
+          
+          if (chartType === 'store') {
+            // 店舗数でソート
+            genreData.sort((a, b) => b.storeCount - a.storeCount);
+            
+            charts.type.data.labels = genreData.map(d => d.genre);
+            charts.type.data.datasets[0].data = genreData.map(d => d.storeCount);
+            charts.type.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.7)';
+            charts.type.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
+            charts.type.data.datasets[0].label = '店舗数';
+            charts.type.options.scales.y.title = { display: true, text: '店舗数' };
+            charts.type.options.scales.y.max = Math.max(...genreData.map(d => d.storeCount)) * 1.1;
+          } else {
+            // 稼働率でソート
+            genreData.sort((a, b) => b.rate - a.rate);
+            
+            charts.type.data.labels = genreData.map(d => d.genre);
+            charts.type.data.datasets[0].data = genreData.map(d => d.rate);
+            charts.type.data.datasets[0].backgroundColor = 'rgba(255, 206, 86, 0.7)';
+            charts.type.data.datasets[0].borderColor = 'rgba(255, 206, 86, 1)';
+            charts.type.data.datasets[0].label = '平均稼働率 (%)';
+            charts.type.options.scales.y.title = { display: true, text: '平均稼働率 (%)' };
+            charts.type.options.scales.y.max = 100;
+          }
+          
+          charts.type.update();
+        }
+        
+        // 平均稼働ランキング強化
+        function enhanceRankingTab() {
+          // エリアフィルター対応
+          document.getElementById("rankingTypeSelect")?.addEventListener("change", function() {
+            const industryFilterDiv = document.getElementById("industryFilterDiv");
+            const areaFilterDiv = document.getElementById("areaFilterDiv");
+            
+            if (this.value === "industry") {
+              if (industryFilterDiv) industryFilterDiv.style.display = "block";
+              if (areaFilterDiv) areaFilterDiv.style.display = "none";
+              fillIndustryDropdownForRanking();
+            } else if (this.value === "area") {
+              if (industryFilterDiv) industryFilterDiv.style.display = "none";
+              if (areaFilterDiv) areaFilterDiv.style.display = "block";
+              fillAreaDropdownForRanking();
+            } else {
+              if (industryFilterDiv) industryFilterDiv.style.display = "none";
+              if (areaFilterDiv) areaFilterDiv.style.display = "none";
+            }
+          });
+          
+          // ランキング検索機能
+          document.getElementById("rankingSearchInput")?.addEventListener("input", function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll("#rankingTableBody tr");
+            
+            rows.forEach(row => {
+              const storeName = row.cells[1].textContent.toLowerCase();
+              const industry = row.cells[2].textContent.toLowerCase();
+              const genre = row.cells[3].textContent.toLowerCase();
+              const area = row.cells[4].textContent.toLowerCase();
+              
+              if (storeName.includes(searchTerm) || 
+                  industry.includes(searchTerm) || 
+                  genre.includes(searchTerm) || 
+                  area.includes(searchTerm)) {
+                row.style.display = "";
+              } else {
+                row.style.display = "none";
+              }
+            });
+          });
+        }
+        
+        // エリアドロップダウン初期化
+        async function fillAreaDropdownForRanking() {
+          try {
+            const areaSelect = document.getElementById("areaSelectRanking");
+            if (!areaSelect) return;
+            
+            const areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
+            
+            areaSelect.innerHTML = '<option value="">すべてのエリア</option>';
+            areaData.forEach(area => {
+              areaSelect.innerHTML += `<option value="${area.area}">${area.area} (${area.store_count}店舗)</option>`;
+            });
+            
+            // ローカルストレージから前回の選択を復元
+            const savedAreaRanking = localStorage.getItem("areaRankingFilter");
+            if (savedAreaRanking) {
+              areaSelect.value = savedAreaRanking;
+            }
+            
+            // 選択変更時の保存処理
+            areaSelect.addEventListener("change", () => {
+              localStorage.setItem("areaRankingFilter", areaSelect.value);
+            });
+          } catch (err) {
+            console.error("エリアドロップダウン取得エラー:", err);
+            handleError(err, "fillAreaDropdownForRanking");
+          }
+        }
+        
+        // 初期化関数を拡張
+        function enhancedInit() {
+          // 基本機能の初期化
+          init();
+          
+          // 機能強化の初期化
+          enhanceAreaStatistics();
+          enhanceIndustryRanking();
+          enhanceRankingTab();
+        }
+
         // タブ切り替え処理
         document.querySelectorAll('.nav-link').forEach(button => {
           button.addEventListener('click', function() {
@@ -2616,8 +3042,8 @@
           });
         });
 
-        // 初期処理実行
-        init();
+        // 拡張版初期処理実行
+        enhancedInit();
       });
     })();
   </script>
