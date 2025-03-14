@@ -44,32 +44,57 @@ def get_db_connection():
                 else:
                     s_decoded = str(s) if not isinstance(s, str) else s
                 
-                # エラー発生を防ぐための簡易処理
+                # エラー発生を防ぐための改善された処理
                 try:
-                    # 最もシンプルな方法を最初に試みる
-                    return datetime.datetime.fromisoformat(s_decoded)
-                except (ValueError, TypeError):
-                    try:
-                        # 標準的なフォーマットを試す
-                        if ' ' in s_decoded:
-                            # スペース区切りの日時
-                            date_part, time_part = s_decoded.split(' ', 1)
-                            if '.' in time_part:
-                                time_part = time_part.split('.')[0]  # マイクロ秒は切り捨て
-                            return datetime.datetime.strptime(f"{date_part} {time_part}", '%Y-%m-%d %H:%M:%S')
-                        elif 'T' in s_decoded:
-                            # ISO形式の日時
+                    # ISOフォーマットを最初に試す
+                    if 'T' in s_decoded:
+                        # マイクロ秒の処理を改善
+                        if '.' in s_decoded:
+                            # マイクロ秒付きのISOフォーマット
+                            main_part = s_decoded.split('+')[0] if '+' in s_decoded else s_decoded
+                            main_part = main_part.split('Z')[0] if 'Z' in main_part else main_part
+                            date_part, time_part = main_part.split('T')
+                            time_components = time_part.split('.')
+                            time_base = time_components[0]
+                            return datetime.datetime.strptime(f"{date_part}T{time_base}", '%Y-%m-%dT%H:%M:%S')
+                        else:
+                            # マイクロ秒なしのISOフォーマット
                             s_simple = s_decoded.split('+')[0] if '+' in s_decoded else s_decoded
                             s_simple = s_simple.split('Z')[0] if 'Z' in s_simple else s_simple
-                            if '.' in s_simple:
-                                s_simple = s_simple.split('.')[0]  # マイクロ秒は切り捨て
                             return datetime.datetime.strptime(s_simple, '%Y-%m-%dT%H:%M:%S')
+                    elif ' ' in s_decoded:
+                        # スペース区切りの日時
+                        date_part, time_part = s_decoded.split(' ', 1)
+                        if '.' in time_part:
+                            time_components = time_part.split('.')
+                            time_base = time_components[0]
+                            return datetime.datetime.strptime(f"{date_part} {time_base}", '%Y-%m-%d %H:%M:%S')
                         else:
-                            # 日付のみ
-                            return datetime.datetime.strptime(s_decoded, '%Y-%m-%d')
-                    except (ValueError, TypeError):
-                        # すべての方法が失敗した場合は現在時刻を返す（重大なエラーを防ぐため）
-                        logger.warning(f"日付変換に失敗。現在時刻を代用: {s_decoded}")
+                            return datetime.datetime.strptime(s_decoded, '%Y-%m-%d %H:%M:%S')
+                    else:
+                        # 日付のみ
+                        return datetime.datetime.strptime(s_decoded, '%Y-%m-%d')
+                except (ValueError, TypeError) as parse_error:
+                    logger.warning(f"標準フォーマットでの日付変換に失敗: {parse_error}, 入力値: {s_decoded}")
+                    
+                    # 最後の手段：文字列の切り捨てと整形
+                    try:
+                        if 'T' in s_decoded:
+                            date_part, time_part = s_decoded.split('T', 1)
+                            time_part = time_part.split('.')[0] if '.' in time_part else time_part
+                            time_part = time_part.split('+')[0] if '+' in time_part else time_part
+                            time_part = time_part.split('Z')[0] if 'Z' in time_part else time_part
+                            # 時間が6文字以下であることを確認 (HH:MM:SS)
+                            if len(time_part) > 8:
+                                time_part = time_part[:8]
+                            return datetime.datetime.strptime(f"{date_part}T{time_part}", '%Y-%m-%dT%H:%M:%S')
+                        else:
+                            # 現在時刻を返す（最終的なフォールバック）
+                            logger.warning(f"日付変換に最終的に失敗。現在時刻を代用: {s_decoded}")
+                            return datetime.datetime.now()
+                    except Exception:
+                        # すべての方法が失敗した場合は現在時刻を返す
+                        logger.warning(f"すべての日付変換方法に失敗。現在時刻を代用: {s_decoded}")
                         return datetime.datetime.now()
             except Exception as e:
                 logger.error(f"予期しない日付変換エラー: {e}, 入力値: {repr(s)}")

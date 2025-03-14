@@ -436,7 +436,7 @@ def api_data():
             }
         }
 
-        # 最新レコードを取得するサブクエリを構築
+        # SQLiteを直接使用してデータ取得
         try:
             # データベース接続を取得
             conn = get_db_connection()
@@ -446,27 +446,36 @@ def api_data():
                 app.logger.error("データベース接続が取得できませんでした")
                 return jsonify(fallback_response), 200
             
-            # 各店舗の最新タイムスタンプをサブクエリで取得
-            app.logger.debug("サブクエリの構築開始")
-            
-            # SQLクエリ実行
-            query = """
-            SELECT s.*
-            FROM store_status s
-            JOIN (
+            # クエリの修正 - JOINを避けた単純化バージョン
+            try:
+                # 最初に各店舗の最新タイムスタンプを取得
+                app.logger.debug("最新タイムスタンプを取得するクエリ実行")
+                latest_query = """
                 SELECT store_name, MAX(timestamp) as max_time
                 FROM store_status
                 GROUP BY store_name
-            ) m ON s.store_name = m.store_name AND s.timestamp = m.max_time
-            ORDER BY s.timestamp DESC
-            """
-            
-            # クエリ実行前にログ出力
-            app.logger.debug(f"実行SQLクエリ: {query}")
-            
-            try:
-                all_results = list(conn.execute(query).fetchall())
-                app.logger.info(f"SQLクエリ結果: {len(all_results)}件のレコードを取得")
+                """
+                latest_times = {}
+                for row in conn.execute(latest_query).fetchall():
+                    latest_times[row['store_name']] = row['max_time']
+                
+                # 最新データを個別に取得
+                all_results = []
+                for store_name, max_time in latest_times.items():
+                    try:
+                        store_query = """
+                        SELECT * FROM store_status 
+                        WHERE store_name = ? AND timestamp = ?
+                        LIMIT 1
+                        """
+                        store_result = conn.execute(store_query, (store_name, max_time)).fetchone()
+                        if store_result:
+                            all_results.append(store_result)
+                    except Exception as store_err:
+                        app.logger.warning(f"店舗 '{store_name}' の最新データ取得エラー: {store_err}")
+                        continue
+                
+                app.logger.info(f"最新店舗データ取得: {len(all_results)}件のレコードを取得")
             except Exception as query_err:
                 app.logger.error(f"クエリ実行エラー: {str(query_err)}")
                 app.logger.error(traceback.format_exc())
@@ -540,6 +549,7 @@ def api_data():
             # データをフォーマット
             app.logger.debug("データフォーマット開始")
             formatted_data = []
+            format_errors = 0
             
             for item in all_results:
                 try:
@@ -549,7 +559,8 @@ def api_data():
                 except Exception as fmt_err:
                     app.logger.warning(f"フォーマットエラー: {str(fmt_err)}")
                     app.logger.warning(traceback.format_exc())
-                    # エラーの場合はスキップ
+                    format_errors += 1
+                    # エラーでもformat_store_statusがフォールバックレスポンスを返すようになった
             
             # データベース接続をクローズ
             conn.close()
@@ -582,6 +593,7 @@ def api_data():
                             "max_rate": round(max_rate, 1),
                             "total_working_staff": total_working_staff,
                             "total_active_staff": total_active_staff,
+                            "format_errors": format_errors,
                             "page": page,
                             "per_page": per_page,
                             "total_pages": total_pages,
@@ -603,6 +615,7 @@ def api_data():
                             "max_rate": round(max_rate, 1),
                             "total_working_staff": total_working_staff,
                             "total_active_staff": total_active_staff,
+                            "format_errors": format_errors,
                             "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
                             "pagination_error": str(page_err)
                         }
@@ -618,6 +631,7 @@ def api_data():
                         "max_rate": round(max_rate, 1),
                         "total_working_staff": total_working_staff,
                         "total_active_staff": total_active_staff,
+                        "format_errors": format_errors,
                         "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                     }
                 }
