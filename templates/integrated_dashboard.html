@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -701,7 +700,7 @@
               <div class="card-header">エリア詳細データ</div>
               <div class="card-body">
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table classtable table-hover">
                     <thead>
                       <tr>
                         <th>エリア</th>
@@ -973,16 +972,13 @@
         const cachedData = JSON.parse(localStorage.getItem(cacheKey) || '{"timestamp":0,"data":[]}');
         const now = Date.now();
 
-        // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = '/api';
-
         // キャッシュが有効かチェック
         if (!forceRefresh && (now - cachedData.timestamp) < cacheTimeout) {
           storeData = cachedData.data;
           updateLastUpdateTime(new Date(cachedData.timestamp));
         } else {
           // APIからデータ取得
-          const response = await fetch(`${apiBaseUrl}/data`);
+          const response = await fetch('/api/data');
           if (!response.ok) throw new Error(`API error: ${response.status}`);
           const data = await response.json();
 
@@ -2169,7 +2165,7 @@
       } finally {
         document.getElementById('hourlyLoadingIndicator').style.display = 'none';
       }
-    }
+    }    }
 
     // 時間帯別チャートの更新
     function updateHourlyChart(hourlyData) {
