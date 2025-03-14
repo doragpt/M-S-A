@@ -49,147 +49,88 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
         }
     }
 
-def format_store_status(item, timezone=None):
+def format_store_status(status, timezone=None):
     """
-    StoreStatusモデルのレコードをAPIレスポンス用に整形する関数
-    timezonがNoneの場合はタイムゾーンを考慮しない
-    
-    エラーが発生した場合も有効なデータを返す（例外を発生させない）
+    StoreStatus オブジェクトまたは辞書を整形して返す関数
+    -status: StoreStatus オブジェクトまたは辞書
+    -timezone: タイムゾーン（オプション）
     """
-    # デフォルト値を用意
-    default_response = {
-        'id': None,
-        'timestamp': None,
-        'store_name': '不明',
-        'biz_type': '不明',
-        'genre': '不明',
-        'area': '不明',
-        'total_staff': 0,
-        'working_staff': 0,
-        'active_staff': 0,
-        'rate': 0,
-        'url': '',
-        'shift_time': ''
-    }
-    
-    if not item:
-        logging.warning("format_store_status: 入力アイテムがNoneです")
-        return default_response
-        
+    # 時間情報のローカライズ
+    if timezone is None:
+        timezone = pytz.timezone('Asia/Tokyo')
+
     try:
-        # 変数をデフォルト値で初期化
-        item_id = None
-        formatted_timestamp = None
-        store_name = '不明'
-        biz_type = '不明'
-        genre = '不明'
-        area = '不明'
-        total_staff = 0
-        working_staff = 0
-        active_staff = 0
-        url = ''
-        shift_time = ''
-        
-        # 各フィールドを個別に安全に取得
-        try:
-            item_id = getattr(item, 'id', None)
-        except Exception:
-            pass
-            
-        # タイムスタンプ処理
-        try:
-            timestamp = getattr(item, 'timestamp', None)
-            if timestamp:
-                if timezone and timestamp.tzinfo is None:
-                    try:
-                        timestamp = timezone.localize(timestamp)
-                    except Exception:
-                        pass
-                        
+        # StoreStatus オブジェクトをディクショナリに変換
+        if hasattr(status, '__dict__'):
+            status_dict = status.__dict__.copy()
+            if '_sa_instance_state' in status_dict:
+                del status_dict['_sa_instance_state']
+        else:
+            # SQLiteの Row オブジェクトの場合（辞書っぽいオブジェクト）
+            if hasattr(status, 'keys'):
+                status_dict = {key: status[key] for key in status.keys()}
+            else:
+                status_dict = dict(status)
+
+        # タイムスタンプをローカライズ
+        if 'timestamp' in status_dict and status_dict['timestamp']:
+            timestamp = status_dict['timestamp']
+            if isinstance(timestamp, str):
+                # 文字列の場合はパース
                 try:
-                    formatted_timestamp = timestamp.isoformat()
-                except Exception:
-                    formatted_timestamp = str(timestamp)
-        except Exception:
-            pass
-            
-        # 文字列フィールド
-        try:
-            store_name = getattr(item, 'store_name', '不明') or '不明'
-        except Exception:
-            pass
-            
-        try:
-            biz_type = getattr(item, 'biz_type', '不明') or '不明'
-        except Exception:
-            pass
-            
-        try:
-            genre = getattr(item, 'genre', '不明') or '不明'
-        except Exception:
-            pass
-            
-        try:
-            area = getattr(item, 'area', '不明') or '不明'
-        except Exception:
-            pass
-            
-        try:
-            url = getattr(item, 'url', '') or ''
-        except Exception:
-            pass
-            
-        try:
-            shift_time = getattr(item, 'shift_time', '') or ''
-        except Exception:
-            pass
-            
-        # 数値フィールド
-        try:
-            total_staff = getattr(item, 'total_staff', 0)
-            total_staff = 0 if total_staff is None else int(total_staff)
-        except Exception:
-            total_staff = 0
-            
-        try:
-            working_staff = getattr(item, 'working_staff', 0)
-            working_staff = 0 if working_staff is None else int(working_staff)
-        except Exception:
-            working_staff = 0
-            
-        try:
-            active_staff = getattr(item, 'active_staff', 0)
-            active_staff = 0 if active_staff is None else int(active_staff)
-        except Exception:
-            active_staff = 0
-            
-        # 稼働率計算
-        rate = 0
-        if working_staff > 0:
-            try:
-                rate = ((working_staff - active_staff) / working_staff) * 100
-                rate = round(rate, 1)
-            except Exception:
-                rate = 0
-        
-        # 結果を辞書にまとめる
-        return {
-            'id': item_id,
-            'timestamp': formatted_timestamp,
-            'store_name': store_name,
-            'biz_type': biz_type,
-            'genre': genre,
-            'area': area,
-            'total_staff': total_staff if total_staff > 0 else working_staff + active_staff,
-            'working_staff': working_staff,
-            'active_staff': active_staff,
-            'rate': rate,
-            'url': url,
-            'shift_time': shift_time
+                    timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                except ValueError:
+                    try:
+                        timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        # その他の形式も試す
+                        formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']
+                        for fmt in formats:
+                            try:
+                                timestamp = datetime.strptime(timestamp, fmt)
+                                break
+                            except ValueError:
+                                continue
+
+            # タイムゾーン情報がない場合は追加
+            if isinstance(timestamp, datetime):
+                if timestamp.tzinfo is None:
+                    timestamp = timezone.localize(timestamp)
+                # 指定されたタイムゾーンに変換
+                else:
+                    timestamp = timestamp.astimezone(timezone)
+                status_dict['timestamp'] = timestamp
+
+        # 整形されたディクショナリを返す
+        formatted = {
+            'id': status_dict.get('id'),
+            'timestamp': status_dict.get('timestamp').isoformat() if isinstance(status_dict.get('timestamp'), datetime) else None,
+            'store_name': status_dict.get('store_name', '不明') or '不明',
+            'biz_type': status_dict.get('biz_type', '不明') or '不明',
+            'genre': status_dict.get('genre', '不明') or '不明',
+            'area': status_dict.get('area', '不明') or '不明',
+            'total_staff': int(status_dict.get('total_staff', 0) or 0),
+            'working_staff': int(status_dict.get('working_staff', 0) or 0),
+            'active_staff': int(status_dict.get('active_staff', 0) or 0),
+            'url': status_dict.get('url', '') or '',
+            'shift_time': status_dict.get('shift_time', '') or ''
         }
+
+        # 稼働率を計算
+        if formatted['working_staff'] > 0:
+            formatted['rate'] = round((formatted['working_staff'] - formatted['active_staff']) / formatted['working_staff'] * 100, 1)
+        else:
+            formatted['rate'] = 0
+
+        # total_staffが設定されていない場合はworking_staffとactive_staffから計算
+        if formatted['total_staff'] == 0:
+            formatted['total_staff'] = formatted['working_staff'] + formatted['active_staff']
+
+        return formatted
     except Exception as e:
-        logging.error(f"形式化エラー: {e}")
-        return default_response
+        from app import app
+        app.logger.error(f"データフォーマットエラー: {e}")
+        return None
 
 def prepare_data_for_integrated_dashboard():
     """統合ダッシュボード用のデータを準備"""
