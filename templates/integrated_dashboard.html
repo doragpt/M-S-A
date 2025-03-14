@@ -1532,11 +1532,11 @@
             // ランキングタイプと業種フィルターを取得
             const rankingType = document.getElementById('rankingTypeSelect').value;
             const industryFilter = document.getElementById('industrySelectRanking');
-            let url = '/api/ranking/average';
+            let url = '/api/ranking/average?limit=1000'; // 最大1000件表示
 
             // 業種別フィルターが選択されている場合
             if (rankingType === 'industry' && industryFilter && industryFilter.value) {
-              url += `?biz_type=${encodeURIComponent(industryFilter.value)}`;
+              url += `&biz_type=${encodeURIComponent(industryFilter.value)}`;
             }
 
             // API呼び出し

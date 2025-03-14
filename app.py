@@ -714,11 +714,11 @@ def api_average_ranking():
     try:
         # フィルタリング条件
         biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 20, type=int)
+        limit = request.args.get('limit', 1000, type=int)  # デフォルト値を1000に変更
 
         # 最大値を制限
-        if limit > 100:
-            limit = 100
+        if limit > 1000:  # 最大値も1000に引き上げ
+            limit = 1000
 
         # サブクエリ: 店舗ごとのグループ化
         subq = db.session.query(
