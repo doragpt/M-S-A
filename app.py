@@ -416,7 +416,7 @@ def api_data():
         # ページネーションの有無を確認
         use_pagination = 'page' in request.args
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100件に制限
         
         # セッション内でのクエリ実行
         try:
@@ -437,13 +437,23 @@ def api_data():
             
             # クエリの全結果を取得（集計値の計算用+全データ返却用）
             app.logger.debug("クエリ実行開始")
-            all_results = query.all()
-            app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
+            
+            try:
+                all_results = query.all()
+                app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
+            except exc.OperationalError as oe:
+                app.logger.error(f"SQLite操作エラー: {str(oe)}")
+                app.logger.error(traceback.format_exc())
+                return jsonify({"error": "データベース操作エラー", "details": str(oe)}), 500
+            except Exception as qe:
+                app.logger.error(f"クエリ実行エラー: {str(qe)}")
+                app.logger.error(traceback.format_exc())
+                return jsonify({"error": "クエリ実行中にエラーが発生しました", "details": str(qe)}), 500
             
             # セッション完了後の処理
             if len(all_results) == 0:
                 app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
-                return jsonify({"data": [], "meta": {"total_count": 0, "error": "データが見つかりません"}}), 404
+                return jsonify({"data": [], "meta": {"total_count": 0, "message": "データが見つかりません"}}), 200  # 404から200に変更
             
             # 集計値の計算
             total_store_count = len(all_results)
@@ -464,16 +474,27 @@ def api_data():
                     total_working_staff += working_staff
                     total_active_staff += active_staff
                     try:
-                        rate = ((working_staff - active_staff) / working_staff) * 100
-                        max_rate = max(max_rate, rate)
+                        if working_staff > 0:  # 追加の0チェック
+                            rate = ((working_staff - active_staff) / working_staff) * 100
+                            max_rate = max(max_rate, rate)
                     except ZeroDivisionError:
                         app.logger.warning(f"0除算エラー: working_staff={working_staff}, active_staff={active_staff}")
+                        pass
+                    except Exception as calc_err:
+                        app.logger.warning(f"計算エラー: {str(calc_err)}, working_staff={working_staff}, active_staff={active_staff}")
                         pass
             
             # 全体平均稼働率の計算
             avg_rate = 0
             if valid_stores > 0 and total_working_staff > 0:
-                avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+                try:
+                    avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+                except ZeroDivisionError:
+                    app.logger.warning("全体平均計算時の0除算エラー")
+                    avg_rate = 0
+                except Exception as avg_err:
+                    app.logger.warning(f"全体平均計算エラー: {str(avg_err)}")
+                    avg_rate = 0
             
             # データのフォーマット - JSTタイムゾーンを明示的に設定
             jst = pytz.timezone('Asia/Tokyo')
@@ -481,44 +502,67 @@ def api_data():
             now_jst = datetime.now(jst)
             
             app.logger.debug("レスポンスデータのフォーマット開始")
+            
+            # データフォーマット共通関数
+            def format_data_with_error_handling(items_to_format):
+                formatted_data = []
+                for item in items_to_format:
+                    try:
+                        formatted_item = format_store_status(item, jst)
+                        formatted_data.append(formatted_item)
+                    except Exception as fmt_err:
+                        app.logger.error(f"アイテムフォーマットエラー: {str(fmt_err)}, item_id={getattr(item, 'id', 'unknown')}")
+                        # エラーとなったアイテムはスキップして続行
+                return formatted_data
+            
             if use_pagination:
                 # ページネーション適用
-                paginated_result = paginate_query_results(query, page, per_page)
-                items = paginated_result['items']
-                
                 try:
-                    data = [format_store_status(item, jst) for item in items]
-                except Exception as e:
-                    app.logger.error(f"データフォーマット中のエラー: {str(e)}")
-                    app.logger.error(traceback.format_exc())
-                    data = []  # エラー時は空のリストを返す
-                
-                # ページネーション情報を含むレスポンス
-                response = {
-                    "data": data,
-                    "meta": {
-                        "total_count": total_store_count,
-                        "valid_stores": valid_stores,
-                        "avg_rate": round(avg_rate, 1),
-                        "max_rate": round(max_rate, 1),
-                        "total_working_staff": total_working_staff,
-                        "total_active_staff": total_active_staff,
-                        "page": paginated_result['meta']['page'],
-                        "per_page": paginated_result['meta']['per_page'],
-                        "total_pages": paginated_result['meta']['total_pages'],
-                        "has_prev": paginated_result['meta']['has_prev'],
-                        "has_next": paginated_result['meta']['has_next'],
-                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                    paginated_result = paginate_query_results(query, page, per_page)
+                    items = paginated_result['items']
+                    
+                    data = format_data_with_error_handling(items)
+                    
+                    # ページネーション情報を含むレスポンス
+                    response = {
+                        "data": data,
+                        "meta": {
+                            "total_count": total_store_count,
+                            "valid_stores": valid_stores,
+                            "avg_rate": round(avg_rate, 1),
+                            "max_rate": round(max_rate, 1),
+                            "total_working_staff": total_working_staff,
+                            "total_active_staff": total_active_staff,
+                            "page": paginated_result['meta']['page'],
+                            "per_page": paginated_result['meta']['per_page'],
+                            "total_pages": paginated_result['meta']['total_pages'],
+                            "has_prev": paginated_result['meta']['has_prev'],
+                            "has_next": paginated_result['meta']['has_next'],
+                            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                        }
                     }
-                }
+                except Exception as page_err:
+                    app.logger.error(f"ページネーション処理エラー: {str(page_err)}")
+                    app.logger.error(traceback.format_exc())
+                    
+                    # ページネーションエラー時は全データで代替
+                    data = format_data_with_error_handling(all_results)
+                    response = {
+                        "data": data,
+                        "meta": {
+                            "total_count": total_store_count,
+                            "valid_stores": valid_stores,
+                            "avg_rate": round(avg_rate, 1),
+                            "max_rate": round(max_rate, 1),
+                            "total_working_staff": total_working_staff,
+                            "total_active_staff": total_active_staff,
+                            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
+                            "pagination_error": str(page_err)
+                        }
+                    }
             else:
                 # ページネーションなし - 全データ返却
-                try:
-                    data = [format_store_status(item, jst) for item in all_results]
-                except Exception as e:
-                    app.logger.error(f"データフォーマット中のエラー: {str(e)}")
-                    app.logger.error(traceback.format_exc())
-                    data = []  # エラー時は空のリストを返す
+                data = format_data_with_error_handling(all_results)
                 
                 response = {
                     "data": data,
