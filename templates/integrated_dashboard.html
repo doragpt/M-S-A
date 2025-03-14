@@ -1783,7 +1783,7 @@
         document.getElementById('historySummaryCard').style.display = 'none';
 
         try {
-          // 最適化されたAPIエンドポイントを使用
+          // 正しいAPIエンドポイントを使用
           let url = `${apiBaseUrl}/history/optimized?store=${encodeURIComponent(storeName)}`;
           
           // 日付パラメータを追加
@@ -1846,7 +1846,6 @@
 
         // データの整形
         const datasets = [];
-        const labels = [];
         const rateData = [];
         const activeData = [];
         const workingData = [];
@@ -1860,8 +1859,6 @@
             date = record.timestamp;
           }
           
-          labels.push(date.toISOString());
-          
           // working_staffが0の場合は稼働率0%とする
           let rate = 0;
           if (record.working_staff > 0) {
@@ -1869,17 +1866,17 @@
           }
 
           rateData.push({
-            x: date.toISOString(),
+            x: date,
             y: parseFloat(rate.toFixed(1))
           });
 
           activeData.push({
-            x: date.toISOString(),
+            x: date,
             y: record.active_staff || 0
           });
 
           workingData.push({
-            x: date.toISOString(),
+            x: date,
             y: record.working_staff || 0
           });
         });
@@ -1935,11 +1932,6 @@
                   day: 'MM/dd'
                 },
                 tooltipFormat: 'yyyy/MM/dd HH:mm'
-              },
-              adapters: {
-                date: {
-                  locale: 'ja'
-                }
               },
               ticks: { color: textColor },
               grid: { color: gridColor }
