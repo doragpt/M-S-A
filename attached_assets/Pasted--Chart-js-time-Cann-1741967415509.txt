@@ -1,0 +1,113 @@
+このエラーは、Chart.js が日付（time）スケールで使用する「日付アダプター」が正しく提供されていない（または参照されていない）ために発生しています。エラー内容にある
+
+```
+Cannot read properties of undefined (reading 'date')
+```
+
+は、以前のバージョンでは `Chart.defaults.adapters.date` で参照できたアダプターが、Chart.js v4 では存在しないために起こっています。また、後続の
+
+```
+This method is not implemented: Check that a complete date adapter is provided.
+```
+
+というエラーは、日付アダプターのメソッド（例えば formats など）が実装されていない状態で呼ばれていることを示しています。
+
+以下の手順で修正してください。
+
+---
+
+### 1. 日付アダプターの参照方法の修正
+
+Chart.js v4 では `Chart.defaults.adapters` は使用されません。  
+**修正例：**
+
+**変更前（エラー発生箇所）：**
+```js
+console.log("日付アダプター確認:", Chart.defaults.adapters.date);
+```
+
+**変更後：**
+```js
+console.log("日付アダプター確認:", Chart._adapters._date);
+```
+これで、グローバルに登録された日付アダプター（Luxon アダプター）が正しく参照できるか確認してください。
+
+---
+
+### 2. 日付アダプターの明示的な登録
+
+場合によっては、chartjs-adapter-luxon が自動で登録されないことがあります。  
+その場合は、以下のように明示的に登録してください。
+
+**追加例：**
+```js
+// chartjs-adapter-luxon のスクリプトが読み込まれた後に、以下を追加してください。
+if (window.LuxonAdapter) {
+  Chart.register(window.LuxonAdapter);
+  console.log("Luxon adapter registered:", Chart._adapters._date);
+} else {
+  console.error("Luxon adapter is not available.");
+}
+```
+
+---
+
+### 3. スクリプト読み込み順序の確認
+
+HTML 内でのスクリプトの読み込み順序が非常に重要です。必ず以下の順序で読み込むようにしてください：
+
+1. **Luxon**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+   ```
+2. **Chart.js**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+   ```
+3. **chartjs-adapter-luxon**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.2/dist/chartjs-adapter-luxon.min.js"></script>
+   ```
+4. **chartjs-plugin-datalabels**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+   ```
+
+これにより、Luxon が先に読み込まれ、Chart.js がその後にアダプターを正しく利用できる状態になります。
+
+---
+
+### 4. チャート設定の確認
+
+履歴チャートの設定部分（例：`updateHistoryChart` 関数内）で、x軸の type を `'time'` にしていることは正しいですが、もし上記の対応後もエラーが続く場合は、アダプターのメソッドが正しく呼ばれるように、x 軸のオプションに明示的に adapter を指定してみてください。
+
+**例：**
+```js
+scales: {
+  x: {
+    type: 'time',
+    adapters: {
+      date: Chart._adapters._date  // もしくは、window.LuxonAdapter を指定
+    },
+    time: {
+      unit: 'day',
+      displayFormats: { day: 'MM/dd' },
+      tooltipFormat: 'yyyy/MM/dd HH:mm'
+    },
+    ticks: { color: textColor },
+    grid: { color: gridColor }
+  },
+  // ...他のスケール設定
+}
+```
+
+---
+
+### まとめ
+
+1. **`Chart.defaults.adapters.date` を `Chart._adapters._date` に置換する。**
+2. **必要に応じて、`Chart.register(window.LuxonAdapter);` を追加して明示的にアダプターを登録する。**
+3. **スクリプトの読み込み順序（Luxon → Chart.js → chartjs-adapter-luxon → chartjs-plugin-datalabels）を確認する。**
+4. **x 軸の設定において、アダプターが正しく参照されるように `adapters` オプションを設定する。**
+
+これらの修正を行えば、履歴チャート更新エラーは解消され、正しく日付アダプターが利用されるはずです。よろしくお願いいたします。
