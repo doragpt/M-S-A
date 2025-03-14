@@ -875,43 +875,58 @@ def api_aggregated_data():
         )
 
         results = query.all()
+        app.logger.info(f"集計クエリ実行結果: {len(results)}件のデータを取得")
 
         # 結果を整形
         data = []
+        skipped_records = 0
+        
         for r in results:
+            # 詳細なデバッグログを追加
+            app.logger.debug(f"処理中のレコード: date={r.date}, avg_rate={r.avg_rate}, sample_count={r.sample_count}")
+            
             # date属性がNoneの場合はスキップ
             if r.date is None:
                 app.logger.warning(f"日付が未設定のレコードをスキップします: {r}")
+                skipped_records += 1
                 continue
                 
             try:
                 # 日付フォーマットのチェック
                 if hasattr(r.date, 'isoformat'):
                     date_str = r.date.isoformat()
+                    app.logger.debug(f"ISO形式の日付を使用: {date_str}")
                 else:
                     date_str = str(r.date)
-                    app.logger.warning(f"日付フォーマットが予期しないタイプでした: {type(r.date)}")
+                    app.logger.warning(f"日付フォーマットが予期しないタイプでした: {type(r.date)}, 値: {date_str}")
                 
                 # 平均稼働率と件数のチェック
                 avg_rate = 0.0
                 if r.avg_rate is not None:
                     try:
                         avg_rate = float(r.avg_rate)
-                    except (ValueError, TypeError):
-                        app.logger.warning(f"平均稼働率の変換に失敗しました: {r.avg_rate}")
+                    except (ValueError, TypeError) as e:
+                        app.logger.warning(f"平均稼働率の変換に失敗しました: {r.avg_rate}, エラー: {e}")
+                else:
+                    app.logger.warning(f"平均稼働率がNullでした: {r}")
                 
                 sample_count = r.sample_count or 0
                 
                 data.append({
                     'date': date_str,
-                    'avg_rate': avg_rate,
+                    'avg_rate': round(avg_rate, 1),  # 丸める処理を追加
                     'sample_count': sample_count
                 })
+                app.logger.debug(f"データに追加: date={date_str}, avg_rate={avg_rate}, sample_count={sample_count}")
             except (AttributeError, TypeError, ValueError) as e:
                 app.logger.error(f"データ変換エラー: {e}, レコード: {r}")
                 app.logger.error(traceback.format_exc())
+                skipped_records += 1
                 continue
 
+        # 集計情報のログ出力
+        app.logger.info(f"集計データ処理完了: 有効={len(data)}件, スキップ={skipped_records}件")
+        
         # 空のレスポンス対策
         if not data:
             app.logger.warning("集計データが空でした")
