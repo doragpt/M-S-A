@@ -18,6 +18,11 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
+    
+    <div id="errorAlert" class="alert alert-danger alert-dismissible fade" role="alert" style="display: none;">
+      <span id="errorMessage">URLの取得中にエラーが発生しました。</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+    </div>
     <ul class="nav nav-tabs mb-3" id="entryTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single-entry" type="button" role="tab" aria-controls="single-entry" aria-selected="true">個別追加</button>
@@ -88,5 +93,75 @@
     </table>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // URLエラーチェック
+      const storeUrls = document.querySelectorAll('table tbody tr td:nth-child(2)');
+      if (storeUrls.length > 0) {
+        storeUrls.forEach(urlCell => {
+          const url = urlCell.textContent.trim();
+          if (!url || !isValidURL(url)) {
+            showError(`無効なURLが検出されました: ${url || '空のURL'}`);
+          }
+        });
+      }
+      
+      // URLのバリデーション関数
+      function isValidURL(string) {
+        try {
+          new URL(string);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+      
+      // エラー表示関数
+      function showError(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        errorMessage.textContent = message;
+        errorAlert.style.display = 'block';
+        errorAlert.classList.add('show');
+      }
+      
+      // フォーム送信前のURLバリデーション
+      const forms = document.querySelectorAll('form');
+      forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+          const urlInput = this.querySelector('input[name="store_url"]');
+          if (urlInput && (!urlInput.value.trim() || !isValidURL(urlInput.value.trim()))) {
+            event.preventDefault();
+            showError('有効なURLを入力してください');
+          }
+        });
+      });
+      
+      // 一括追加フォームのバリデーション
+      const bulkForm = document.querySelector('form[action*="bulk_add_store_urls"]');
+      if (bulkForm) {
+        bulkForm.addEventListener('submit', function(event) {
+          const textarea = this.querySelector('textarea[name="bulk_urls"]');
+          if (textarea) {
+            const urls = textarea.value.split('\n').filter(url => url.trim());
+            let hasInvalidURL = false;
+            
+            for (const url of urls) {
+              if (!isValidURL(url.trim())) {
+                hasInvalidURL = true;
+                showError(`無効なURLが含まれています: ${url.trim()}`);
+                break;
+              }
+            }
+            
+            if (hasInvalidURL) {
+              event.preventDefault();
+            }
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

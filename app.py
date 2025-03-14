@@ -500,8 +500,23 @@ def bulk_add_store_urls():
     # 成功・エラーカウント
     success_count = 0
     error_count = 0
+    invalid_urls = []
+
+    from urllib.parse import urlparse
 
     for url in urls:
+        # URL形式の検証
+        try:
+            result = urlparse(url)
+            if not all([result.scheme, result.netloc]):
+                invalid_urls.append(url)
+                error_count += 1
+                continue
+        except Exception:
+            invalid_urls.append(url)
+            error_count += 1
+            continue
+
         # 重複チェック
         existing = StoreURL.query.filter_by(store_url=url).first()
         if existing:
@@ -514,11 +529,15 @@ def bulk_add_store_urls():
             success_count += 1
         except Exception:
             error_count += 1
+            invalid_urls.append(url)
 
     # コミット
     try:
         db.session.commit()
-        flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。', 'success')
+        if invalid_urls:
+            flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。無効なURL: {", ".join(invalid_urls[:5])}{"..." if len(invalid_urls) > 5 else ""}', 'warning')
+        else:
+            flash(f'{success_count}件のURLを追加しました。', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'エラーが発生しました: {e}', 'danger')
@@ -610,6 +629,16 @@ def manage_store_urls():
         store_url = request.form.get('store_url', '').strip()
         if not store_url:
             flash("URLを入力してください。", "warning")
+            return redirect(url_for('manage_store_urls'))
+        
+        # URLの基本検証
+        try:
+            from urllib.parse import urlparse
+            result = urlparse(store_url)
+            if not all([result.scheme, result.netloc]):
+                raise ValueError("URLの形式が正しくありません")
+        except Exception as e:
+            flash(f"無効なURL形式です: {str(e)}", "danger")
             return redirect(url_for('manage_store_urls'))
 
         existing = StoreURL.query.filter_by(store_url=store_url).first()
