@@ -17,7 +17,7 @@
 
     // Luxon のDateTime オブジェクトを便宜上グローバル変数として保持
     const DateTime = window.luxon.DateTime;
-    
+
     // 日付アダプターが正しく登録されているか確認
     console.log("日付アダプター確認:", Chart.defaults.adapters.date);
   </script>
@@ -1916,12 +1916,6 @@
           scales: {
             x: {
               type: 'time',
-              adapters: {
-                date: {
-                  // Luxonアダプタの明示的な設定
-                  locale: 'ja'
-                }
-              },
               time: {
                 unit: 'day',
                 displayFormats: {
@@ -1996,7 +1990,7 @@
         console.log("Chart作成: データ件数=", rateData.length);
         console.log("データ例(最初の要素):", rateData[0].x, "タイプ:", typeof rateData[0].x);
         console.log("現在の日付アダプター:", Chart.defaults.adapters.date);
-        
+
         // 日付アダプターが正しく機能しているか確認
         try {
           if (!Chart.defaults.adapters.date) {
@@ -2617,7 +2611,7 @@
 
         const data = await response.json();
 
-        if (!data || !Array.isArray(data)) {
+        if(!data || !Array.isArray(data)) {
           document.getElementById('areaLoadingIndicator').style.display = 'none';
           return;
         }
