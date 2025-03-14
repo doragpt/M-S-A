@@ -726,8 +726,9 @@
             console.error("トップ10店舗グラフエラー:", error);
             handleError(error, "updateTop10Chart");
           } finally {
-            loadingElement.style.display = 'none';
-            containerElement.style.display = 'block';
+            // 要素が存在する場合のみ表示状態を変更
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (containerElement) containerElement.style.display = 'block';
           }
         }
 
@@ -970,6 +971,7 @@
               });
             }
           } finally {
+            // 要素が存在する場合のみ表示状態を変更
             if (loadingElement) loadingElement.style.display = 'none';
             if (containerElement) containerElement.style.display = 'block';
           }
@@ -1152,11 +1154,14 @@
                 plugins: {
                   title: { display: true, text: "時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                  zoom: {
+                    pan: { enabled: true, mode: 'xy' },
+                    zoom: {
                       wheel: { enabled: true },
-                      drag: { enabled: true },
+                      pinch: { enabled: true },
                       mode: 'xy'
-                    } }
+                    }
+                  }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -1172,8 +1177,9 @@
             handleError(err, "updateHourlyAnalysis");
             hideSpinner();
           } finally {
-            loadingElement.style.display = 'none';
-            containerElement.style.display = 'block';
+            // 要素が存在する場合のみ表示状態を変更
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (containerElement) containerElement.style.display = 'block';
           }
         }
         document.getElementById("updateHourlyBtn")?.addEventListener("click", updateHourlyAnalysis);
@@ -1434,11 +1440,14 @@
                 plugins: {
                   title: { display: true, text: "店舗履歴グラフ", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                  zoom: {
+                    pan: { enabled: true, mode: 'xy' },
+                    zoom: {
                       wheel: { enabled: true },
-                      drag: { enabled: true },
+                      pinch: { enabled: true },
                       mode: 'xy'
-                    } }
+                    }
+                  }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
@@ -1499,11 +1508,14 @@
                 plugins: {
                   title: { display: true, text: "店舗詳細 時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
-                  zoom: { pan: { enabled: true, mode: 'xy' }, zoom: { 
+                  zoom: {
+                    pan: { enabled: true, mode: 'xy' },
+                    zoom: {
                       wheel: { enabled: true },
-                      drag: { enabled: true },
+                      pinch: { enabled: true },
                       mode: 'xy'
-                    } }
+                    }
+                  }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
