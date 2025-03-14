@@ -20,6 +20,13 @@
 
     // 日付アダプターが正しく登録されているか確認
     console.log("日付アダプター確認:", Chart._adapters._date);
+    
+    // Luxon アダプターが登録されていることを確認
+    if (Chart._adapters._date) {
+      console.log("Luxon adapter is properly registered");
+    } else {
+      console.error("Warning: Date adapter is not registered properly");
+    }
   </script>
   <style>
     :root {
@@ -1916,9 +1923,6 @@
           scales: {
             x: {
               type: 'time',
-              adapters: {
-                date: window.luxon.DateTime
-              },
               time: {
                 unit: 'day',
                 displayFormats: {
