@@ -1,0 +1,55 @@
+Uncaught TypeError: Cannot read properties of undefined (reading 'helpers')
+    at chartjs-plugin-datalabels@2.2.0:7:295
+    at chartjs-plugin-datalabels@2.2.0:7:312Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1004 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):978:35)
+loadDashboardData @ (index):1004Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1004 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):978:35)
+loadDashboardData @ (index):1004Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1671 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):1671Understand this errorAI
+:5000/api/hourly:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2146 時間帯別分析エラー: Error: API error: 404
+    at loadHourlyAnalysis ((index):2130:17)
+loadHourlyAnalysis @ (index):2146Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2072 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2072Understand this errorAI
+:5000/api/area_stats:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2416 エリア統計データ読み込みエラー: Error: API error: 404
+    at loadAreaStatistics ((index):2402:17)
+loadAreaStatistics @ (index):2416Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2575 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2575Understand this errorAI
+:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1004 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):978:35)
