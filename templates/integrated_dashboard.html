@@ -1837,6 +1837,11 @@
         const activeData = [];
         const workingData = [];
 
+        // 日付フォーマット用に関数を定義
+        function formatDate(date) {
+          return date.toISOString();
+        }
+
         records.forEach(record => {
           // タイムスタンプがDateオブジェクトか確認
           let date = record.timestamp;
@@ -1847,21 +1852,21 @@
           // working_staffが0の場合は稼働率0%とする
           let rate = 0;
           if (record.working_staff > 0) {
-            rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
+            rate = ((record.working_staff - record.active_staff) / record.working_staff * 100);
           }
 
           rateData.push({
-            x: date,
+            x: formatDate(date),
             y: parseFloat(rate.toFixed(1))
           });
 
           activeData.push({
-            x: date,
+            x: formatDate(date),
             y: record.active_staff || 0
           });
 
           workingData.push({
-            x: date,
+            x: formatDate(date),
             y: record.working_staff || 0
           });
         });
@@ -1989,16 +1994,6 @@
         // デバッグ情報を出力
         console.log("Chart作成: データ件数=", rateData.length);
         console.log("データ例(最初の要素):", rateData[0].x, "タイプ:", typeof rateData[0].x);
-        console.log("現在の日付アダプター:", Chart.defaults.adapters.date);
-
-        // 日付アダプターが正しく機能しているか確認
-        try {
-          if (!Chart.defaults.adapters.date) {
-            console.warn("警告: 日付アダプターが設定されていません");
-          }
-        } catch (e) {
-          console.error("日付アダプター確認エラー:", e);
-        }
 
         // 新しいチャートを作成
         charts.history = new Chart(ctx, {
