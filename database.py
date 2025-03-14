@@ -18,7 +18,7 @@ def get_db_connection():
     """データベース接続を取得する関数"""
     import logging
     logger = logging.getLogger('app')
-    
+
     try:
         # detect_types=sqlite3.PARSE_DECLTYPESを追加してdatetimeを適切に処理
         conn = sqlite3.connect('store_data.db', detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
@@ -35,50 +35,79 @@ def get_db_connection():
                 return str(dt)
 
         def convert_datetime(s):
+            import logging
+            logger = logging.getLogger('app')
+
             if s is None:
                 return None
             try:
                 # 既に datetime オブジェクトの場合はそのまま返す
                 if isinstance(s, datetime.datetime):
                     return s
-                
+
                 # バイト列から文字列に変換
                 if isinstance(s, bytes):
                     s = s.decode()
                 elif not isinstance(s, str):
                     s = str(s)
-                
+
+                # 具体的なエラー例の対応: 2025-02-19T03:03:42.281587
+                if 'T' in s and '.' in s and len(s.split('.')[1]) > 6:
+                    # マイクロ秒が6桁以上ある場合は6桁に切り詰める
+                    date_part, time_part = s.split('T')
+                    time_main, micro_part = time_part.split('.')
+
+                    # マイクロ秒またはその他の部分が長すぎる場合、6桁に切り詰める
+                    if '+' in micro_part:
+                        micro, tz = micro_part.split('+', 1)
+                        micro = micro[:6]
+                        s = f"{date_part}T{time_main}.{micro}+{tz}"
+                    elif '-' in micro_part[10:]:  # タイムゾーン情報を持つマイナスの場合
+                        parts = micro_part.split('-', 1)
+                        micro = parts[0][:6]
+                        s = f"{date_part}T{time_main}.{micro}-{parts[1]}"
+                    else:
+                        micro = micro_part[:6]
+                        s = f"{date_part}T{time_main}.{micro}"
+
                 # シンプルな処理フロー
                 try:
                     # ISOフォーマットの処理 (Python 3.7+)
                     if 'T' in s:
                         # Zを+00:00に置換してタイムゾーン対応
                         s = s.replace('Z', '+00:00')
-                        
+
                         # タイムゾーン情報がない場合はUTCとみなす
                         if '+' not in s and '-' not in s[10:]:
                             s = s + '+00:00'
-                        
+
                         # Python 3.7+ のfromisoformatを使用
                         if hasattr(datetime.datetime, 'fromisoformat'):
                             try:
                                 return datetime.datetime.fromisoformat(s)
-                            except ValueError:
-                                pass
-                        
+                            except ValueError as e:
+                                logger.warning(f"fromisoformat失敗: {e}, 入力値: {s}")
+                                # 続行してフォールバック方法を試す
+
                         # マイクロ秒対応のstrptimeを使用（フォールバック）
                         try:
                             if '.' in s:
                                 # マイクロ秒あり
                                 main_part = s.split('+')[0] if '+' in s else s
+                                # タイムゾーン情報を取り除く
+                                if '-' in main_part[10:]:
+                                    main_part = main_part.split('-')[0]
                                 return datetime.datetime.strptime(main_part, '%Y-%m-%dT%H:%M:%S.%f')
                             else:
                                 # マイクロ秒なし
                                 main_part = s.split('+')[0] if '+' in s else s
+                                # タイムゾーン情報を取り除く
+                                if '-' in main_part[10:]:
+                                    main_part = main_part.split('-')[0]
                                 return datetime.datetime.strptime(main_part, '%Y-%m-%dT%H:%M:%S')
-                        except ValueError:
-                            pass
-                    
+                        except ValueError as e:
+                            logger.warning(f"ISO strptime失敗: {e}, 入力値: {s}")
+
                     # スペース区切りの日時
                     elif ' ' in s:
                         try:
@@ -90,16 +119,16 @@ def get_db_connection():
                             # 日付部分だけ解析
                             date_part = s.split(' ')[0]
                             return datetime.datetime.strptime(date_part, '%Y-%m-%d')
-                    
+
                     # 日付のみ
                     else:
                         return datetime.datetime.strptime(s, '%Y-%m-%d')
-                    
+
                 except Exception as parse_error:
                     logger.warning(f"日付変換エラー: {parse_error}, 入力値: {s}")
                     # フォールバック: 現在時刻を返す
                     return datetime.datetime.now()
-            
+
             except Exception as e:
                 logger.error(f"予期しない日付変換エラー: {e}, 入力値: {repr(s)}")
                 return datetime.datetime.now()
@@ -115,7 +144,7 @@ def get_db_connection():
         conn.execute("PRAGMA journal_mode = WAL")
         # 同期モードの最適化
         conn.execute("PRAGMA synchronous = NORMAL")
-        
+
         # 接続テスト
         test_query = "SELECT COUNT(*) FROM store_status"
         result = conn.execute(test_query).fetchone()

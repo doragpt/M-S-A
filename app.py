@@ -438,74 +438,49 @@ def api_data():
 
         # SQLAlchemyを使用してデータ取得（SQLite変換エラー回避のため）
         try:
-            # 各店舗の最新レコードを取得するためのサブクエリ
-            from sqlalchemy import func, desc
+            # 直接SQLiteを使用して最新データを取得
+            app.logger.info("直接SQLiteを使用してデータを取得します")
+            conn = get_db_connection()
 
-            # 最新データのクエリを作成
-            latest_records_subquery = db.session.query(
-                StoreStatus.store_name,
-                func.max(StoreStatus.timestamp).label('max_timestamp')
-            ).group_by(StoreStatus.store_name).subquery()
+            if conn is None:
+                app.logger.error("データベース接続が取得できませんでした")
+                return jsonify(fallback_response), 200
 
-            # 最新レコードをサブクエリで結合して取得
-            query = db.session.query(StoreStatus).join(
-                latest_records_subquery,
-                db.and_(
-                    StoreStatus.store_name == latest_records_subquery.c.store_name,
-                    StoreStatus.timestamp == latest_records_subquery.c.max_timestamp
-                )
+            # 最新レコードを取得するクエリ
+            query = """
+            WITH LatestTimestamps AS (
+                SELECT store_name, MAX(timestamp) as max_timestamp
+                FROM store_status
+                GROUP BY store_name
             )
+            SELECT s.*
+            FROM store_status s
+            JOIN LatestTimestamps lt ON s.store_name = lt.store_name AND s.timestamp = lt.max_timestamp
+            """
 
-            # データを取得
             try:
-                all_results = query.all()
-                app.logger.info(f"最新店舗データ取得: {len(all_results)}件のレコードを取得")
+                all_results = list(conn.execute(query).fetchall())
+                conn.close()
+                app.logger.info(f"SQLite直接取得結果: {len(all_results)}件のレコードを取得")
             except Exception as query_err:
                 app.logger.error(f"クエリ実行エラー: {str(query_err)}")
                 app.logger.error(traceback.format_exc())
 
-                # SQLAlchemyでの取得に失敗した場合、直接SQLiteを使用
+                # 最後の手段：単純に最新の100件を取得
                 try:
-                    app.logger.info("SQLiteを直接使用して再試行します")
                     conn = get_db_connection()
-
-                    # 接続が取得できなかった場合
-                    if conn is None:
-                        app.logger.error("データベース接続が取得できませんでした")
-                        return jsonify(fallback_response), 200
-
-                    # 単純なクエリを実行
                     query = """
-                    WITH LatestTimestamps AS (
-                        SELECT store_name, MAX(timestamp) as max_timestamp
-                        FROM store_status
-                        GROUP BY store_name
-                    )
-                    SELECT s.*
-                    FROM store_status s
-                    JOIN LatestTimestamps lt ON s.store_name = lt.store_name AND s.timestamp = lt.max_timestamp
+                    SELECT * FROM store_status
+                    ORDER BY timestamp DESC
+                    LIMIT 100
                     """
                     all_results = list(conn.execute(query).fetchall())
                     conn.close()
-                    app.logger.info(f"SQLite直接取得結果: {len(all_results)}件のレコードを取得")
-                except Exception as sqlite_err:
-                    app.logger.error(f"SQLite直接取得エラー: {str(sqlite_err)}")
-                    app.logger.error(traceback.format_exc())
+                    app.logger.info(f"最終フォールバック結果: {len(all_results)}件のレコードを取得")
+                except Exception as final_err:
+                    app.logger.error(f"最終フォールバック取得エラー: {str(final_err)}")
+                    return jsonify(fallback_response), 200
 
-                    # 最後の手段：単純に最新の100件を取得
-                    try:
-                        conn = get_db_connection()
-                        query = """
-                        SELECT * FROM store_status
-                        ORDER BY timestamp DESC
-                        LIMIT 100
-                        """
-                        all_results = list(conn.execute(query).fetchall())
-                        conn.close()
-                        app.logger.info(f"最終フォールバック結果: {len(all_results)}件のレコードを取得")
-                    except Exception as final_err:
-                        app.logger.error(f"最終フォールバック取得エラー: {str(final_err)}")
-                        return jsonify(fallback_response), 200
 
             # データが0件の場合
             if len(all_results) == 0:
@@ -762,7 +737,7 @@ def api_history():
         store = request.args.get('store')
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
-        limit = request.args.get('limit', type=int)
+        limit = request.args.get('limit', typeint)
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 100, type=int), 100)  # 最大100件に制限
 
