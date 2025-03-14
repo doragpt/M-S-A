@@ -1808,6 +1808,15 @@
             return;
           }
 
+          // 選択した店舗に関連するデータのみをフィルタリング
+          records = records.filter(record => record.store_name === storeName);
+          
+          if (records.length === 0) {
+            document.getElementById('historyNoData').style.display = 'block';
+            document.getElementById('historyLoadingIndicator').style.display = 'none';
+            return;
+          }
+
           // データを時間順にソート
           records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
@@ -1818,8 +1827,12 @@
             }
           });
 
-          updateHistoryChart(records);
-          updateHistorySummary(records);
+          // 店舗名を確認（デバッグ用）
+          console.log("選択された店舗名:", storeName);
+          console.log("データの最初のレコードの店舗名:", records[0].store_name);
+
+          updateHistoryChart(records, storeName);
+          updateHistorySummary(records, storeName);
         } catch (error) {
           console.error('API呼び出しエラー:', error);
           showHistoryError(`データ取得エラー: ${error.message}`);
@@ -1833,7 +1846,7 @@
     }
 
     // 履歴チャートの更新
-    function updateHistoryChart(records) {
+    function updateHistoryChart(records, selectedStoreName) {
       try {
         if (!records || records.length === 0) {
           throw new Error('該当するデータが見つかりませんでした');
@@ -1844,13 +1857,24 @@
         // 既存のチャートを破棄
         if (charts.history) charts.history.destroy();
 
+        // データポイントの数を制限（表示を改善するため）
+        const maxPoints = 100;
+        let sampledRecords = records;
+        
+        // データが多すぎる場合はサンプリング
+        if (records.length > maxPoints) {
+          const sampleInterval = Math.floor(records.length / maxPoints);
+          sampledRecords = records.filter((_, index) => index % sampleInterval === 0);
+          console.log(`データポイントを ${records.length} から ${sampledRecords.length} に削減しました`);
+        }
+
         // データの整形
         const datasets = [];
         const rateData = [];
         const activeData = [];
         const workingData = [];
 
-        records.forEach(record => {
+        sampledRecords.forEach(record => {
           // タイムスタンプがDateオブジェクトか確認
           let date = record.timestamp;
           if (!(date instanceof Date)) {
@@ -1894,8 +1918,8 @@
           data: rateData,
           borderColor: 'rgba(255, 99, 132, 1)',
           backgroundColor: 'rgba(255, 99, 132, 0.1)',
-          pointRadius: 2,
-          pointHoverRadius: 4,
+          pointRadius: 1,  // ポイントサイズを小さく
+          pointHoverRadius: 5,
           borderWidth: 2,
           yAxisID: 'y',
           fill: true
@@ -1923,6 +1947,9 @@
           hidden: true
         });
 
+        // 時間の表示形式を調整
+        const timeUnit = determineTimeUnit(rateData);
+
         // グラフのオプション
         const options = {
           maintainAspectRatio: false,
@@ -1930,15 +1957,22 @@
             x: {
               type: 'time',
               time: {
-                unit: 'day',
+                unit: timeUnit,
                 displayFormats: {
-                  day: 'MM/DD'
+                  hour: 'MM/DD HH:mm',
+                  day: 'MM/DD',
+                  week: 'yyyy/MM/DD',
+                  month: 'yyyy/MM'
                 },
-                tooltipFormat: 'YYYY/MM/DD HH:mm'
+                tooltipFormat: 'yyyy/MM/DD HH:mm'
               },
               ticks: { 
                 color: textColor,
-                source: 'auto'
+                maxRotation: 45,
+                minRotation: 30,
+                source: 'auto',
+                autoSkip: true,
+                maxTicksLimit: 10
               },
               grid: { color: gridColor }
             },
@@ -1976,7 +2010,7 @@
           plugins: {
             title: {
               display: true,
-              text: `${records[0].store_name} 稼働率履歴`,
+              text: `${selectedStoreName} 稼働率履歴`,
               color: textColor,
               font: { size: 16, weight: 'bold' }
             },
@@ -1986,15 +2020,20 @@
             },
             legend: {
               labels: { color: textColor }
+            },
+            decimation: {
+              enabled: true,
+              algorithm: 'min-max'
             }
           },
           interaction: {
             mode: 'nearest',
-            intersect: false
+            intersect: false,
+            axis: 'x'
           },
           elements: {
             line: {
-              tension: 0.2
+              tension: 0.3  // より滑らかな線に
             }
           }
         };
@@ -2016,8 +2055,22 @@
       }
     }
 
+    // データの時間範囲に基づいて適切な時間単位を決定
+    function determineTimeUnit(data) {
+      if (!data || data.length < 2) return 'day';
+
+      const firstDate = data[0].x;
+      const lastDate = data[data.length - 1].x;
+      const diffDays = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+
+      if (diffDays < 1) return 'hour';
+      if (diffDays < 14) return 'day';
+      if (diffDays < 60) return 'week';
+      return 'month';
+    }
+
     // 履歴集計結果の表示
-    function updateHistorySummary(records) {
+    function updateHistorySummary(records, selectedStoreName) {
       try {
         if (!records || records.length === 0) return;
 
@@ -2074,7 +2127,7 @@
         // 集計結果をHTML形式で表示
         const summaryHTML = `
           <div class="mb-3">
-            <h5 class="mb-2">${records[0].store_name}</h5>
+            <h5 class="mb-2">${selectedStoreName}</h5>
             <p class="mb-1">${new Date(records[0].timestamp).toLocaleDateString()} ～ ${new Date(records[records.length - 1].timestamp).toLocaleDateString()}</p>
             <p class="mb-0">データ件数: ${rates.length}件</p>
           </div>
