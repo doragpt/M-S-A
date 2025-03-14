@@ -630,7 +630,7 @@ def manage_store_urls():
         if not store_url:
             flash("URLを入力してください。", "warning")
             return redirect(url_for('manage_store_urls'))
-        
+
         # URLの基本検証
         try:
             from urllib.parse import urlparse
@@ -880,17 +880,17 @@ def api_aggregated_data():
         # 結果を整形
         data = []
         skipped_records = 0
-        
+
         for r in results:
             # 詳細なデバッグログを追加
             app.logger.debug(f"処理中のレコード: date={r.date}, avg_rate={r.avg_rate}, sample_count={r.sample_count}")
-            
+
             # date属性がNoneの場合はスキップ
             if r.date is None:
                 app.logger.warning(f"日付が未設定のレコードをスキップします: {r}")
                 skipped_records += 1
                 continue
-                
+
             try:
                 # 日付フォーマットのチェック
                 if hasattr(r.date, 'isoformat'):
@@ -899,7 +899,7 @@ def api_aggregated_data():
                 else:
                     date_str = str(r.date)
                     app.logger.warning(f"日付フォーマットが予期しないタイプでした: {type(r.date)}, 値: {date_str}")
-                
+
                 # 平均稼働率と件数のチェック
                 avg_rate = 0.0
                 if r.avg_rate is not None:
@@ -909,9 +909,9 @@ def api_aggregated_data():
                         app.logger.warning(f"平均稼働率の変換に失敗しました: {r.avg_rate}, エラー: {e}")
                 else:
                     app.logger.warning(f"平均稼働率がNullでした: {r}")
-                
+
                 sample_count = r.sample_count or 0
-                
+
                 data.append({
                     'date': date_str,
                     'avg_rate': round(avg_rate, 1),  # 丸める処理を追加
@@ -926,11 +926,11 @@ def api_aggregated_data():
 
         # 集計情報のログ出力
         app.logger.info(f"集計データ処理完了: 有効={len(data)}件, スキップ={skipped_records}件")
-        
+
         # 空のレスポンス対策
         if not data:
             app.logger.warning("集計データが空でした")
-            
+
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"API集計データ取得エラー: {e}")
@@ -1166,7 +1166,7 @@ def api_store_names():
         store_names = [name[0] for name in store_names if name[0]]
         # アルファベット順にソート
         store_names.sort(key=lambda x: x.lower())
-        
+
         return jsonify(store_names)
     except Exception as e:
         app.logger.error(f"店舗名リスト取得エラー: {e}")
