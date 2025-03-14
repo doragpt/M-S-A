@@ -436,71 +436,80 @@ def api_data():
             }
         }
 
-        # SQLiteを直接使用してデータ取得
+        # SQLAlchemyを使用してデータ取得（SQLite変換エラー回避のため）
         try:
-            # データベース接続を取得
-            conn = get_db_connection()
+            # 各店舗の最新レコードを取得するためのサブクエリ
+            from sqlalchemy import func, desc
             
-            # 接続が取得できなかった場合
-            if conn is None:
-                app.logger.error("データベース接続が取得できませんでした")
-                return jsonify(fallback_response), 200
+            # 最新データのクエリを作成
+            latest_records_subquery = db.session.query(
+                StoreStatus.store_name,
+                func.max(StoreStatus.timestamp).label('max_timestamp')
+            ).group_by(StoreStatus.store_name).subquery()
             
-            # クエリの修正 - JOINを避けた単純化バージョン
+            # 最新レコードをサブクエリで結合して取得
+            query = db.session.query(StoreStatus).join(
+                latest_records_subquery,
+                db.and_(
+                    StoreStatus.store_name == latest_records_subquery.c.store_name,
+                    StoreStatus.timestamp == latest_records_subquery.c.max_timestamp
+                )
+            )
+            
+            # データを取得
             try:
-                # 最初に各店舗の最新タイムスタンプを取得
-                app.logger.debug("最新タイムスタンプを取得するクエリ実行")
-                latest_query = """
-                SELECT store_name, MAX(timestamp) as max_time
-                FROM store_status
-                GROUP BY store_name
-                """
-                latest_times = {}
-                for row in conn.execute(latest_query).fetchall():
-                    latest_times[row['store_name']] = row['max_time']
-                
-                # 最新データを個別に取得
-                all_results = []
-                for store_name, max_time in latest_times.items():
-                    try:
-                        store_query = """
-                        SELECT * FROM store_status 
-                        WHERE store_name = ? AND timestamp = ?
-                        LIMIT 1
-                        """
-                        store_result = conn.execute(store_query, (store_name, max_time)).fetchone()
-                        if store_result:
-                            all_results.append(store_result)
-                    except Exception as store_err:
-                        app.logger.warning(f"店舗 '{store_name}' の最新データ取得エラー: {store_err}")
-                        continue
-                
+                all_results = query.all()
                 app.logger.info(f"最新店舗データ取得: {len(all_results)}件のレコードを取得")
             except Exception as query_err:
                 app.logger.error(f"クエリ実行エラー: {str(query_err)}")
                 app.logger.error(traceback.format_exc())
                 
-                # フォールバッククエリ - より単純な形式を試す
+                # SQLAlchemyでの取得に失敗した場合、直接SQLiteを使用
                 try:
-                    # より単純なクエリを実行
+                    app.logger.info("SQLiteを直接使用して再試行します")
+                    conn = get_db_connection()
+                    
+                    # 接続が取得できなかった場合
+                    if conn is None:
+                        app.logger.error("データベース接続が取得できませんでした")
+                        return jsonify(fallback_response), 200
+                    
+                    # 単純なクエリを実行
                     query = """
-                    SELECT * FROM store_status
-                    ORDER BY timestamp DESC
-                    LIMIT 1000
+                    WITH LatestTimestamps AS (
+                        SELECT store_name, MAX(timestamp) as max_timestamp
+                        FROM store_status
+                        GROUP BY store_name
+                    )
+                    SELECT s.*
+                    FROM store_status s
+                    JOIN LatestTimestamps lt ON s.store_name = lt.store_name AND s.timestamp = lt.max_timestamp
                     """
-                    app.logger.debug(f"フォールバックSQLクエリ: {query}")
                     all_results = list(conn.execute(query).fetchall())
-                    app.logger.info(f"フォールバッククエリ結果: {len(all_results)}件のレコードを取得")
-                except Exception as fallback_err:
-                    app.logger.error(f"フォールバッククエリ実行エラー: {str(fallback_err)}")
-                    app.logger.error(traceback.format_exc())
                     conn.close()
-                    return jsonify(fallback_response), 200
+                    app.logger.info(f"SQLite直接取得結果: {len(all_results)}件のレコードを取得")
+                except Exception as sqlite_err:
+                    app.logger.error(f"SQLite直接取得エラー: {str(sqlite_err)}")
+                    app.logger.error(traceback.format_exc())
+                    
+                    # 最後の手段：単純に最新の100件を取得
+                    try:
+                        conn = get_db_connection()
+                        query = """
+                        SELECT * FROM store_status
+                        ORDER BY timestamp DESC
+                        LIMIT 100
+                        """
+                        all_results = list(conn.execute(query).fetchall())
+                        conn.close()
+                        app.logger.info(f"最終フォールバック結果: {len(all_results)}件のレコードを取得")
+                    except Exception as final_err:
+                        app.logger.error(f"最終フォールバック取得エラー: {str(final_err)}")
+                        return jsonify(fallback_response), 200
             
             # データが0件の場合
             if len(all_results) == 0:
                 app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
-                conn.close()
                 return jsonify({
                     "data": [],
                     "meta": {
@@ -518,11 +527,18 @@ def api_data():
             max_rate = 0
             
             app.logger.debug("集計値の計算開始")
-            for r in all_results:
+            for item in all_results:
                 # NULL値チェック
                 try:
-                    working_staff = r['working_staff'] if r['working_staff'] is not None else 0
-                    active_staff = r['active_staff'] if r['active_staff'] is not None else 0
+                    # SQLAlchemyモデルかSQLiteのRowかを確認して適切に値を取得
+                    if hasattr(item, 'working_staff'):
+                        # SQLAlchemyモデルの場合
+                        working_staff = item.working_staff if item.working_staff is not None else 0
+                        active_staff = item.active_staff if item.active_staff is not None else 0
+                    else:
+                        # SQLiteのRowオブジェクトの場合
+                        working_staff = item['working_staff'] if item['working_staff'] is not None else 0
+                        active_staff = item['active_staff'] if item['active_staff'] is not None else 0
                     
                     # 数値型チェック
                     working_staff = int(working_staff)
@@ -537,7 +553,7 @@ def api_data():
                         # 稼働率計算
                         rate = ((working_staff - active_staff) / working_staff) * 100
                         max_rate = max(max_rate, rate)
-                except (ValueError, TypeError, ZeroDivisionError) as e:
+                except (ValueError, TypeError, ZeroDivisionError, KeyError, AttributeError) as e:
                     app.logger.debug(f"集計スキップ: {str(e)}")
                     continue
             
@@ -560,11 +576,8 @@ def api_data():
                     app.logger.warning(f"フォーマットエラー: {str(fmt_err)}")
                     app.logger.warning(traceback.format_exc())
                     format_errors += 1
-                    # エラーでもformat_store_statusがフォールバックレスポンスを返すようになった
+                    # エラーでもformat_store_statusが辞書を返すようになったのでエラーは発生しない
             
-            # データベース接続をクローズ
-            conn.close()
-                    
             # ページネーション処理
             if use_pagination:
                 try:
@@ -753,26 +766,21 @@ def api_history():
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 100, type=int), 100)  # 最大100件に制限
 
+        # SQLAlchemyを使用してデータを取得する
         try:
-            # データベース接続
-            conn = get_db_connection()
-            
-            # SQLクエリの基本部分
-            query = "SELECT * FROM store_status WHERE 1=1"
-            params = []
+            # クエリ条件を構築
+            query = StoreStatus.query
             
             # フィルタリング条件の適用
             if store:
-                query += " AND store_name = ?"
-                params.append(store)
+                query = query.filter(StoreStatus.store_name == store)
 
             if start_date:
                 try:
                     # 日本時間の00:00:00として日付開始時刻を設定
                     start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
                     start_datetime = jst.localize(start_datetime)
-                    query += " AND timestamp >= ?"
-                    params.append(start_datetime.strftime('%Y-%m-%d %H:%M:%S'))
+                    query = query.filter(StoreStatus.timestamp >= start_datetime)
                 except Exception as e:
                     app.logger.error(f"開始日付変換エラー: {e}")
                     # エラー時は日付フィルタを適用しない
@@ -782,90 +790,93 @@ def api_history():
                     # 日本時間の23:59:59として日付終了時刻を設定
                     end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
                     end_datetime = jst.localize(end_datetime)
-                    query += " AND timestamp <= ?"
-                    params.append(end_datetime.strftime('%Y-%m-%d %H:%M:%S'))
+                    query = query.filter(StoreStatus.timestamp <= end_datetime)
                 except Exception as e:
                     app.logger.error(f"終了日付変換エラー: {e}")
                     # エラー時は日付フィルタを適用しない
 
             # ソート順
-            query += " ORDER BY timestamp ASC"
+            query = query.order_by(StoreStatus.timestamp.asc())
             
-            # カウントクエリ
-            count_query = f"SELECT COUNT(*) FROM ({query}) as count_query"
+            # 総件数を取得
+            total_count = query.count()
             
-            # データ制限（LIMITとOFFSET）
+            # ページネーションまたは制限を適用
             if 'page' in request.args or 'per_page' in request.args:
                 offset = (page - 1) * per_page
-                query += f" LIMIT {per_page} OFFSET {offset}"
+                query = query.limit(per_page).offset(offset)
             elif limit:
-                query += f" LIMIT {limit}"
+                query = query.limit(limit)
             
-            # クエリ実行
-            app.logger.debug(f"実行SQL: {query}")
-            app.logger.debug(f"パラメータ: {params}")
-            
-            # 総件数の取得
-            cursor = conn.execute(count_query, params)
-            total_count = cursor.fetchone()[0]
-            
-            # データ取得
-            cursor = conn.execute(query, params)
-            results = cursor.fetchall()
+            try:
+                # データ取得
+                results = query.all()
+            except Exception as query_error:
+                app.logger.error(f"SQLAlchemyクエリエラー: {query_error}")
+                app.logger.error(traceback.format_exc())
+                
+                # SQLiteに直接接続して取得を試みる
+                try:
+                    app.logger.info("SQLiteを直接使用して再試行します")
+                    conn = get_db_connection()
+                    
+                    # SQLクエリの基本部分
+                    sql_query = "SELECT * FROM store_status WHERE 1=1"
+                    params = []
+                    
+                    # フィルタリング条件の適用
+                    if store:
+                        sql_query += " AND store_name = ?"
+                        params.append(store)
+                    
+                    # 日付フィルタは単純化（SQLite文字列比較を使用）
+                    if start_date:
+                        sql_query += " AND date(timestamp) >= date(?)"
+                        params.append(start_date)
+                    
+                    if end_date:
+                        sql_query += " AND date(timestamp) <= date(?)"
+                        params.append(end_date)
+                    
+                    # ソート順
+                    sql_query += " ORDER BY timestamp ASC"
+                    
+                    # 制限
+                    if 'page' in request.args or 'per_page' in request.args:
+                        offset = (page - 1) * per_page
+                        sql_query += f" LIMIT {per_page} OFFSET {offset}"
+                    elif limit:
+                        sql_query += f" LIMIT {limit}"
+                    
+                    # 総件数の取得（単純化した近似値）
+                    count_sql = "SELECT COUNT(*) FROM store_status"
+                    total_count = conn.execute(count_sql).fetchone()[0]
+                    
+                    # データ取得
+                    results = list(conn.execute(sql_query, params).fetchall())
+                    conn.close()
+                except Exception as sqlite_err:
+                    app.logger.error(f"SQLite直接取得エラー: {sqlite_err}")
+                    # エラーレスポンスを返す
+                    return jsonify({
+                        "data": [],
+                        "meta": {
+                            "error": str(sqlite_err),
+                            "message": "データベース処理中にエラーが発生しました",
+                            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+                        }
+                    }), 200
             
             # データのフォーマット
             data = []
-            for r in results:
-                # SQLiteの行オブジェクトから辞書を作成
-                item = {}
-                for key in r.keys():
-                    item[key] = r[key]
-                
-                # 日時のタイムゾーン変換
-                if 'timestamp' in item and item['timestamp']:
-                    timestamp = item['timestamp']
-                    if isinstance(timestamp, str):
-                        try:
-                            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                        except ValueError:
-                            try:
-                                timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-                            except ValueError:
-                                pass
-                    
-                    if isinstance(timestamp, datetime):
-                        if timestamp.tzinfo is None:
-                            timestamp = jst.localize(timestamp)
-                        else:
-                            timestamp = timestamp.astimezone(jst)
-                        item['timestamp'] = timestamp
-                
-                # データ整形
-                formatted_item = {
-                    'id': item.get('id'),
-                    'timestamp': item.get('timestamp').isoformat() if isinstance(item.get('timestamp'), datetime) else None,
-                    'store_name': item.get('store_name', '不明') or '不明',
-                    'biz_type': item.get('biz_type', '不明') or '不明',
-                    'genre': item.get('genre', '不明') or '不明',
-                    'area': item.get('area', '不明') or '不明',
-                    'total_staff': int(item.get('total_staff', 0) or 0),
-                    'working_staff': int(item.get('working_staff', 0) or 0),
-                    'active_staff': int(item.get('active_staff', 0) or 0),
-                    'url': item.get('url', '') or '',
-                    'shift_time': item.get('shift_time', '') or ''
-                }
-                
-                # 稼働率計算
-                if formatted_item['working_staff'] > 0:
-                    formatted_item['rate'] = round(((formatted_item['working_staff'] - formatted_item['active_staff']) / formatted_item['working_staff']) * 100, 1)
-                else:
-                    formatted_item['rate'] = 0
-                
-                # total_staffが設定されていない場合はworking_staffとactive_staffから計算
-                if formatted_item['total_staff'] == 0:
-                    formatted_item['total_staff'] = formatted_item['working_staff'] + formatted_item['active_staff']
-                
-                data.append(formatted_item)
+            for item in results:
+                try:
+                    formatted_item = format_store_status(item, jst)
+                    if formatted_item:  # Noneでない場合のみ追加
+                        data.append(formatted_item)
+                except Exception as fmt_err:
+                    app.logger.warning(f"フォーマットエラー: {fmt_err}")
+                    # format_store_statusが改善されているのでエラーは発生しにくい
             
             # ページネーション情報
             if 'page' in request.args or 'per_page' in request.args:
@@ -898,9 +909,6 @@ def api_history():
                         "end_date": end_date if end_date else None
                     }
                 }
-            
-            # 接続クローズ
-            conn.close()
             
             # レスポンス返却
             return jsonify({

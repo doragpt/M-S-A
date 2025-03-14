@@ -49,160 +49,54 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
         }
     }
 
-def format_store_status(status, timezone=None):
+def format_store_status(item, timezone=None):
     """
-    StoreStatus オブジェクトまたは辞書を整形して返す関数
-    -status: StoreStatus オブジェクトまたは辞書
-    -timezone: タイムゾーン（オプション）
+    店舗ステータスレコードを整形してフロントエンド用JSONに変換する関数
+
+    Parameters:
+    -----------
+    item : dict or SQLAlchemy model
+        変換する店舗ステータスレコード
+    timezone : pytz timezone object, optional
+        変換先のタイムゾーン（指定しない場合はUTC）
+
+    Returns:
+    --------
+    dict
+        整形されたJSONオブジェクト
     """
-    # 時間情報のローカライズ
-    if timezone is None:
-        timezone = pytz.timezone('Asia/Tokyo')
-    
-    from app import app
-    logger = app.logger
+    import logging
+    import datetime
+    import pytz
+    logger = logging.getLogger('app')
 
-    try:
-        # StoreStatus オブジェクトをディクショナリに変換
-        if hasattr(status, '__dict__'):
-            status_dict = status.__dict__.copy()
-            if '_sa_instance_state' in status_dict:
-                del status_dict['_sa_instance_state']
-        else:
-            # SQLiteの Row オブジェクトの場合（辞書っぽいオブジェクト）
-            if hasattr(status, 'keys'):
-                status_dict = {key: status[key] for key in status.keys()}
-            else:
-                status_dict = dict(status)
+    # SQLAlchemy モデルオブジェクトの場合は辞書に変換
+    if hasattr(item, '__dict__'):
+        item_dict = {}
+        for key in ['id', 'timestamp', 'store_name', 'biz_type', 'genre', 'area', 
+                   'total_staff', 'working_staff', 'active_staff', 'url', 'shift_time']:
+            if hasattr(item, key):
+                item_dict[key] = getattr(item, key)
+        item = item_dict
 
-        # タイムスタンプをローカライズ
-        if 'timestamp' in status_dict and status_dict['timestamp']:
-            timestamp = status_dict['timestamp']
-            timestamp_str = None
-            
-            # デバッグログ
-            if isinstance(timestamp, str):
-                logger.debug(f"文字列タイムスタンプ処理: {timestamp}")
-            elif hasattr(timestamp, 'isoformat'):
-                logger.debug(f"datetime タイムスタンプ処理: {timestamp.isoformat() if hasattr(timestamp, 'isoformat') else 'フォーマット不可'}")
-            
-            if isinstance(timestamp, str):
-                # 文字列の場合はパース
-                timestamp_str = timestamp  # 元の文字列を保存
-                try:
-                    if 'Z' in timestamp:
-                        timestamp = timestamp.replace('Z', '+00:00')
-                    if timestamp.endswith('+00:00') or '+' in timestamp:
-                        timestamp = datetime.fromisoformat(timestamp)
-                    elif 'T' in timestamp:
-                        # マイクロ秒の処理
-                        if '.' in timestamp:
-                            parts = timestamp.split('.')
-                            base_time = parts[0]
-                            timestamp = datetime.fromisoformat(base_time)
-                        else:
-                            timestamp = datetime.fromisoformat(timestamp)
-                    else:
-                        timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-                except ValueError as e:
-                    logger.warning(f"一次的な日付変換エラー: {e}, 入力値: {timestamp}")
-                    try:
-                        # その他の形式も試す
-                        formats = [
-                            '%Y-%m-%d %H:%M:%S',
-                            '%Y-%m-%d %H:%M:%S.%f',
-                            '%Y-%m-%dT%H:%M:%S',
-                            '%Y-%m-%dT%H:%M:%S.%f'
-                        ]
-                        for fmt in formats:
-                            try:
-                                # マイクロ秒を含む形式の場合は切り捨て処理
-                                if '.%f' in fmt and '.' in timestamp:
-                                    main_part, _ = timestamp.split('.', 1)
-                                    if 'T' in fmt:
-                                        main_part += '.000000'  # マイクロ秒を追加
-                                    else:
-                                        main_part += '.000000'  # マイクロ秒を追加
-                                    timestamp = datetime.strptime(main_part, fmt)
-                                else:
-                                    timestamp = datetime.strptime(timestamp, fmt)
-                                break
-                            except ValueError:
-                                continue
-                    except Exception as parse_error:
-                        logger.error(f"複数形式での日付変換も失敗: {parse_error}, 入力値: {timestamp}")
-                        # エラー回避のため現在時刻を使用
-                        timestamp = datetime.now()
-
-            # タイムゾーン情報がない場合は追加
-            if isinstance(timestamp, datetime):
-                if timestamp.tzinfo is None:
-                    timestamp = timezone.localize(timestamp)
-                # 指定されたタイムゾーンに変換
-                else:
-                    timestamp = timestamp.astimezone(timezone)
-                status_dict['timestamp'] = timestamp
-            else:
-                # datetimeに変換できない場合は元の値を使用
-                logger.warning(f"タイムスタンプの変換失敗: {timestamp_str if timestamp_str else timestamp}, 型: {type(timestamp)}")
-                # 現在時刻を代用
-                status_dict['timestamp'] = timezone.localize(datetime.now())
-
-        # 整形されたディクショナリを返す
+    # SQLite の Row オブジェクトの場合
+    elif hasattr(item, 'keys'):
         try:
-            formatted = {
-                'id': status_dict.get('id'),
-                'timestamp': status_dict.get('timestamp').isoformat() if hasattr(status_dict.get('timestamp'), 'isoformat') else None,
-                'store_name': status_dict.get('store_name', '不明') or '不明',
-                'biz_type': status_dict.get('biz_type', '不明') or '不明',
-                'genre': status_dict.get('genre', '不明') or '不明',
-                'area': status_dict.get('area', '不明') or '不明',
-                'total_staff': int(status_dict.get('total_staff', 0) or 0),
-                'working_staff': int(status_dict.get('working_staff', 0) or 0),
-                'active_staff': int(status_dict.get('active_staff', 0) or 0),
-                'url': status_dict.get('url', '') or '',
-                'shift_time': status_dict.get('shift_time', '') or ''
-            }
+            item_dict = {}
+            for key in item.keys():
+                item_dict[key] = item[key]
+            item = item_dict
+        except Exception as e:
+            logger.error(f"SQLite Row の変換エラー: {e}")
+            # 続行するために空の辞書を作成
+            item = {'error': f"データ変換エラー: {str(e)}"}
 
-            # timestamp が None の場合は現在時刻を設定
-            if formatted['timestamp'] is None:
-                formatted['timestamp'] = timezone.localize(datetime.now()).isoformat()
-
-            # 稼働率を計算
-            if formatted['working_staff'] > 0:
-                formatted['rate'] = round((formatted['working_staff'] - formatted['active_staff']) / formatted['working_staff'] * 100, 1)
-            else:
-                formatted['rate'] = 0
-
-            # total_staffが設定されていない場合はworking_staffとactive_staffから計算
-            if formatted['total_staff'] == 0:
-                formatted['total_staff'] = formatted['working_staff'] + formatted['active_staff']
-
-            return formatted
-        except Exception as fmt_error:
-            logger.error(f"データフォーマット処理エラー: {fmt_error}")
-            # 最低限必要なフィールドだけのフォールバックレスポンス
-            return {
-                'id': status_dict.get('id') if 'id' in status_dict else 0,
-                'timestamp': timezone.localize(datetime.now()).isoformat(),
-                'store_name': status_dict.get('store_name', '不明') or '不明',
-                'biz_type': '不明',
-                'genre': '不明',
-                'area': '不明',
-                'total_staff': 0,
-                'working_staff': 0,
-                'active_staff': 0,
-                'url': '',
-                'shift_time': '',
-                'rate': 0
-            }
-    except Exception as e:
-        from app import app
-        app.logger.error(f"データフォーマットエラー: {e}")
-        # エラーでもNoneを返さず、最低限の情報を含む空のレコードを返す
+    # 辞書でない場合は処理中止
+    if not isinstance(item, dict):
+        logger.error(f"未対応の型: {type(item)}")
         return {
-            'id': 0,
-            'timestamp': timezone.localize(datetime.now()).isoformat(),
+            'id': None,
+            'timestamp': datetime.datetime.now().isoformat(),
             'store_name': '不明',
             'biz_type': '不明',
             'genre': '不明',
@@ -212,8 +106,193 @@ def format_store_status(status, timezone=None):
             'active_staff': 0,
             'url': '',
             'shift_time': '',
-            'rate': 0
+            'rate': 0.0,
+            'error': f"未対応の型: {type(item)}"
         }
+
+    try:
+        # タイムスタンプがdatetime型でない場合の変換処理
+        timestamp = item.get('timestamp')
+
+        if timestamp is not None:
+            if isinstance(timestamp, datetime.datetime):
+                # すでにdatetime型の場合は何もしない
+                pass
+            elif isinstance(timestamp, str):
+                try:
+                    # ISO 8601形式を試す
+                    if 'T' in timestamp:
+                        try:
+                            # Python 3.7以降の場合はfromisoformat()を使用
+                            if hasattr(datetime.datetime, 'fromisoformat'):
+                                # Z形式をタイムゾーン付きに変換
+                                iso_str = timestamp.replace('Z', '+00:00')
+                                timestamp = datetime.datetime.fromisoformat(iso_str)
+                            else:
+                                # マイクロ秒を持つISO形式
+                                if '.' in timestamp:
+                                    # マイクロ秒を除去
+                                    main_part = timestamp.split('+')[0] if '+' in timestamp else timestamp
+                                    main_part = main_part.split('Z')[0] if 'Z' in main_part else main_part
+                                    date_part, time_part = main_part.split('T')
+                                    time_base = time_part.split('.')[0]
+                                    timestamp = datetime.datetime.strptime(f"{date_part}T{time_base}", '%Y-%m-%dT%H:%M:%S')
+                                else:
+                                    # マイクロ秒なしISO形式
+                                    clean_ts = timestamp.split('+')[0].split('Z')[0]
+                                    timestamp = datetime.datetime.strptime(clean_ts, '%Y-%m-%dT%H:%M:%S')
+                        except ValueError as e:
+                            logger.warning(f"ISO形式の日付変換エラー: {e}, 値: {timestamp}")
+                            # フォールバック: 日付部分だけを使用
+                            try:
+                                date_part = timestamp.split('T')[0]
+                                timestamp = datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                            except ValueError:
+                                timestamp = datetime.datetime.now()
+                    else:
+                        # 通常の日時形式を試す
+                        try:
+                            timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+                        except ValueError:
+                            # 別形式を試す
+                            try:
+                                timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d')
+                            except ValueError:
+                                logger.warning(f"日付変換に失敗: {timestamp}")
+                                timestamp = datetime.datetime.now()
+                except Exception as dt_err:
+                    logger.error(f"日付変換中の予期しないエラー: {dt_err}, 値: {timestamp}")
+                    timestamp = datetime.datetime.now()
+            else:
+                # 他の型の場合は現在時刻を使用
+                logger.warning(f"未対応のタイムスタンプ型: {type(timestamp)}")
+                timestamp = datetime.datetime.now()
+        else:
+            # タイムスタンプがない場合は現在時刻を使用
+            timestamp = datetime.datetime.now()
+
+        # タイムゾーン変換
+        if timezone and timestamp:
+            try:
+                # タイムゾーン情報がない場合はUTCと仮定して変換
+                if not timestamp.tzinfo:
+                    timestamp = pytz.utc.localize(timestamp)
+                # 指定されたタイムゾーンに変換
+                timestamp = timestamp.astimezone(timezone)
+            except Exception as tz_err:
+                logger.error(f"タイムゾーン変換エラー: {tz_err}")
+                # エラー時は現在時刻を使用
+                timestamp = datetime.datetime.now(timezone)
+
+        # 文字列がない場合は"不明"、数値がない場合は0にする
+        store_name = item.get('store_name', '不明')
+        if store_name is None or store_name == '':
+            store_name = '不明'
+
+        biz_type = item.get('biz_type', '不明')
+        if biz_type is None or biz_type == '':
+            biz_type = '不明'
+
+        genre = item.get('genre', '不明')
+        if genre is None or genre == '':
+            genre = '不明'
+
+        area = item.get('area', '不明')
+        if area is None or area == '':
+            area = '不明'
+
+        # 数値型データの処理 (None or '' -> 0)
+        try:
+            total_staff = int(item.get('total_staff', 0) or 0)
+        except (ValueError, TypeError):
+            total_staff = 0
+
+        try:
+            working_staff = int(item.get('working_staff', 0) or 0)
+        except (ValueError, TypeError):
+            working_staff = 0
+
+        try:
+            active_staff = int(item.get('active_staff', 0) or 0)
+        except (ValueError, TypeError):
+            active_staff = 0
+
+        # URL がない場合は空文字列
+        url = item.get('url', '')
+        if url is None:
+            url = ''
+
+        # シフト時間がない場合は空文字列
+        shift_time = item.get('shift_time', '')
+        if shift_time is None:
+            shift_time = ''
+
+        # 稼働率計算
+        rate = 0.0
+        if working_staff > 0:
+            rate = ((working_staff - active_staff) / working_staff) * 100
+            rate = round(rate, 1)  # 小数点第1位で丸める
+
+        # 整形済みデータ
+        formatted = {
+            'id': item.get('id'),
+            'timestamp': timestamp.isoformat() if timestamp else datetime.datetime.now().isoformat(),
+            'store_name': store_name,
+            'biz_type': biz_type,
+            'genre': genre,
+            'area': area,
+            'total_staff': total_staff,
+            'working_staff': working_staff,
+            'active_staff': active_staff,
+            'url': url,
+            'shift_time': shift_time,
+            'rate': rate
+        }
+
+        return formatted
+
+    except Exception as e:
+        logger.error(f"データフォーマットエラー: {e}")
+        logger.error(f"エラーの原因となったデータ: {item}")
+
+        # 最低限のフォールバックデータを返す
+        try:
+            store_name = item.get('store_name', '不明')
+            if store_name is None or store_name == '':
+                store_name = '不明'
+
+            return {
+                'id': item.get('id'),
+                'timestamp': datetime.datetime.now().isoformat(),
+                'store_name': store_name,
+                'biz_type': '不明',
+                'genre': '不明',
+                'area': '不明',
+                'total_staff': 0,
+                'working_staff': 0,
+                'active_staff': 0,
+                'url': '',
+                'shift_time': '',
+                'rate': 0.0,
+                'error': str(e)
+            }
+        except Exception as fallback_err:
+            logger.error(f"フォールバックデータ作成エラー: {fallback_err}")
+            return {
+                'id': None,
+                'timestamp': datetime.datetime.now().isoformat(),
+                'store_name': '不明',
+                'biz_type': '不明',
+                'genre': '不明',
+                'area': '不明',
+                'total_staff': 0,
+                'working_staff': 0,
+                'active_staff': 0,
+                'url': '',
+                'shift_time': '',
+                'rate': 0.0,
+                'error': '重大なフォーマットエラー'
+            }
 
 def prepare_data_for_integrated_dashboard():
     """統合ダッシュボード用のデータを準備"""
