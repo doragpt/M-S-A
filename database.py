@@ -31,11 +31,24 @@ def get_db_connection():
             return None
         try:
             if isinstance(s, bytes):
-                return datetime.datetime.fromisoformat(s.decode())
+                s_decoded = s.decode()
+                # ISO形式の日付文字列にスペースが含まれている場合に対処
+                if ' ' in s_decoded and 'T' not in s_decoded:
+                    parts = s_decoded.split(' ')
+                    if len(parts) >= 2:
+                        s_decoded = f"{parts[0]}T{parts[1]}"
+                return datetime.datetime.fromisoformat(s_decoded)
             elif isinstance(s, str):
+                # ISO形式の日付文字列にスペースが含まれている場合に対処
+                if ' ' in s and 'T' not in s:
+                    parts = s.split(' ')
+                    if len(parts) >= 2:
+                        s = f"{parts[0]}T{parts[1]}"
                 return datetime.datetime.fromisoformat(s)
             return s
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            # エラーの詳細をログに出力
+            print(f"日付変換エラー: {e}, 入力値: {repr(s)}")
             # ISO形式でない場合は文字列として返す
             if isinstance(s, bytes):
                 return s.decode()

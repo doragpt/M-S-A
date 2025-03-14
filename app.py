@@ -445,18 +445,34 @@ def api_data():
                 import datetime
 
                 def adapt_datetime(dt):
+                    if dt is None:
+                        return None
                     return dt.isoformat()
 
                 def convert_datetime(s):
+                    if s is None:
+                        return None
                     try:
-                        return datetime.datetime.fromisoformat(s.decode())
-                    except ValueError:
+                        if isinstance(s, bytes):
+                            s_decoded = s.decode()
+                            # ISO形式の日付文字列にスペースが含まれている場合に対処
+                            if ' ' in s_decoded and 'T' not in s_decoded:
+                                parts = s_decoded.split(' ')
+                                if len(parts) >= 2:
+                                    s_decoded = f"{parts[0]}T{parts[1]}"
+                            return datetime.datetime.fromisoformat(s_decoded)
+                        return s
+                    except ValueError as e:
+                        app.logger.warning(f"日付変換エラー: {e}, 入力値: {repr(s)}")
                         # ISO形式でない場合は文字列として返す
-                        return s.decode()
+                        if isinstance(s, bytes):
+                            return s.decode()
+                        return s
 
                 # SQLiteにカスタムの変換関数を登録
                 register_adapter(datetime.datetime, adapt_datetime)
                 register_converter("timestamp", convert_datetime)
+                register_converter("datetime", convert_datetime)
 
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
