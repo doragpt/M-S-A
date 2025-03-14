@@ -2543,12 +2543,21 @@
           const data = await response.json();
 
           // レスポンスデータ形式に対応
-          let historyData = data;
-          if (data.items) {
+          let historyData = [];
+          
+          // APIレスポンスの構造を検出して適切に抽出
+          if (data.data && Array.isArray(data.data)) {
+            historyData = data.data;
+          } else if (Array.isArray(data)) {
+            historyData = data;
+          } else if (data.items && Array.isArray(data.items)) {
             historyData = data.items;
+          } else {
+            console.error('予期しないAPIレスポンス形式:', data);
+            throw new Error('APIからのデータ形式が無効です');
           }
 
-          if (!historyData || historyData.length === 0) {
+          if (historyData.length === 0) {
             throw new Error('データが見つかりませんでした');
           }
 
@@ -2561,7 +2570,7 @@
           const hourlyStats = {};
 
           historyData.forEach(record => {
-            if (record.working_staff <= 0) return;
+            if (!record || record.working_staff <= 0) return;
 
             const date = new Date(record.timestamp);
             const hour = date.getHours();
@@ -3752,17 +3761,28 @@
           throw new Error(`API error: ${response.status}`);
         }
         
-        const data = await response.json();
+        const responseData = await response.json();
         
-        if (!data || data.length === 0) {
+        // レスポンスデータの構造を検証して正しく抽出
+        let rankingData = [];
+        if (responseData.data && Array.isArray(responseData.data)) {
+          rankingData = responseData.data;
+        } else if (Array.isArray(responseData)) {
+          rankingData = responseData;
+        } else {
+          console.error('予期しないAPIレスポンス形式:', responseData);
+          throw new Error('APIからのデータ形式が無効です');
+        }
+        
+        if (rankingData.length === 0) {
           throw new Error('ランキングデータが見つかりませんでした');
         }
         
-        console.log(`取得したランキングデータ: ${data.length}件`);
+        console.log(`取得したランキングデータ: ${rankingData.length}件`);
         
         // ランキングチャートとテーブルを更新
-        updatePopularRankingChart(data);
-        updatePopularRankingTable(data);
+        updatePopularRankingChart(rankingData);
+        updatePopularRankingTable(rankingData);
         
       } catch (error) {
         console.error('人気店舗ランキングデータ読み込みエラー:', error);
@@ -3780,6 +3800,12 @@
         
         // 既存のチャートを破棄
         if (charts.popularRanking) charts.popularRanking.destroy();
+        
+        // データが配列でない場合は処理を中止
+        if (!Array.isArray(rankingData)) {
+          console.error('ランキングデータが配列ではありません:', rankingData);
+          throw new Error('ランキングデータが配列形式ではありません');
+        }
         
         // 選択した件数で表示（9999は全店舗表示の特殊コード）
         const limit = parseInt(document.getElementById('rankingLimit').value);
@@ -3927,6 +3953,12 @@
       try {
         const tableBody = document.getElementById('popularRankingTableBody');
         tableBody.innerHTML = '';
+        
+        // データが配列でない場合は処理を中止
+        if (!Array.isArray(rankingData)) {
+          console.error('ランキングデータが配列ではありません:', rankingData);
+          throw new Error('ランキングデータが配列形式ではありません');
+        }
         
         // 選択した件数で表示
         const limit = parseInt(document.getElementById('rankingLimit').value);
