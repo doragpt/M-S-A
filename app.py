@@ -422,6 +422,7 @@ def api_data():
         try:
             # 各店舗の最新タイムスタンプをサブクエリで取得
             app.logger.debug("サブクエリの構築開始")
+            # datetime文字列のパース問題を回避するため、直接DBの関数を使用
             subq = session.query(
                 StoreStatus.store_name,
                 func.max(StoreStatus.timestamp).label("max_time")
@@ -439,6 +440,24 @@ def api_data():
             app.logger.debug("クエリ実行開始")
             
             try:
+                # SQLiteのdatetime解析エラーを回避するための設定
+                from sqlite3 import register_adapter, register_converter
+                import datetime
+                
+                def adapt_datetime(dt):
+                    return dt.isoformat()
+                
+                def convert_datetime(s):
+                    try:
+                        return datetime.datetime.fromisoformat(s.decode())
+                    except ValueError:
+                        # ISO形式でない場合は文字列として返す
+                        return s.decode()
+                
+                # SQLiteにカスタムの変換関数を登録
+                register_adapter(datetime.datetime, adapt_datetime)
+                register_converter("timestamp", convert_datetime)
+                
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
             except exc.OperationalError as oe:
