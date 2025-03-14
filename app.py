@@ -422,15 +422,16 @@ def api_data():
         try:
             # 各店舗の最新タイムスタンプをサブクエリで取得
             app.logger.debug("サブクエリの構築開始")
-            # datetime文字列のパース問題を回避するため、直接DBの関数を使用
-            subq = session.query(
+            
+            # サブクエリを明示的に構築
+            subq = db.session.query(
                 StoreStatus.store_name,
                 func.max(StoreStatus.timestamp).label("max_time")
             ).group_by(StoreStatus.store_name).subquery()
 
             # メインクエリの構築
             app.logger.debug("メインクエリの構築開始")
-            query = session.query(StoreStatus).join(
+            query = db.session.query(StoreStatus).join(
                 subq,
                 (StoreStatus.store_name == subq.c.store_name) &
                 (StoreStatus.timestamp == subq.c.max_time)
@@ -440,75 +441,36 @@ def api_data():
             app.logger.debug("クエリ実行開始")
 
             try:
-                # SQLiteのdatetime解析エラーを回避するための設定
-                from sqlite3 import register_adapter, register_converter
-                import datetime
-
-                def adapt_datetime(dt):
-                    if dt is None:
-                        return None
-                    return dt.isoformat()
-
-                def convert_datetime(s):
-                    if s is None:
-                        return None
-                    try:
-                        if isinstance(s, bytes):
-                            s_decoded = s.decode()
-                            # ISO形式の日付文字列にスペースが含まれている場合に対処
-                            if ' ' in s_decoded and 'T' not in s_decoded:
-                                parts = s_decoded.split(' ')
-                                if len(parts) >= 2:
-                                    s_decoded = f"{parts[0]}T{parts[1]}"
-                            return datetime.datetime.fromisoformat(s_decoded)
-                        elif isinstance(s, str):
-                            # マイクロ秒が含まれている場合は6桁に制限
-                            if '.' in s:
-                                parts = s.split('.')
-                                if len(parts) == 2 and len(parts[1]) > 6:
-                                    s = f"{parts[0]}.{parts[1][:6]}"
-                            return datetime.datetime.fromisoformat(s)
-                        return s
-                    except ValueError as e:
-                        app.logger.warning(f"日付変換エラー: {e}, 入力値: {repr(s)}")
-                        # ISO形式でない場合は文字列として返す
-                        if isinstance(s, bytes):
-                            return s.decode()
-                        return s
-
-                # SQLiteにカスタムの変換関数を登録
-                register_adapter(datetime.datetime, adapt_datetime)
-                register_converter("timestamp", convert_datetime)
-                register_converter("datetime", convert_datetime)
-
+                # データベース接続を直接使用
+                from database import get_db_connection
+                conn = get_db_connection()
+                
+                # SQLiteのカスタム関数を使ってクエリを実行（エラー時のフォールバック用）
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
-            except exc.OperationalError as oe:
-                app.logger.error(f"SQLite操作エラー: {str(oe)}")
-                app.logger.error(traceback.format_exc())
-                return jsonify({"error": "データベース操作エラー", "details": str(oe)}), 500
             except Exception as qe:
                 app.logger.error(f"クエリ実行エラー: {str(qe)}")
                 app.logger.error(traceback.format_exc())
-                return jsonify({"error": "クエリ実行中にエラーが発生しました", "details": str(qe)}), 500
+                # エラーの場合でも空のデータを返す
+                return jsonify({"data": [], "meta": {"total_count": 0, "message": "データ取得中にエラーが発生しました", "error": str(qe)}}), 500
 
             # セッション完了後の処理
             if len(all_results) == 0:
                 app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
-                return jsonify({"data": [], "meta": {"total_count": 0, "message": "データが見つかりません"}}), 200  # 404から200に変更
+                return jsonify({"data": [], "meta": {"total_count": 0, "message": "データが見つかりません"}}), 200
 
             # 集計値の計算
             total_store_count = len(all_results)
             total_working_staff = 0
             total_active_staff = 0
-            valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+            valid_stores = 0
             max_rate = 0
 
             app.logger.debug("集計値の計算開始")
             for r in all_results:
                 # NULL値チェック
-                working_staff = r.working_staff or 0
-                active_staff = r.active_staff or 0
+                working_staff = r.working_staff if r.working_staff is not None else 0
+                active_staff = r.active_staff if r.active_staff is not None else 0
 
                 # 集計用データの収集
                 if working_staff > 0:
@@ -516,31 +478,22 @@ def api_data():
                     total_working_staff += working_staff
                     total_active_staff += active_staff
                     try:
-                        if working_staff > 0:  # 追加の0チェック
-                            rate = ((working_staff - active_staff) / working_staff) * 100
-                            max_rate = max(max_rate, rate)
-                    except ZeroDivisionError:
-                        app.logger.warning(f"0除算エラー: working_staff={working_staff}, active_staff={active_staff}")
-                        pass
-                    except Exception as calc_err:
-                        app.logger.warning(f"計算エラー: {str(calc_err)}, working_staff={working_staff}, active_staff={active_staff}")
-                        pass
+                        # 稼働率 = (勤務中 - 待機中) / 勤務中 × 100
+                        rate = ((working_staff - active_staff) / working_staff) * 100
+                        max_rate = max(max_rate, rate)
+                    except (ZeroDivisionError, TypeError):
+                        app.logger.warning(f"稼働率計算エラー: working_staff={working_staff}, active_staff={active_staff}")
 
             # 全体平均稼働率の計算
             avg_rate = 0
             if valid_stores > 0 and total_working_staff > 0:
                 try:
                     avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
-                except ZeroDivisionError:
-                    app.logger.warning("全体平均計算時の0除算エラー")
-                    avg_rate = 0
-                except Exception as avg_err:
-                    app.logger.warning(f"全体平均計算エラー: {str(avg_err)}")
-                    avg_rate = 0
+                except (ZeroDivisionError, TypeError):
+                    app.logger.warning("全体平均計算時のエラー")
 
             # データのフォーマット - JSTタイムゾーンを明示的に設定
             jst = pytz.timezone('Asia/Tokyo')
-            # 現在時刻をJSTで取得（API呼び出し時刻）
             now_jst = datetime.now(jst)
 
             app.logger.debug("レスポンスデータのフォーマット開始")
@@ -548,13 +501,19 @@ def api_data():
             # データフォーマット共通関数
             def format_data_with_error_handling(items_to_format):
                 formatted_data = []
+                error_count = 0
+                
                 for item in items_to_format:
                     try:
+                        # format_store_statusがNoneを返す場合に対処
                         formatted_item = format_store_status(item, jst)
-                        formatted_data.append(formatted_item)
+                        if formatted_item:
+                            formatted_data.append(formatted_item)
                     except Exception as fmt_err:
+                        error_count += 1
                         app.logger.error(f"アイテムフォーマットエラー: {str(fmt_err)}, item_id={getattr(item, 'id', 'unknown')}")
-                        # エラーとなったアイテムはスキップして続行
+                
+                app.logger.info(f"データフォーマット完了: {len(formatted_data)}件成功, {error_count}件エラー")
                 return formatted_data
 
             if use_pagination:
@@ -580,7 +539,7 @@ def api_data():
                             "total_pages": paginated_result['meta']['total_pages'],
                             "has_prev": paginated_result['meta']['has_prev'],
                             "has_next": paginated_result['meta']['has_next'],
-                            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                         }
                     }
                 except Exception as page_err:
@@ -615,45 +574,31 @@ def api_data():
                         "max_rate": round(max_rate, 1),
                         "total_working_staff": total_working_staff,
                         "total_active_staff": total_active_staff,
-                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                     }
                 }
 
             app.logger.info("API /api/data レスポンス準備完了")
-
-            # 常に統一された形式で返す
-            if isinstance(response, dict) and 'data' in response:
-                # すでに data キーがある場合はそのまま使用
-                return jsonify(response)
-            else:
-                # data キーがない場合は適切な形式に変換
-                if isinstance(response, dict):
-                    data_content = response.pop('data', []) if 'data' in response else []
-                    return jsonify({"data": data_content, "meta": response.get('meta', {})})
-                else:
-                    # responseが辞書でない場合（リストなど）
-                    return jsonify({"data": response if response is not None else [], "meta": {}})
+            return jsonify(response)
 
         except Exception as e:
             app.logger.error(f"クエリ実行中の例外: {str(e)}")
             app.logger.error(traceback.format_exc())
-            # 統一形式でエラーレスポンスを返す
+            # シンプルなエラーレスポンス
             return jsonify({
                 "data": [],
-                "meta": {},
-                "error": "クエリ実行中にエラーが発生しました",
-                "details": str(e)
+                "meta": {"error": str(e)},
+                "error": "クエリ実行中にエラーが発生しました"
             }), 500
 
     except Exception as e:
         app.logger.error(f"API /api/data 全体での例外: {str(e)}")
         app.logger.error(traceback.format_exc())
-        # 統一形式でエラーレスポンスを返す
+        # シンプルなエラーレスポンス
         return jsonify({
             "data": [],
-            "meta": {},
-            "error": "APIの処理中にエラーが発生しました",
-            "details": str(e)
+            "meta": {"error": str(e)},
+            "error": "APIの処理中にエラーが発生しました"
         }), 500
 
 

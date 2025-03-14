@@ -73,14 +73,26 @@ def format_store_status(item, timezone=None):
         # 既にタイムゾーン情報がある場合は変換
         timestamp = timestamp.astimezone(timezone)
 
-    # タイムスタンプをISO 8601形式の文字列に変換
-    formatted_timestamp = timestamp.isoformat()
+    # タイムスタンプをISO 8601形式の文字列に変def format_store_status(item, timezone=None):
+    """
+    StoreStatusモデルのレコードをAPIレスポンス用に整形する関数
+    timezonがNoneの場合はタイムゾーンを考慮しない
+    """
+    # タイムスタンプにタイムゾーン情報を追加してJSTにする
+    timestamp = item.timestamp
+    if timestamp and timezone and timestamp.tzinfo is None:
+        timestamp = timezone.localize(timestamp)
 
-    # 稼働率の計算
+    formatted_timestamp = timestamp.isoformat() if timestamp else None
+
+    # 稼働率の計算 - Noneチェックを強化
     rate = 0
-    if item.working_staff and item.working_staff > 0:
+    working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
+    active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
+    
+    if working_staff > 0:
         # (勤務中 - 待機中) / 勤務中 × 100
-        rate = ((item.working_staff - item.active_staff) / item.working_staff) * 100
+        rate = ((working_staff - active_staff) / working_staff) * 100e_staff) / item.working_staff) * 100
 
     # 結果を辞書にまとめる
     return {
