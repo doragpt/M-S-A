@@ -2049,18 +2049,18 @@
                 maintainAspectRatio: false,
                 plugins: {
                   title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } },
-                  zoom: {
-                    zoom: {
-                      wheel: { enabled: false },
-                      pinch: { enabled: false },
-                      mode: 'xy'
-                    },
-                    pan: { enabled: false }
-                  }
+                  zoom: false, // ズーム機能を完全に無効化
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "平均稼働率 (%)" } }
-                }
+                },
+                // カーソルホバー時の動作カスタマイズ
+                onHover: null, // ホバーイベントを無効化
+                hover: {
+                  mode: null // ホバーモードを無効化
+                },
+                // ドラッグ操作を無効化
+                events: ['click', 'touchstart', 'touchmove']
               }
             });
 
@@ -2870,12 +2870,15 @@
             charts.area.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
             charts.area.data.datasets[0].label = '店舗数';
             
-            // ズーム機能を明示的に無効化
-            if (charts.area.options.plugins && charts.area.options.plugins.zoom) {
-              charts.area.options.plugins.zoom.zoom.wheel.enabled = false;
-              charts.area.options.plugins.zoom.zoom.pinch.enabled = false;
-              charts.area.options.plugins.zoom.pan.enabled = false;
+            // ズーム機能を完全に無効化
+            if (charts.area.options.plugins) {
+              charts.area.options.plugins.zoom = false;
             }
+            
+            // ホバーイベントも無効化
+            charts.area.options.onHover = null;
+            charts.area.options.hover = { mode: null };
+            charts.area.options.events = ['click', 'touchstart', 'touchmove'];
             
             // タイトルの更新
             if (charts.area.options.plugins && charts.area.options.plugins.title) {
