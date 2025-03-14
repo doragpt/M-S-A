@@ -1564,8 +1564,7 @@
             if (error.toString().includes('HTTP error 404')) {
               try {
                 // 最新データからランキングを計算
-                const data = await fetchWithRetry('/api/data', {}, 3, 2000);
-                const storeData = Array.isArray(data) ? data : (data.data || []);
+                const data = await fetchWithRetry('/api/data', {}, 3, 2000);                const storeData = Array.isArray(data) ? data : (data.data || []);
 
                 // 平均稼働率計算のためのモックデータ
                 const mockRankingData = storeData.map(store => {
