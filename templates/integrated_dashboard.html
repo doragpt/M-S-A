@@ -10,6 +10,36 @@
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script>
+    // Chart.jsに日付アダプタを明示的に登録
+    Chart.register({
+      id: 'luxon',
+      _date: window.luxon.DateTime,
+      _adapter: {
+        parse: function(value) {
+          return typeof value === 'string' ? window.luxon.DateTime.fromISO(value) : value;
+        },
+        format: function(time, format) {
+          return time.toFormat(format);
+        },
+        startOf: function(time, unit) {
+          return time.startOf(unit);
+        },
+        endOf: function(time, unit) {
+          return time.endOf(unit);
+        },
+        add: function(time, amount, unit) {
+          return time.plus({ [unit]: amount });
+        },
+        diff: function(max, min, unit) {
+          return max.diff(min).as(unit);
+        },
+        _create: function(time) {
+          return typeof time === 'string' ? window.luxon.DateTime.fromISO(time) : window.luxon.DateTime.fromMillis(time);
+        }
+      }
+    });
+  </script>
   <style>
     :root {
       --primary-color: #007bff;
@@ -1754,7 +1784,7 @@
 
         try {
           // 最適化されたAPIエンドポイントを使用
-          let url = `${apiBaseUrl}/history/optimized?store=${encodeURIComponent(storeName)}`;
+          let url = `${apiBaseUrl}/history_optimized?store=${encodeURIComponent(storeName)}`;
           
           // 日付パラメータを追加
           if (startDate) {
@@ -1822,9 +1852,15 @@
         const workingData = [];
 
         records.forEach(record => {
-          // タイムスタンプからDateオブジェクトを作成
-          const date = new Date(record.timestamp);
-          labels.push(date);
+          // タイムスタンプの処理（ISO文字列からDateオブジェクトへ変換）
+          let date;
+          if (typeof record.timestamp === 'string') {
+            date = new Date(record.timestamp);
+          } else {
+            date = record.timestamp;
+          }
+          
+          labels.push(date.toISOString());
           
           // working_staffが0の場合は稼働率0%とする
           let rate = 0;
@@ -1833,17 +1869,17 @@
           }
 
           rateData.push({
-            x: date,
+            x: date.toISOString(),
             y: parseFloat(rate.toFixed(1))
           });
 
           activeData.push({
-            x: date,
+            x: date.toISOString(),
             y: record.active_staff || 0
           });
 
           workingData.push({
-            x: date,
+            x: date.toISOString(),
             y: record.working_staff || 0
           });
         });
