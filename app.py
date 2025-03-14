@@ -727,7 +727,7 @@ def bulk_add_store_urls():
     try:
         db.session.commit()
         if invalid_urls:
-            flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。無効なURL: {`, '.join(invalid_urls[:5])}{"..." if len(invalid_urls) > 5 else ""}', 'warning')
+            flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。無効なURL: {", ".join(invalid_urls[:5])}{"..." if len(invalid_urls) > 5 else ""}', 'warning')
         else:
             flash(f'{success_count}件のURLを追加しました。', 'success')
     except Exception as e:
