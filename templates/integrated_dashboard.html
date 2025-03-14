@@ -2771,39 +2771,85 @@
       try {
         // 業種選択肢を初期化
         const typeSelector = document.getElementById('typeSelector');
+        if (!typeSelector) {
+          console.error("typeSelector要素が見つかりません");
+          return;
+        }
+        
         typeSelector.innerHTML = '<option value="">すべての業種</option>';
 
-        // APIのベースURL（ポート番号を含む）
+        // APIのベースURL
         const apiBaseUrl = '/api';
 
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
+          console.log("店舗データを取得します...");
           fetch(`${apiBaseUrl}/data`)
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+              }
+              return response.json();
+            })
             .then(data => {
-              storeData = data.data;
+              console.log("店舗データを取得しました:", data);
+              // APIレスポンス構造に対応
+              if (data.data) {
+                storeData = data.data;
+              } else {
+                storeData = data;
+              }
+              
               populateTypeSelect();
+              
+              // キャバクラをデフォルトで選択（最初の業種をデフォルト表示するため）
+              if (typeSelector.options.length > 1) {
+                typeSelector.selectedIndex = 1;
+              }
+              
               loadGenreRanking();
             })
-            .catch(error => console.error('店舗データの取得に失敗:', error));
+            .catch(error => {
+              console.error('店舗データの取得に失敗:', error);
+              document.getElementById('genreErrorMessage').textContent = `店舗データの取得に失敗: ${error.message}`;
+              document.getElementById('genreErrorMessage').style.display = 'block';
+            });
         } else {
+          console.log("既存の店舗データを使用します:", storeData.length);
           populateTypeSelect();
+          
+          // キャバクラをデフォルトで選択
+          if (typeSelector.options.length > 1) {
+            typeSelector.selectedIndex = 1;
+          }
+          
           loadGenreRanking();
         }
 
         // 業種選択メニューを設定
         function populateTypeSelect() {
-          const bizTypes = [...new Set(storeData.map(store => store.biz_type).filter(Boolean))].sort();
+          // 店舗データから業種を抽出
+          const bizTypes = [...new Set(storeData
+            .filter(store => store && store.biz_type) // nullチェックを追加
+            .map(store => store.biz_type))].sort();
 
+          console.log("抽出された業種:", bizTypes);
+          
           bizTypes.forEach(bizType => {
             const option = document.createElement('option');
             option.value = bizType;
             option.textContent = bizType;
             typeSelector.appendChild(option);
           });
+          
+          console.log("業種選択肢を設定しました。選択肢数:", typeSelector.options.length);
         }
       } catch (error) {
         console.error('業種タブ初期化エラー:', error);
+        if (document.getElementById('genreErrorMessage')) {
+          document.getElementById('genreErrorMessage').textContent = `初期化エラー: ${error.message}`;
+          document.getElementById('genreErrorMessage').style.display = 'block';
+        }
       }
     }
 
@@ -2817,18 +2863,21 @@
         document.getElementById('genreErrorMessage').style.display = 'none';
         document.getElementById('storeRankLoadingIndicator').style.display = 'flex';
 
-        // APIのベースURL（ポート番号を含む）
+        // APIのベースURL
         const apiBaseUrl = '/api';
 
         // bizTypeパラメータが存在しない場合の処理
         // 必須パラメータなので、ない場合はデフォルト値を設定
         let url = `${apiBaseUrl}/ranking/genre`;
+        
         if (bizType) {
           url += `?biz_type=${encodeURIComponent(bizType)}`;
         } else {
           // デフォルト値として「キャバクラ」を設定（400エラー回避のため）
           url += `?biz_type=${encodeURIComponent("キャバクラ")}`;
         }
+
+        console.log('ジャンルランキングAPI URL:', url); // デバッグ用
 
         const response = await fetch(url);
 
@@ -2837,6 +2886,7 @@
         }
 
         const data = await response.json();
+        console.log('ジャンルランキングデータ:', data); // デバッグ用
 
         if (!data || data.length === 0) {
           document.getElementById('genreErrorMessage').textContent = 'データがありません';
