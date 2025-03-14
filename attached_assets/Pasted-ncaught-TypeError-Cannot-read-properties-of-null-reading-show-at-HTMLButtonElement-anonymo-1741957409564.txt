@@ -1,0 +1,52 @@
+ncaught TypeError: Cannot read properties of null (reading 'show')
+    at HTMLButtonElement.<anonymous> ((index):1434:46)Understand this errorAI
+:5000/api/hourly:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2166 時間帯別分析エラー: Error: API error: 404
+    at loadHourlyAnalysis ((index):2150:17)
+loadHourlyAnalysis @ (index):2166Understand this errorAI
+:5000/api/history?store=AQUA&start_date=2025-03-07&end_date=2025-03-14&limit=1000:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)Understand this errorAI
+:5000/api/history?store=AQUA&start_date=2025-03-07&end_date=2025-03-14&limit=1000:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)Understand this errorAI
+:5000/api/hourly:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2166 時間帯別分析エラー: Error: API error: 404
+    at HTMLButtonElement.loadHourlyAnalysis ((index):2150:17)
+loadHourlyAnalysis @ (index):2166Understand this errorAI
+:5000/api/hourly:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2166 時間帯別分析エラー: Error: API error: 404
+    at HTMLButtonElement.loadHourlyAnalysis ((index):2150:17)
+loadHourlyAnalysis @ (index):2166Understand this errorAI
+:5000/api/area_stats:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2422 エリア統計データ読み込みエラー: Error: API error: 404
+    at loadAreaStatistics ((index):2408:17)
+loadAreaStatistics @ (index):2422Understand this errorAI
+:5000/api/ranking/genre:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 (BAD REQUEST)Understand this errorAI
+(index):2646 ジャンルランキングデータ読み込みエラー: Error: API error: 400
+    at loadGenreRanking ((index):2628:17)
+loadGenreRanking @ (index):2646Understand this errorAI
+:5000/api/ranking/genre:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 (BAD REQUEST)Understand this errorAI
+(index):2646 ジャンルランキングデータ読み込みエラー: Error: API error: 400
+    at HTMLButtonElement.loadGenreRanking ((index):2628:17)
+loadGenreRanking @ (index):2646Understand this errorAI
