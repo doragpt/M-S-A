@@ -738,16 +738,18 @@ def api_average_ranking():
 
     クエリパラメータ:
         biz_type: 業種でフィルタリング
-        limit: 上位何件を返すか（デフォルト20件）
+        limit: 上位何件を返すか（デフォルト1000件）
+        min_samples: 最小サンプル数（デフォルト1件）
     """
     try:
         # フィルタリング条件
         biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 1000, type=int)  # デフォルト値を1000に変更
+        limit = request.args.get('limit', 1000, type=int)  # デフォルト値は1000
+        min_samples = request.args.get('min_samples', 1, type=int)  # サンプル数の最小値（デフォルト1）
 
         # 最大値を制限
-        if limit > 1000:  # 最大値も1000に引き上げ
-            limit = 1000
+        if limit > 5000:  # 最大値を5000に引き上げ
+            limit = 5000
 
         # サブクエリ: 店舗ごとのグループ化
         subq = db.session.query(
@@ -766,8 +768,8 @@ def api_average_ranking():
         if biz_type:
             subq = subq.filter(StoreStatus.biz_type == biz_type)
 
-        # グループ化と最小サンプル数フィルタ
-        subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 3).subquery()
+        # グループ化と最小サンプル数フィルタ（最小値を引数から取得）
+        subq = subq.group_by(StoreStatus.store_name).having(func.count() >= min_samples).subquery()
 
         # メインクエリ: ランキング取得
         query = db.session.query(
@@ -779,12 +781,47 @@ def api_average_ranking():
             subq.c.area
         ).order_by(subq.c.avg_rate.desc()).limit(limit)
 
+        # クエリ実行と件数の確認
         results = query.all()
+        app.logger.info(f"平均稼働ランキング取得: {len(results)}件のデータを取得")
+
+        # 結果が0件の場合、サンプル数の条件を緩和して再取得
+        if len(results) == 0 and min_samples > 1:
+            app.logger.warning(f"サンプル数{min_samples}以上の店舗が見つからなかったため、条件を緩和します")
+            # サブクエリ再構築（サンプル数条件を1に）
+            subq = db.session.query(
+                StoreStatus.store_name,
+                func.avg(
+                    (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                    func.nullif(StoreStatus.working_staff, 0)
+                ).label('avg_rate'),
+                func.count().label('sample_count'),
+                func.max(StoreStatus.biz_type).label('biz_type'),
+                func.max(StoreStatus.genre).label('genre'),
+                func.max(StoreStatus.area).label('area')
+            ).filter(StoreStatus.working_staff > 0)
+            
+            if biz_type:
+                subq = subq.filter(StoreStatus.biz_type == biz_type)
+                
+            subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 1).subquery()
+            
+            query = db.session.query(
+                subq.c.store_name,
+                subq.c.avg_rate,
+                subq.c.sample_count,
+                subq.c.biz_type,
+                subq.c.genre,
+                subq.c.area
+            ).order_by(subq.c.avg_rate.desc()).limit(limit)
+            
+            results = query.all()
+            app.logger.info(f"条件緩和後の取得件数: {len(results)}件")
 
         # 結果を整形
         data = [{
             'store_name': r.store_name,
-            'avg_rate': float(r.avg_rate),
+            'avg_rate': float(r.avg_rate) if r.avg_rate is not None else 0.0,
             'sample_count': r.sample_count,
             'biz_type': r.biz_type if r.biz_type else '不明',
             'genre': r.genre if r.genre else '不明',
@@ -794,6 +831,7 @@ def api_average_ranking():
         return jsonify(data)
     except Exception as e:
         app.logger.error(f"平均稼働ランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
         return jsonify({"error": "ランキングの取得中にエラーが発生しました"}), 500
 
 # 業種内ジャンルランキングのAPIエンドポイント
