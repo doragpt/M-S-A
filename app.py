@@ -738,7 +738,7 @@ def api_average_ranking():
             subq = subq.filter(StoreStatus.biz_type == biz_type)
 
         # グループ化と最小サンプル数フィルタ
-        subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 10).subquery()
+        subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 3).subquery()
 
         # メインクエリ: ランキング取得
         query = db.session.query(
