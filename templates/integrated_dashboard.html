@@ -1,0 +1,2897 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>統合ダッシュボード</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --body-bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --chart-bg: rgba(255, 255, 255, 0.9);
+      --text-color: #333333;
+      --border-color: #dee2e6;
+      --hover-color: #e9ecef;
+      --tooltip-bg: rgba(0, 0, 0, 0.8);
+      --tooltip-color: #ffffff;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition-speed: 0.3s;
+    }
+
+    [data-theme="dark"] {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #222;
+      --dark-color: #f8f9fa;
+      --body-bg: #121212;
+      --card-bg: #1e1e1e;
+      --chart-bg: rgba(30, 30, 30, 0.9);
+      --text-color: #e0e0e0;
+      --border-color: #444;
+      --hover-color: #2c2c2c;
+      --tooltip-bg: rgba(255, 255, 255, 0.9);
+      --tooltip-color: #000000;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--body-bg);
+      color: var(--text-color);
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background-color: var(--card-bg);
+      padding: 15px 20px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color var(--transition-speed);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      transition: all var(--transition-speed);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .tab-content {
+      margin-top: 20px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      transition: box-shadow 0.2s, transform 0.2s, background-color var(--transition-speed);
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .card-header {
+      background-color: rgba(var(--primary-color-rgb), 0.1);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    .form-control, .form-select {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    }
+
+    .form-control:focus, .form-select:focus {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
+    }
+
+    .table {
+      color: var(--text-color);
+      border-color: var(--border-color);
+    }
+
+    .table thead th {
+      background-color: rgba(var(--primary-color-rgb), 0.1);
+      border-color: var(--border-color);
+    }
+
+    .table-hover tbody tr:hover {
+      background-color: var(--hover-color);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 340px;
+      width: 100%;
+      background-color: var(--chart-bg);
+      border-radius: 8px;
+      padding: 10px;
+      transition: background-color var(--transition-speed);
+    }
+
+    .loading-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      font-size: 1.2rem;
+      color: var(--secondary-color);
+    }
+
+    .spinner-border {
+      margin-right: 10px;
+    }
+
+    .nav-tabs {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-tabs .nav-link {
+      color: var(--text-color);
+      border: 1px solid transparent;
+      margin-bottom: -1px;
+      transition: color var(--transition-speed), background-color var(--transition-speed);
+    }
+
+    .nav-tabs .nav-link:hover {
+      color: var(--primary-color);
+      border-color: var(--hover-color) var(--hover-color) var(--border-color);
+    }
+
+    .nav-tabs .nav-link.active {
+      color: var(--primary-color);
+      background-color: var(--card-bg);
+      border-color: var(--border-color) var(--border-color) var(--card-bg);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .filter-control {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    @media (max-width: 768px) {
+      .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .filter-control {
+        width: 100%;
+      }
+      
+      .chart-container {
+        height: 300px;
+      }
+    }
+
+    .icon-button {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      padding: 5px;
+      transition: color 0.2s;
+    }
+
+    .icon-button:hover {
+      color: var(--primary-color);
+      opacity: 0.8;
+    }
+
+    .toggle-favorite {
+      cursor: pointer;
+      color: var(--secondary-color);
+      transition: color 0.2s;
+    }
+
+    .toggle-favorite.active {
+      color: var(--warning-color);
+    }
+
+    .badge {
+      padding: 0.35em 0.65em;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    .badge-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .badge-warning {
+      background-color: var(--warning-color);
+      color: black;
+    }
+
+    .badge-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .tooltip-inner {
+      background-color: var(--tooltip-bg);
+      color: var(--tooltip-color);
+      border-radius: 4px;
+      padding: 8px 12px;
+      max-width: 300px;
+      box-shadow: var(--shadow);
+    }
+
+    .bs-tooltip-auto[x-placement^=top] .arrow::before,
+    .bs-tooltip-top .arrow::before {
+      border-top-color: var(--tooltip-bg);
+    }
+
+    .result-summary {
+      background-color: var(--light-color);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      transition: background-color var(--transition-speed);
+    }
+
+    .result-summary h4 {
+      margin: 0 0 10px 0;
+      font-size: 1.1rem;
+      color: var(--primary-color);
+    }
+
+    .result-summary p {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 15px;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--secondary-color);
+    }
+
+    /* アニメーション効果 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .error-message {
+      color: var(--danger-color);
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: rgba(var(--danger-color-rgb), 0.1);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    /* デザインを統一するためのカスタムスタイル */
+    :root {
+      --primary-color-rgb: 0, 123, 255;
+      --secondary-color-rgb: 108, 117, 125;
+      --success-color-rgb: 40, 167, 69;
+      --danger-color-rgb: 220, 53, 69;
+      --warning-color-rgb: 255, 193, 7;
+      --info-color-rgb: 23, 162, 184;
+    }
+
+    /* 時間帯別分析の結果表示スタイル */
+    .hourly-results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    /* グラフ高さの調整 */
+    #genreRankingChart, #storeRankingChart {
+      height: 400px;
+      width: 100%;
+    }
+
+    /* モバイル対応の追加スタイル */
+    @media (max-width: 576px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+      }
+
+      .btn-group {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .header h1 {
+        font-size: 1.2rem;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <div class="header" id="pageHeader">
+    <h1>統合ダッシュボード</h1>
+    <div class="btn-group">
+      <button id="darkModeToggle" class="btn btn-light btn-sm" aria-label="ダークモード切替">
+        <i class="bi bi-moon"></i> <span class="d-none d-md-inline">ダークモード</span>
+      </button>
+      <button id="favoritesToggle" class="btn btn-light btn-sm" aria-label="お気に入りのみ表示">
+        <i class="bi bi-star"></i> <span class="d-none d-md-inline">お気に入りのみ</span>
+      </button>
+      <a href="/dashboard" class="btn btn-primary btn-sm" aria-label="メニューに戻る">
+        <i class="bi bi-house"></i> <span class="d-none d-md-inline">メニュー</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="container-fluid my-3">
+    <!-- メインタブ -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="true">
+          <i class="bi bi-speedometer2"></i> 店舗稼働状況
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history" role="tab" aria-controls="history" aria-selected="false">
+          <i class="bi bi-graph-up"></i> 店舗履歴グラフ
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="hourly-tab" data-bs-toggle="tab" href="#hourly" role="tab" aria-controls="hourly" aria-selected="false">
+          <i class="bi bi-clock"></i> 時間帯別分析
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="area-tab" data-bs-toggle="tab" href="#area" role="tab" aria-controls="area" aria-selected="false">
+          <i class="bi bi-geo-alt"></i> エリア統計
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="type-tab" data-bs-toggle="tab" href="#type" role="tab" aria-controls="type" aria-selected="false">
+          <i class="bi bi-bar-chart"></i> ジャンルランキング
+        </a>
+      </li>
+    </ul>
+
+    <!-- タブコンテンツ -->
+    <div class="tab-content" id="dashboardTabsContent">
+      <!-- 店舗稼働状況タブ -->
+      <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+        <div class="row mt-3">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+              <div class="card-header">フィルター</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="bizTypeFilter" class="form-label">業種</label>
+                  <select class="form-select" id="bizTypeFilter">
+                    <option value="all">すべて</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="genreFilter" class="form-label">ジャンル</label>
+                  <select class="form-select" id="genreFilter">
+                    <option value="all">すべて</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="areaFilter" class="form-label">エリア</label>
+                  <select class="form-select" id="areaFilter">
+                    <option value="all">すべて</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="searchStore" class="form-label">店舗検索</label>
+                  <input type="text" class="form-control" id="searchStore" placeholder="店舗名を入力">
+                </div>
+                <button id="filterReset" class="btn btn-secondary w-100">リセット</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <span>店舗稼働状況</span>
+                <div>
+                  <span id="lastUpdate"></span>
+                  <button id="refreshData" class="btn btn-sm btn-outline-primary ms-2">
+                    <i class="bi bi-arrow-clockwise"></i> 更新
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="loadingIndicator" class="loading-indicator">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div id="storeTable" class="table-responsive" style="display: none;">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>お気に入り</th>
+                        <th id="sortStore">店舗名 <i class="bi bi-arrow-down-up"></i></th>
+                        <th>業種</th>
+                        <th>ジャンル</th>
+                        <th>エリア</th>
+                        <th id="sortRate">稼働率 <i class="bi bi-arrow-down-up"></i></th>
+                        <th>勤務中/総数</th>
+                        <th>詳細</th>
+                      </tr>
+                    </thead>
+                    <tbody id="storeListBody"></tbody>
+                  </table>
+                </div>
+                <div id="noDataMessage" class="alert alert-info" style="display: none;">
+                  表示するデータがありません。
+                </div>
+                <div id="pagination" class="d-flex justify-content-center mt-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">稼働率トップ10</div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="top10Chart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">業種別平均稼働率</div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="bizTypeChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 店舗履歴グラフタブ -->
+      <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        <div class="row mt-3">
+          <div class="col-lg-4 col-md-12 mb-3">
+            <div class="card">
+              <div class="card-header">フィルター</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="historyStore" class="form-label">店舗選択</label>
+                  <select class="form-select" id="historyStore">
+                    <option value="">-- 店舗を選択 --</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="historyStartDate" class="form-label">開始日</label>
+                  <input type="date" class="form-control" id="historyStartDate">
+                </div>
+                <div class="mb-3">
+                  <label for="historyEndDate" class="form-label">終了日</label>
+                  <input type="date" class="form-control" id="historyEndDate">
+                </div>
+                <div class="d-grid gap-2">
+                  <button id="loadHistory" class="btn btn-primary">グラフを表示</button>
+                  <button id="resetHistory" class="btn btn-outline-secondary">リセット</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 集計結果表示エリア -->
+            <div class="card mt-3" id="historySummaryCard" style="display: none;">
+              <div class="card-header">集計結果</div>
+              <div class="card-body">
+                <div id="historySummary"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8 col-md-12">
+            <div class="card">
+              <div class="card-header">店舗稼働率履歴</div>
+              <div class="card-body">
+                <div id="historyLoadingIndicator" class="loading-indicator" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div id="historyErrorMessage" class="error-message" style="display: none;"></div>
+                <div class="chart-container" style="height: 400px;">
+                  <canvas id="historyChart"></canvas>
+                </div>
+                <div id="historyNoData" class="alert alert-info mt-3" style="display: none;">
+                  データがありません。別の店舗または期間を選択してください。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 時間帯別分析タブ -->
+      <div class="tab-pane fade" id="hourly" role="tabpanel" aria-labelledby="hourly-tab">
+        <div class="row mt-3">
+          <div class="col-lg-4 mb-3">
+            <div class="card">
+              <div class="card-header">フィルター</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="hourlyStore" class="form-label">店舗選択</label>
+                  <select class="form-select" id="hourlyStore">
+                    <option value="">-- 全店舗 --</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="hourlyBizType" class="form-label">業種</label>
+                  <select class="form-select" id="hourlyBizType">
+                    <option value="">-- すべて --</option>
+                  </select>
+                </div>
+                <div class="d-grid">
+                  <button id="loadHourly" class="btn btn-primary">分析を実行</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 集計結果表示エリア -->
+            <div class="card mt-3" id="hourlyResultsCard">
+              <div class="card-header">分析結果</div>
+              <div class="card-body">
+                <div id="hourlyLoadingIndicator" class="loading-indicator" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>分析中...</span>
+                </div>
+                <div id="hourlyResults">
+                  <p>分析を実行してください。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">時間帯別稼働率</div>
+              <div class="card-body">
+                <div class="chart-container" style="height: 400px;">
+                  <canvas id="hourlyChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- エリア統計タブ -->
+      <div class="tab-pane fade" id="area" role="tabpanel" aria-labelledby="area-tab">
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <span>エリア別統計</span>
+                <div>
+                  <button id="toggleAreaView" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-repeat"></i> 表示切替
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="areaLoadingIndicator" class="loading-indicator">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div class="chart-container" style="height: 500px; max-height: 500px; overflow: hidden;">
+                  <canvas id="areaChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">エリア詳細データ</div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>エリア</th>
+                        <th>店舗数</th>
+                        <th>平均稼働率</th>
+                      </tr>
+                    </thead>
+                    <tbody id="areaTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 業種内ジャンルランキングタブ -->
+      <div class="tab-pane fade" id="type" role="tabpanel" aria-labelledby="type-tab">
+        <div class="row mt-3">
+          <div class="col-lg-4 mb-3">
+            <div class="card">
+              <div class="card-header">フィルター</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="typeSelector" class="form-label">業種選択</label>
+                  <select class="form-select" id="typeSelector">
+                    <option value="">すべての業種</option>
+                  </select>
+                </div>
+                <div class="d-grid">
+                  <button id="loadRanking" class="btn btn-primary">ランキングを表示</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">ジャンル別平均稼働率</div>
+              <div class="card-body">
+                <div id="genreLoadingIndicator" class="loading-indicator" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div id="genreErrorMessage" class="error-message" style="display: none;"></div>
+                <div class="chart-container" style="height: 500px; width: 100%;">
+                  <canvas id="genreRankingChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">平均稼働ランキング (店舗別)</div>
+              <div class="card-body">
+                <div id="storeRankLoadingIndicator" class="loading-indicator" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div class="chart-container" style="height: 500px; width: 100%;">
+                  <canvas id="storeRankingChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- スクリプト -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // グローバル変数
+    const charts = {};
+    let storeData = [];
+    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let showOnlyFavorites = false;
+    let currentPage = 1;
+    const itemsPerPage = 20;
+    let sortColumn = 'rate';
+    let sortDirection = 'desc';
+    let loadedTabs = {
+      dashboard: false,
+      history: false,
+      hourly: false,
+      area: false,
+      type: false
+    };
+    let currentFilters = {
+      bizType: 'all',
+      genre: 'all',
+      area: 'all',
+      search: ''
+    };
+    let areaViewMode = 'rate'; // 'rate' or 'stores'
+    
+    // DOMのロード完了時に実行
+    document.addEventListener('DOMContentLoaded', function() {
+      // ダークモードの初期設定
+      initializeDarkMode();
+      
+      // タブ切り替え時のイベント
+      document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', event => {
+          const targetId = event.target.getAttribute('href').substring(1);
+          if (!loadedTabs[targetId]) {
+            switch(targetId) {
+              case 'dashboard':
+                loadDashboardData();
+                break;
+              case 'history':
+                initializeHistoryTab();
+                break;
+              case 'hourly':
+                initializeHourlyTab();
+                break;
+              case 'area':
+                loadAreaStatistics();
+                break;
+              case 'type':
+                initializeTypeTab();
+                break;
+            }
+            loadedTabs[targetId] = true;
+          }
+        });
+      });
+      
+      // イベントリスナーを設定
+      setupEventListeners();
+      
+      // 最初のタブのデータを読み込む
+      loadDashboardData();
+    });
+
+    // ダークモードの初期設定
+    function initializeDarkMode() {
+      const darkMode = localStorage.getItem('darkMode') === 'true';
+      if (darkMode) {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('darkModeToggle').innerHTML = 
+          '<i class="bi bi-sun"></i> <span class="d-none d-md-inline">ライトモード</span>';
+      }
+      
+      document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+    }
+
+    // ダークモード切替
+    function toggleDarkMode() {
+      const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+      if (isDarkMode) {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('darkMode', 'false');
+        document.getElementById('darkModeToggle').innerHTML = 
+          '<i class="bi bi-moon"></i> <span class="d-none d-md-inline">ダークモード</span>';
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('darkMode', 'true');
+        document.getElementById('darkModeToggle').innerHTML = 
+          '<i class="bi bi-sun"></i> <span class="d-none d-md-inline">ライトモード</span>';
+      }
+      
+      // チャートを更新（カラースキームを適用するため）
+      updateChartsForTheme();
+    }
+    
+    // テーマに合わせてチャートを更新
+    function updateChartsForTheme() {
+      const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+      const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+      const gridColor = isDarkMode ? '#444' : '#ddd';
+      
+      // すべてのチャートを更新
+      Object.values(charts).forEach(chart => {
+        if (chart) {
+          if (chart.options && chart.options.scales) {
+            Object.values(chart.options.scales).forEach(scale => {
+              if (scale.ticks) scale.ticks.color = textColor;
+              if (scale.grid) scale.grid.color = gridColor;
+            });
+          }
+          
+          if (chart.options && chart.options.plugins && chart.options.plugins.title) {
+            chart.options.plugins.title.color = textColor;
+          }
+          
+          if (chart.options && chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+            chart.options.plugins.legend.labels.color = textColor;
+          }
+          
+          chart.update();
+        }
+      });
+    }
+
+    // イベントリスナーの設定
+    function setupEventListeners() {
+      // お気に入り表示切替
+      document.getElementById('favoritesToggle').addEventListener('click', function() {
+        showOnlyFavorites = !showOnlyFavorites;
+        if (showOnlyFavorites) {
+          this.classList.add('active');
+          this.innerHTML = '<i class="bi bi-star-fill"></i> <span class="d-none d-md-inline">すべて表示</span>';
+        } else {
+          this.classList.remove('active');
+          this.innerHTML = '<i class="bi bi-star"></i> <span class="d-none d-md-inline">お気に入りのみ</span>';
+        }
+        updateDashboardTable();
+      });
+      
+      // 店舗データの更新ボタン
+      document.getElementById('refreshData').addEventListener('click', () => loadDashboardData(true));
+      
+      // フィルターリセットボタン
+      document.getElementById('filterReset').addEventListener('click', resetFilters);
+      
+      // 並べ替えボタン
+      document.getElementById('sortStore').addEventListener('click', () => sortTable('store'));
+      document.getElementById('sortRate').addEventListener('click', () => sortTable('rate'));
+      
+      // フィルター変更時の処理
+      document.getElementById('bizTypeFilter').addEventListener('change', applyFilters);
+      document.getElementById('genreFilter').addEventListener('change', applyFilters);
+      document.getElementById('areaFilter').addEventListener('change', applyFilters);
+      
+      // 検索入力時の処理
+      document.getElementById('searchStore').addEventListener('input', function() {
+        currentFilters.search = this.value.trim().toLowerCase();
+        updateDashboardTable();
+      });
+      
+      // エリア表示切替ボタン
+      document.getElementById('toggleAreaView').addEventListener('click', function() {
+        areaViewMode = areaViewMode === 'rate' ? 'stores' : 'rate';
+        this.innerHTML = areaViewMode === 'rate' ? 
+          '<i class="bi bi-arrow-repeat"></i> 店舗数表示' : 
+          '<i class="bi bi-arrow-repeat"></i> 稼働率表示';
+        loadAreaStatistics();
+      });
+      
+      // 履歴タブのボタン
+      document.getElementById('loadHistory').addEventListener('click', loadStoreHistory);
+      document.getElementById('resetHistory').addEventListener('click', resetHistoryForm);
+      
+      // 時間帯別分析ボタン
+      document.getElementById('loadHourly').addEventListener('click', loadHourlyAnalysis);
+      
+      // ジャンルランキングボタン
+      document.getElementById('loadRanking').addEventListener('click', loadGenreRanking);
+    }
+
+    // 店舗一覧データの読み込み
+    async function loadDashboardData(forceRefresh = false) {
+      try {
+        document.getElementById('loadingIndicator').style.display = 'flex';
+        document.getElementById('storeTable').style.display = 'none';
+        document.getElementById('noDataMessage').style.display = 'none';
+        
+        // キャッシュ使用制御
+        const cacheKey = 'dashboardData';
+        const cacheTimeout = 5 * 60 * 1000; // 5分
+        const cachedData = JSON.parse(localStorage.getItem(cacheKey) || '{"timestamp":0,"data":[]}');
+        const now = Date.now();
+        
+        // キャッシュが有効かチェック
+        if (!forceRefresh && (now - cachedData.timestamp) < cacheTimeout) {
+          storeData = cachedData.data;
+          updateLastUpdateTime(new Date(cachedData.timestamp));
+        } else {
+          // APIからデータ取得
+          const response = await fetch('/api/latest');
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
+          const data = await response.json();
+          
+          if (!data || !Array.isArray(data.stores)) {
+            throw new Error('Invalid data format received from API');
+          }
+          
+          // データの保存とキャッシュ
+          storeData = data.stores;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: now,
+            data: storeData
+          }));
+          
+          updateLastUpdateTime(new Date());
+        }
+        
+        // フィルターのオプションを設定
+        populateFilterOptions();
+        
+        // テーブルとグラフを更新
+        updateDashboardTable();
+        updateTop10Chart();
+        updateBizTypeChart();
+        
+      } catch (error) {
+        console.error('データ読み込みエラー:', error);
+        document.getElementById('noDataMessage').textContent = `データの読み込みに失敗しました: ${error.message}`;
+        document.getElementById('noDataMessage').style.display = 'block';
+      } finally {
+        document.getElementById('loadingIndicator').style.display = 'none';
+      }
+    }
+
+    // 更新時刻の表示
+    function updateLastUpdateTime(date) {
+      const options = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      };
+      document.getElementById('lastUpdate').textContent = 
+        `最終更新: ${date.toLocaleString('ja-JP', options)}`;
+    }
+
+    // フィルターオプションの設定
+    function populateFilterOptions() {
+      const bizTypes = new Set();
+      const genres = new Set();
+      const areas = new Set();
+      
+      storeData.forEach(store => {
+        if (store.biz_type) bizTypes.add(store.biz_type);
+        if (store.genre) genres.add(store.genre);
+        if (store.area) areas.add(store.area);
+      });
+      
+      // 業種オプション
+      const bizTypeSelect = document.getElementById('bizTypeFilter');
+      bizTypeSelect.innerHTML = '<option value="all">すべて</option>';
+      Array.from(bizTypes).sort().forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        bizTypeSelect.appendChild(option);
+      });
+      
+      // ジャンルオプション
+      const genreSelect = document.getElementById('genreFilter');
+      genreSelect.innerHTML = '<option value="all">すべて</option>';
+      Array.from(genres).sort().forEach(genre => {
+        const option = document.createElement('option');
+        option.value = genre;
+        option.textContent = genre;
+        genreSelect.appendChild(option);
+      });
+      
+      // エリアオプション
+      const areaSelect = document.getElementById('areaFilter');
+      areaSelect.innerHTML = '<option value="all">すべて</option>';
+      Array.from(areas).sort().forEach(area => {
+        const option = document.createElement('option');
+        option.value = area;
+        option.textContent = area;
+        areaSelect.appendChild(option);
+      });
+    }
+
+    // フィルター適用
+    function applyFilters() {
+      currentFilters.bizType = document.getElementById('bizTypeFilter').value;
+      currentFilters.genre = document.getElementById('genreFilter').value;
+      currentFilters.area = document.getElementById('areaFilter').value;
+      currentPage = 1; // ページをリセット
+      updateDashboardTable();
+    }
+
+    // フィルターリセット
+    function resetFilters() {
+      document.getElementById('bizTypeFilter').value = 'all';
+      document.getElementById('genreFilter').value = 'all';
+      document.getElementById('areaFilter').value = 'all';
+      document.getElementById('searchStore').value = '';
+      currentFilters = {
+        bizType: 'all',
+        genre: 'all',
+        area: 'all',
+        search: ''
+      };
+      currentPage = 1;
+      updateDashboardTable();
+    }
+
+    // テーブルのソート
+    function sortTable(column) {
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = column === 'store' ? 'asc' : 'desc';
+      }
+      
+      // ソートアイコンの更新
+      const storeHeader = document.getElementById('sortStore');
+      const rateHeader = document.getElementById('sortRate');
+      
+      storeHeader.innerHTML = 'Store Name ' + 
+        (sortColumn === 'store' ? (sortDirection === 'asc' ? '<i class="bi bi-sort-alpha-down"></i>' : '<i class="bi bi-sort-alpha-up"></i>') : '<i class="bi bi-arrow-down-up"></i>');
+      
+      rateHeader.innerHTML = 'Rate ' + 
+        (sortColumn === 'rate' ? (sortDirection === 'asc' ? '<i class="bi bi-sort-numeric-down"></i>' : '<i class="bi bi-sort-numeric-down-alt"></i>') : '<i class="bi bi-arrow-down-up"></i>');
+      
+      updateDashboardTable();
+    }
+
+    // ダッシュボードテーブルの更新
+    function updateDashboardTable() {
+      // フィルタリング
+      let filteredData = storeData.filter(store => {
+        // お気に入りフィルター
+        if (showOnlyFavorites && !favorites.includes(store.store_name)) {
+          return false;
+        }
+        
+        // その他のフィルター
+        if (currentFilters.bizType !== 'all' && store.biz_type !== currentFilters.bizType) {
+          return false;
+        }
+        
+        if (currentFilters.genre !== 'all' && store.genre !== currentFilters.genre) {
+          return false;
+        }
+        
+        if (currentFilters.area !== 'all' && store.area !== currentFilters.area) {
+          return false;
+        }
+        
+        // 検索
+        if (currentFilters.search && !store.store_name.toLowerCase().includes(currentFilters.search)) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      // ソート
+      filteredData.sort((a, b) => {
+        if (sortColumn === 'store') {
+          const comparison = a.store_name.localeCompare(b.store_name);
+          return sortDirection === 'asc' ? comparison : -comparison;
+        } else {
+          // 稼働率の計算
+          const rateA = a.working_staff > 0 ? 
+            ((a.working_staff - a.active_staff) / a.working_staff) * 100 : 0;
+          const rateB = b.working_staff > 0 ? 
+            ((b.working_staff - b.active_staff) / b.working_staff) * 100 : 0;
+          
+          return sortDirection === 'asc' ? rateA - rateB : rateB - rateA;
+        }
+      });
+      
+      // ページネーション
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+      }
+      
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const pagedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+      
+      // テーブル本体の更新
+      const tableBody = document.getElementById('storeListBody');
+      tableBody.innerHTML = '';
+      
+      if (pagedData.length === 0) {
+        document.getElementById('storeTable').style.display = 'none';
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+      
+      pagedData.forEach(store => {
+        const rate = store.working_staff > 0 ? 
+          ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
+        
+        const tr = document.createElement('tr');
+        tr.className = 'fade-in';
+        
+        const rateBadgeClass = rate < 30 ? 'badge-success' : (rate < 70 ? 'badge-warning' : 'badge-danger');
+        
+        tr.innerHTML = `
+          <td>
+            <i class="bi ${favorites.includes(store.store_name) ? 'bi-star-fill' : 'bi-star'} toggle-favorite" 
+               data-store="${store.store_name}"></i>
+          </td>
+          <td>${store.store_name}</td>
+          <td>${store.biz_type || '-'}</td>
+          <td>${store.genre || '-'}</td>
+          <td>${store.area || '-'}</td>
+          <td><span class="badge ${rateBadgeClass}">${rate.toFixed(1)}%</span></td>
+          <td>${store.working_staff - store.active_staff}/${store.working_staff}</td>
+          <td>
+            <button class="icon-button view-details" data-store="${store.store_name}">
+              <i class="bi bi-info-circle"></i>
+            </button>
+          </td>
+        `;
+        
+        tableBody.appendChild(tr);
+      });
+      
+      // お気に入りトグルイベントを設定
+      document.querySelectorAll('.toggle-favorite').forEach(element => {
+        element.addEventListener('click', function() {
+          const storeName = this.getAttribute('data-store');
+          toggleFavorite(storeName, this);
+        });
+      });
+      
+      // 詳細ボタンイベントを設定
+      document.querySelectorAll('.view-details').forEach(element => {
+        element.addEventListener('click', function() {
+          const storeName = this.getAttribute('data-store');
+          showStoreDetails(storeName);
+        });
+      });
+      
+      // テーブルを表示
+      document.getElementById('storeTable').style.display = 'block';
+      document.getElementById('noDataMessage').style.display = 'none';
+      
+      // ページネーションの更新
+      updatePagination(filteredData.length, totalPages);
+    }
+
+    // ページネーションの更新
+    function updatePagination(totalItems, totalPages) {
+      const paginationDiv = document.getElementById('pagination');
+      paginationDiv.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      const ul = document.createElement('ul');
+      ul.className = 'pagination';
+      
+      // 前へボタン
+      const prevLi = document.createElement('li');
+      prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+      const prevA = document.createElement('a');
+      prevA.className = 'page-link';
+      prevA.href = '#';
+      prevA.innerHTML = '&laquo;';
+      if (currentPage > 1) {
+        prevA.addEventListener('click', e => {
+          e.preventDefault();
+          currentPage--;
+          updateDashboardTable();
+        });
+      }
+      prevLi.appendChild(prevA);
+      ul.appendChild(prevLi);
+      
+      // ページ番号
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+      
+      if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = i;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          currentPage = i;
+          updateDashboardTable();
+        });
+        li.appendChild(a);
+        ul.appendChild(li);
+      }
+      
+      // 次へボタン
+      const nextLi = document.createElement('li');
+      nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+      const nextA = document.createElement('a');
+      nextA.className = 'page-link';
+      nextA.href = '#';
+      nextA.innerHTML = '&raquo;';
+      if (currentPage < totalPages) {
+        nextA.addEventListener('click', e => {
+          e.preventDefault();
+          currentPage++;
+          updateDashboardTable();
+        });
+      }
+      nextLi.appendChild(nextA);
+      ul.appendChild(nextLi);
+      
+      paginationDiv.appendChild(ul);
+      
+      // 表示件数情報
+      const info = document.createElement('div');
+      info.className = 'text-center mt-2';
+      info.textContent = `${totalItems}件中 ${(currentPage - 1) * itemsPerPage + 1}-${Math.min(currentPage * itemsPerPage, totalItems)}件表示`;
+      paginationDiv.appendChild(info);
+    }
+
+    // お気に入り切り替え
+    function toggleFavorite(storeName, element) {
+      const index = favorites.indexOf(storeName);
+      if (index === -1) {
+        favorites.push(storeName);
+        element.classList.remove('bi-star');
+        element.classList.add('bi-star-fill');
+      } else {
+        favorites.splice(index, 1);
+        element.classList.remove('bi-star-fill');
+        element.classList.add('bi-star');
+      }
+      
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+
+    // 店舗詳細表示
+    function showStoreDetails(storeName) {
+      const store = storeData.find(s => s.store_name === storeName);
+      if (!store) return;
+      
+      // モーダルで表示する詳細内容を作成
+      const rate = store.working_staff > 0 ? 
+        ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
+      
+      const details = `
+        <h5>${store.store_name}</h5>
+        <div class="table-responsive">
+          <table class="table">
+            <tr>
+              <th>業種</th>
+              <td>${store.biz_type || '-'}</td>
+            </tr>
+            <tr>
+              <th>ジャンル</th>
+              <td>${store.genre || '-'}</td>
+            </tr>
+            <tr>
+              <th>エリア</th>
+              <td>${store.area || '-'}</td>
+            </tr>
+            <tr>
+              <th>現在の稼働率</th>
+              <td><strong>${rate.toFixed(1)}%</strong></td>
+            </tr>
+            <tr>
+              <th>待機スタッフ</th>
+              <td>${store.active_staff}人</td>
+            </tr>
+            <tr>
+              <th>勤務中スタッフ</th>
+              <td>${store.working_staff}人</td>
+            </tr>
+            <tr>
+              <th>総スタッフ</th>
+              <td>${store.total_staff}人</td>
+            </tr>
+            <tr>
+              <th>最終更新</th>
+              <td>${new Date(store.timestamp).toLocaleString('ja-JP')}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="d-flex justify-content-between mt-3">
+          <button id="viewHistory" class="btn btn-outline-primary btn-sm">履歴を見る</button>
+          <button id="toggleFavBtn" class="btn ${favorites.includes(storeName) ? 'btn-warning' : 'btn-outline-secondary'} btn-sm">
+            ${favorites.includes(storeName) ? 'お気に入り解除' : 'お気に入りに追加'}
+          </button>
+        </div>
+      `;
+      
+      // モーダル要素を作成
+      const modalWrapper = document.createElement('div');
+      modalWrapper.className = 'modal fade';
+      modalWrapper.setAttribute('tabindex', '-1');
+      modalWrapper.innerHTML = `
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">店舗詳細</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              ${details}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modalWrapper);
+      
+      // モーダルのイベント設定
+      const modal = new bootstrap.Modal(modalWrapper);
+      modal.show();
+      
+      // モーダルを閉じたら削除
+      modalWrapper.addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modalWrapper);
+      });
+      
+      // お気に入りボタンのイベント
+      modalWrapper.querySelector('#toggleFavBtn').addEventListener('click', function() {
+        const icon = document.querySelector(`.toggle-favorite[data-store="${storeName}"]`);
+        toggleFavorite(storeName, icon);
+        updateDashboardTable();
+        modal.hide();
+      });
+      
+      // 履歴ボタンのイベント
+      modalWrapper.querySelector('#viewHistory').addEventListener('click', function() {
+        modal.hide();
+        
+        // 履歴タブを選択
+        const historyTab = document.querySelector('#history-tab');
+        bootstrap.Tab.getInstance(historyTab).show();
+        
+        // 店舗を選択して履歴を表示
+        const storeSelect = document.getElementById('historyStore');
+        if (storeSelect) {
+          storeSelect.value = storeName;
+          setTimeout(loadStoreHistory, 300);
+        }
+      });
+    }
+
+    // トップ10チャートの更新
+    function updateTop10Chart() {
+      try {
+        // 稼働率でソート
+        const sortedData = [...storeData]
+          .filter(store => store.working_staff > 0)
+          .map(store => ({
+            name: store.store_name,
+            rate: ((store.working_staff - store.active_staff) / store.working_staff) * 100
+          }))
+          .sort((a, b) => b.rate - a.rate)
+          .slice(0, 10);
+        
+        if (sortedData.length === 0) return;
+        
+        const ctx = document.getElementById('top10Chart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.top10) charts.top10.destroy();
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 新しいチャートを作成
+        charts.top10 = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: sortedData.map(item => item.name),
+            datasets: [{
+              label: '稼働率 (%)',
+              data: sortedData.map(item => item.rate.toFixed(1)),
+              backgroundColor: sortedData.map(item => {
+                const rate = item.rate;
+                if (rate < 30) return 'rgba(40, 167, 69, 0.7)';
+                if (rate < 70) return 'rgba(255, 193, 7, 0.7)';
+                return 'rgba(220, 53, 69, 0.7)';
+              }),
+              borderColor: sortedData.map(item => {
+                const rate = item.rate;
+                if (rate < 30) return 'rgba(40, 167, 69, 1)';
+                if (rate < 70) return 'rgba(255, 193, 7, 1)';
+                return 'rgba(220, 53, 69, 1)';
+              }),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: '稼働率トップ10店舗',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              datalabels: {
+                display: true,
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return value + '%';
+                },
+                color: textColor,
+                font: { weight: 'bold' }
+              },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: function(context) {
+                    return `稼働率: ${context.raw}%`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('トップ10チャート更新エラー:', error);
+      }
+    }
+
+    // 業種別チャートの更新
+    function updateBizTypeChart() {
+      try {
+        // 業種別にデータをグループ化
+        const bizTypeData = {};
+        storeData.forEach(store => {
+          if (!store.biz_type || store.working_staff <= 0) return;
+          
+          const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
+          
+          if (!bizTypeData[store.biz_type]) {
+            bizTypeData[store.biz_type] = { sum: 0, count: 0 };
+          }
+          
+          bizTypeData[store.biz_type].sum += rate;
+          bizTypeData[store.biz_type].count += 1;
+        });
+        
+        // 平均を計算
+        const chartData = Object.entries(bizTypeData)
+          .map(([bizType, data]) => ({
+            bizType,
+            avgRate: data.sum / data.count,
+            count: data.count
+          }))
+          .sort((a, b) => b.avgRate - a.avgRate);
+        
+        if (chartData.length === 0) return;
+        
+        const ctx = document.getElementById('bizTypeChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.bizType) charts.bizType.destroy();
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色パレット
+        const colors = [
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(255, 159, 64, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
+          'rgba(255, 205, 86, 0.7)',
+          'rgba(201, 203, 207, 0.7)',
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(75, 192, 192, 0.7)'
+        ];
+        
+        // 新しいチャートを作成
+        charts.bizType = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: chartData.map(item => `${item.bizType} (${item.count}店舗)`),
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: chartData.map(item => item.avgRate.toFixed(1)),
+              backgroundColor: chartData.map((_, i) => colors[i % colors.length]),
+              borderColor: chartData.map((_, i) => colors[i % colors.length].replace('0.7', '1')),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              x: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: '業種別平均稼働率',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              datalabels: {
+                display: true,
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return value + '%';
+                },
+                color: textColor,
+                font: { weight: 'bold' }
+              },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: function(context) {
+                    return `平均稼働率: ${context.raw}%`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('業種別チャート更新エラー:', error);
+      }
+    }
+
+    // 履歴タブの初期化
+    function initializeHistoryTab() {
+      try {
+        // 日付フィールドのデフォルト値を設定
+        const today = new Date();
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(today.getDate() - 7);
+        
+        document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
+        document.getElementById('historyStartDate').value = oneWeekAgo.toISOString().split('T')[0];
+        
+        // 店舗選択肢を初期化
+        const storeSelect = document.getElementById('historyStore');
+        storeSelect.innerHTML = '<option value="">-- 店舗を選択 --</option>';
+        
+        // 店舗データがなければAPIから取得
+        if (storeData.length === 0) {
+          fetch('/api/latest')
+            .then(response => response.json())
+            .then(data => {
+              storeData = data.stores;
+              populateStoreSelect();
+            })
+            .catch(error => console.error('店舗データの取得に失敗:', error));
+        } else {
+          populateStoreSelect();
+        }
+        
+        // 店舗選択メニューを設定
+        function populateStoreSelect() {
+          const stores = [...new Set(storeData.map(store => store.store_name))].sort();
+          
+          stores.forEach(storeName => {
+            const option = document.createElement('option');
+            option.value = storeName;
+            option.textContent = storeName;
+            storeSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('履歴タブ初期化エラー:', error);
+      }
+    }
+
+    // 履歴フォームのリセット
+    function resetHistoryForm() {
+      document.getElementById('historyStore').value = '';
+      
+      const today = new Date();
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(today.getDate() - 7);
+      
+      document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
+      document.getElementById('historyStartDate').value = oneWeekAgo.toISOString().split('T')[0];
+      
+      document.getElementById('historySummaryCard').style.display = 'none';
+      document.getElementById('historyErrorMessage').style.display = 'none';
+      document.getElementById('historyNoData').style.display = 'none';
+      
+      if (charts.history) {
+        charts.history.destroy();
+        charts.history = null;
+      }
+    }
+
+    // 店舗履歴データの読み込み
+    async function loadStoreHistory() {
+      try {
+        const storeName = document.getElementById('historyStore').value;
+        if (!storeName) {
+          showHistoryError('店舗を選択してください');
+          return;
+        }
+        
+        const startDate = document.getElementById('historyStartDate').value;
+        const endDate = document.getElementById('historyEndDate').value;
+        
+        if (!startDate || !endDate) {
+          showHistoryError('開始日と終了日を指定してください');
+          return;
+        }
+        
+        // ローディング表示
+        document.getElementById('historyLoadingIndicator').style.display = 'flex';
+        document.getElementById('historyErrorMessage').style.display = 'none';
+        document.getElementById('historyNoData').style.display = 'none';
+        document.getElementById('historySummaryCard').style.display = 'none';
+        
+        // APIからデータ取得
+        const url = `/api/history?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}&limit=1000`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.records || data.records.length === 0) {
+          document.getElementById('historyNoData').style.display = 'block';
+          document.getElementById('historyLoadingIndicator').style.display = 'none';
+          return;
+        }
+        
+        // データの整形
+        const records = data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        updateHistoryChart(records);
+        updateHistorySummary(records);
+        
+      } catch (error) {
+        showHistoryError(`データ取得エラー: ${error.message}`);
+      } finally {
+        document.getElementById('historyLoadingIndicator').style.display = 'none';
+      }
+    }
+
+    // 履歴チャートの更新
+    function updateHistoryChart(records) {
+      try {
+        if (!records || records.length === 0) {
+          throw new Error('該当するデータが見つかりませんでした');
+        }
+        
+        const ctx = document.getElementById('historyChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.history) charts.history.destroy();
+        
+        // データの整形
+        const datasets = [];
+        const labels = [];
+        const rateData = [];
+        const activeData = [];
+        const workingData = [];
+        
+        records.forEach(record => {
+          labels.push(new Date(record.timestamp));
+          
+          const rate = record.working_staff > 0 ? 
+            ((record.working_staff - record.active_staff) / record.working_staff) * 100 : 0;
+          
+          rateData.push({
+            x: new Date(record.timestamp),
+            y: parseFloat(rate.toFixed(1))
+          });
+          
+          activeData.push({
+            x: new Date(record.timestamp),
+            y: record.active_staff
+          });
+          
+          workingData.push({
+            x: new Date(record.timestamp),
+            y: record.working_staff
+          });
+        });
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        datasets.push({
+          label: '稼働率 (%)',
+          data: rateData,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          yAxisID: 'y',
+          fill: true
+        });
+        
+        datasets.push({
+          label: '勤務中スタッフ',
+          data: workingData,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          pointRadius: 0,
+          borderWidth: 1.5,
+          yAxisID: 'y1',
+          hidden: true
+        });
+        
+        datasets.push({
+          label: '待機中スタッフ',
+          data: activeData,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.1)',
+          pointRadius: 0,
+          borderWidth: 1.5,
+          yAxisID: 'y1',
+          hidden: true
+        });
+        
+        // グラフのオプション
+        const options = {
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: {
+                  day: 'MM/dd'
+                },
+                tooltipFormat: 'yyyy/MM/dd HH:mm'
+              },
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: '稼働率 (%)',
+                color: textColor
+              },
+              min: 0,
+              max: 100,
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'スタッフ数',
+                color: textColor
+              },
+              min: 0,
+              ticks: { color: textColor },
+              grid: {
+                drawOnChartArea: false,
+                color: gridColor
+              }
+            }
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: `${records[0].store_name} 稼働率履歴`,
+              color: textColor,
+              font: { size: 16, weight: 'bold' }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            },
+            legend: {
+              labels: { color: textColor }
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            intersect: false
+          },
+          elements: {
+            line: {
+              tension: 0.2
+            }
+          }
+        };
+        
+        // 新しいチャートを作成
+        charts.history = new Chart(ctx, {
+          type: 'line',
+          data: { datasets },
+          options
+        });
+        
+      } catch (error) {
+        console.error('履歴チャート更新エラー:', error);
+        showHistoryError(`エラー (updateHistoryChart): ${error.message}`);
+      }
+    }
+
+    // 履歴集計結果の表示
+    function updateHistorySummary(records) {
+      try {
+        if (!records || records.length === 0) return;
+        
+        // 集計データの計算
+        const rates = records
+          .filter(r => r.working_staff > 0)
+          .map(r => ((r.working_staff - r.active_staff) / r.working_staff) * 100);
+        
+        if (rates.length === 0) {
+          document.getElementById('historySummary').innerHTML = 
+            '<div class="alert alert-warning">稼働データが十分ではありません</div>';
+          document.getElementById('historySummaryCard').style.display = 'block';
+          return;
+        }
+        
+        // 基本統計量の計算
+        const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+        const min = Math.min(...rates);
+        const max = Math.max(...rates);
+        
+        // 四分位数を計算
+        const sortedRates = [...rates].sort((a, b) => a - b);
+        const q1 = sortedRates[Math.floor(sortedRates.length * 0.25)];
+        const median = sortedRates[Math.floor(sortedRates.length * 0.5)];
+        const q3 = sortedRates[Math.floor(sortedRates.length * 0.75)];
+        
+        // ピーク時間帯の特定
+        const hourlyRates = {};
+        records.forEach(r => {
+          if (r.working_staff <= 0) return;
+          
+          const hour = new Date(r.timestamp).getHours();
+          const rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100;
+          
+          if (!hourlyRates[hour]) hourlyRates[hour] = { sum: 0, count: 0 };
+          hourlyRates[hour].sum += rate;
+          hourlyRates[hour].count += 1;
+        });
+        
+        // 時間帯ごとの平均を計算
+        const hourlyAverages = Object.entries(hourlyRates)
+          .map(([hour, data]) => ({
+            hour: parseInt(hour),
+            avg: data.sum / data.count
+          }))
+          .sort((a, b) => b.avg - a.avg);
+        
+        // 最も混んでいる時間帯（TOP3）
+        const busyHours = hourlyAverages.slice(0, 3);
+        
+        // 最も空いている時間帯（TOP3）
+        const quietHours = [...hourlyAverages].sort((a, b) => a.avg - b.avg).slice(0, 3);
+        
+        // 集計結果をHTML形式で表示
+        const summaryHTML = `
+          <div class="mb-3">
+            <h5 class="mb-2">${records[0].store_name}</h5>
+            <p class="mb-1">${new Date(records[0].timestamp).toLocaleDateString()} ～ ${new Date(records[records.length - 1].timestamp).toLocaleDateString()}</p>
+            <p class="mb-0">データ件数: ${rates.length}件</p>
+          </div>
+          
+          <div class="mb-3">
+            <h6>基本統計</h6>
+            <div class="row">
+              <div class="col-4 text-center">
+                <div class="stat-value">${avg.toFixed(1)}%</div>
+                <div class="stat-label">平均稼働率</div>
+              </div>
+              <div class="col-4 text-center">
+                <div class="stat-value">${median.toFixed(1)}%</div>
+                <div class="stat-label">中央値</div>
+              </div>
+              <div class="col-4 text-center">
+                <div class="stat-value">${max.toFixed(1)}%</div>
+                <div class="stat-label">最大値</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <h6>混雑ピーク時間帯</h6>
+            <ul class="list-group list-group-flush">
+              ${busyHours.map(h => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  ${h.hour}:00～${h.hour+1}:00
+                  <span class="badge bg-danger">${h.avg.toFixed(1)}%</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          
+          <div>
+            <h6>空き時間帯</h6>
+            <ul class="list-group list-group-flush">
+              ${quietHours.map(h => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  ${h.hour}:00～${h.hour+1}:00
+                  <span class="badge bg-success">${h.avg.toFixed(1)}%</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+        
+        document.getElementById('historySummary').innerHTML = summaryHTML;
+        document.getElementById('historySummaryCard').style.display = 'block';
+        
+      } catch (error) {
+        console.error('履歴集計エラー:', error);
+      }
+    }
+
+    // 履歴エラーの表示
+    function showHistoryError(message) {
+      const errorElement = document.getElementById('historyErrorMessage');
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+      document.getElementById('historyLoadingIndicator').style.display = 'none';
+    }
+
+    // 時間帯別分析タブの初期化
+    function initializeHourlyTab() {
+      try {
+        // 店舗選択肢を初期化
+        const storeSelect = document.getElementById('hourlyStore');
+        storeSelect.innerHTML = '<option value="">-- 全店舗 --</option>';
+        
+        // 業種選択肢を初期化
+        const bizTypeSelect = document.getElementById('hourlyBizType');
+        bizTypeSelect.innerHTML = '<option value="">-- すべて --</option>';
+        
+        // 店舗データがなければAPIから取得
+        if (storeData.length === 0) {
+          fetch('/api/latest')
+            .then(response => response.json())
+            .then(data => {
+              storeData = data.stores;
+              populateHourlySelects();
+            })
+            .catch(error => console.error('店舗データの取得に失敗:', error));
+        } else {
+          populateHourlySelects();
+        }
+        
+        // 選択メニューを設定
+        function populateHourlySelects() {
+          // 店舗選択肢
+          const stores = [...new Set(storeData.map(store => store.store_name))].sort();
+          stores.forEach(storeName => {
+            const option = document.createElement('option');
+            option.value = storeName;
+            option.textContent = storeName;
+            storeSelect.appendChild(option);
+          });
+          
+          // 業種選択肢
+          const bizTypes = [...new Set(storeData.map(store => store.biz_type).filter(Boolean))].sort();
+          bizTypes.forEach(bizType => {
+            const option = document.createElement('option');
+            option.value = bizType;
+            option.textContent = bizType;
+            bizTypeSelect.appendChild(option);
+          });
+        }
+        
+        // 初期データ表示
+        loadHourlyAnalysis();
+        
+      } catch (error) {
+        console.error('時間帯別分析タブ初期化エラー:', error);
+      }
+    }
+
+    // 時間帯別分析データの読み込み
+    async function loadHourlyAnalysis() {
+      try {
+        const storeName = document.getElementById('hourlyStore').value;
+        const bizType = document.getElementById('hourlyBizType').value;
+        
+        // ローディング表示
+        document.getElementById('hourlyLoadingIndicator').style.display = 'flex';
+        document.getElementById('hourlyResults').innerHTML = '';
+        
+        // APIからデータ取得
+        let url = '/api/hourly';
+        const params = [];
+        
+        if (storeName) params.push(`store=${encodeURIComponent(storeName)}`);
+        if (bizType) params.push(`biz_type=${encodeURIComponent(bizType)}`);
+        
+        if (params.length > 0) {
+          url += '?' + params.join('&');
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.hourly_data || data.hourly_data.length === 0) {
+          document.getElementById('hourlyResults').innerHTML = 
+            '<div class="alert alert-info">該当するデータがありません</div>';
+          document.getElementById('hourlyLoadingIndicator').style.display = 'none';
+          return;
+        }
+        
+        updateHourlyChart(data.hourly_data);
+        updateHourlyResults(data.hourly_data);
+        
+      } catch (error) {
+        console.error('時間帯別分析エラー:', error);
+        document.getElementById('hourlyResults').innerHTML = 
+          `<div class="alert alert-danger">エラーが発生しました: ${error.message}</div>`;
+      } finally {
+        document.getElementById('hourlyLoadingIndicator').style.display = 'none';
+      }
+    }
+
+    // 時間帯別チャートの更新
+    function updateHourlyChart(hourlyData) {
+      try {
+        const ctx = document.getElementById('hourlyChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.hourly) charts.hourly.destroy();
+        
+        // データの整形
+        const labels = hourlyData.map(item => `${item.hour}:00`);
+        const rateData = hourlyData.map(item => parseFloat(item.rate));
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色の設定（時間帯に応じて変化）
+        const getColor = (hour) => {
+          // 朝（6-10時）
+          if (hour >= 6 && hour < 10) return 'rgba(255, 159, 64, ';
+          // 昼（10-14時）
+          if (hour >= 10 && hour < 14) return 'rgba(255, 205, 86, ';
+          // 午後（14-18時）
+          if (hour >= 14 && hour < 18) return 'rgba(75, 192, 192, ';
+          // 夕方（18-22時）
+          if (hour >= 18 && hour < 22) return 'rgba(54, 162, 235, ';
+          // 夜間（22-6時）
+          return 'rgba(153, 102, 255, ';
+        };
+        
+        const colors = hourlyData.map(item => getColor(item.hour));
+        
+        // 新しいチャートを作成
+        charts.hourly = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: rateData,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointBackgroundColor: hourlyData.map((item, i) => colors[i] + '1)'),
+              pointBorderColor: hourlyData.map((item, i) => colors[i] + '1)')
+            }]
+          },
+          options: {
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: '稼働率 (%)',
+                  color: textColor
+                },
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: '時間帯',
+                  color: textColor
+                },
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: '時間帯別平均稼働率',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `稼働率: ${context.raw}%`;
+                  }
+                }
+              },
+              annotation: {
+                annotations: {
+                  line1: {
+                    type: 'line',
+                    yMin: 50,
+                    yMax: 50,
+                    borderColor: 'rgba(255, 99, 132, 0.5)',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    label: {
+                      content: '混雑目安 (50%)',
+                      enabled: true,
+                      position: 'end'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('時間帯別チャート更新エラー:', error);
+      }
+    }
+
+    // 時間帯別分析結果の表示
+    function updateHourlyResults(hourlyData) {
+      try {
+        // ピーク時間と空き時間を特定
+        const sortedData = [...hourlyData].sort((a, b) => b.rate - a.rate);
+        
+        const peakHours = sortedData.slice(0, 3);
+        const quietHours = sortedData.slice(-3).reverse();
+        
+        // 朝/昼/夕/夜の平均
+        const timeGroups = {
+          morning: { hours: [6, 7, 8, 9], rates: [], avg: 0 },
+          noon: { hours: [10, 11, 12, 13], rates: [], avg: 0 },
+          afternoon: { hours: [14, 15, 16, 17], rates: [], avg: 0 },
+          evening: { hours: [18, 19, 20, 21], rates: [], avg: 0 },
+          night: { hours: [22, 23, 0, 1, 2, 3, 4, 5], rates: [], avg: 0 }
+        };
+        
+        hourlyData.forEach(item => {
+          const hour = item.hour;
+          const rate = parseFloat(item.rate);
+          
+          for (const [key, group] of Object.entries(timeGroups)) {
+            if (group.hours.includes(hour)) {
+              group.rates.push(rate);
+              break;
+            }
+          }
+        });
+        
+        // 時間帯グループごとの平均を計算
+        for (const group of Object.values(timeGroups)) {
+          if (group.rates.length > 0) {
+            group.avg = group.rates.reduce((a, b) => a + b, 0) / group.rates.length;
+          }
+        }
+        
+        // 全体の平均を計算
+        const totalAvg = hourlyData.reduce((sum, item) => sum + parseFloat(item.rate), 0) / hourlyData.length;
+        
+        // 店舗名またはフィルター条件を取得
+        const storeName = document.getElementById('hourlyStore').value;
+        const bizType = document.getElementById('hourlyBizType').value;
+        
+        let title = '時間帯別分析結果';
+        if (storeName) title = `${storeName} 時間帯別分析`;
+        else if (bizType) title = `${bizType} 業種の時間帯別分析`;
+        
+        // 分析結果をHTML形式で表示
+        const resultsHTML = `
+          <h6>${title}</h6>
+          
+          <div class="mb-3">
+            <p><strong>平均稼働率: ${totalAvg.toFixed(1)}%</strong></p>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <h6>ピーク時間帯 (最も混雑)</h6>
+              <ul class="list-group">
+                ${peakHours.map(item => `
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.hour}:00 ～ ${(item.hour + 1) % 24}:00
+                    <span class="badge ${parseFloat(item.rate) > 70 ? 'bg-danger' : 'bg-warning'}">${item.rate}%</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+            
+            <div class="col-md-6">
+              <h6>空き時間帯 (最も空いている)</h6>
+              <ul class="list-group">
+                ${quietHours.map(item => `
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.hour}:00 ～ ${(item.hour + 1) % 24}:00
+                    <span class="badge bg-success">${item.rate}%</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <h6>時間帯別平均</h6>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>朝 (6-10時)</th>
+                    <th>昼 (10-14時)</th>
+                    <th>午後 (14-18時)</th>
+                    <th>夕方 (18-22時)</th>
+                    <th>夜間 (22-6時)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>${timeGroups.morning.avg.toFixed(1)}%</td>
+                    <td>${timeGroups.noon.avg.toFixed(1)}%</td>
+                    <td>${timeGroups.afternoon.avg.toFixed(1)}%</td>
+                    <td>${timeGroups.evening.avg.toFixed(1)}%</td>
+                    <td>${timeGroups.night.avg.toFixed(1)}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <small>混雑時は予約や時間変更を検討しましょう。空いている時間帯の利用がおすすめです。</small>
+          </div>
+        `;
+        
+        document.getElementById('hourlyResults').innerHTML = resultsHTML;
+        
+      } catch (error) {
+        console.error('時間帯別分析結果エラー:', error);
+      }
+    }
+
+    // エリア統計データの読み込み
+    async function loadAreaStatistics() {
+      try {
+        // ローディング表示
+        document.getElementById('areaLoadingIndicator').style.display = 'flex';
+        
+        // APIからデータ取得
+        const response = await fetch('/api/area_stats');
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.areas || data.areas.length === 0) {
+          document.getElementById('areaLoadingIndicator').style.display = 'none';
+          return;
+        }
+        
+        updateAreaChart(data.areas);
+        updateAreaTable(data.areas);
+        
+      } catch (error) {
+        console.error('エリア統計データ読み込みエラー:', error);
+      } finally {
+        document.getElementById('areaLoadingIndicator').style.display = 'none';
+      }
+    }
+
+    // エリアチャートの更新
+    function updateAreaChart(areaData) {
+      try {
+        const ctx = document.getElementById('areaChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.area) charts.area.destroy();
+        
+        // データの整形と並べ替え
+        let sortedData;
+        if (areaViewMode === 'rate') {
+          sortedData = [...areaData].sort((a, b) => b.avg_rate - a.avg_rate);
+        } else {
+          sortedData = [...areaData].sort((a, b) => b.store_count - a.store_count);
+        }
+        
+        // 上位15件のみ表示
+        const limitedData = sortedData.slice(0, 15);
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色の設定
+        const colorPalette = [
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(255, 159, 64, 0.7)',
+          'rgba(255, 205, 86, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
+          'rgba(201, 203, 207, 0.7)'
+        ];
+        
+        const dataKey = areaViewMode === 'rate' ? 'avg_rate' : 'store_count';
+        const dataLabel = areaViewMode === 'rate' ? '平均稼働率 (%)' : '店舗数';
+        
+        // 新しいチャートを作成
+        charts.area = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: limitedData.map(area => area.area),
+            datasets: [{
+              label: dataLabel,
+              data: limitedData.map(area => areaViewMode === 'rate' ? 
+                parseFloat(area.avg_rate).toFixed(1) : area.store_count),
+              backgroundColor: limitedData.map((_, i) => colorPalette[i % colorPalette.length]),
+              borderColor: limitedData.map((_, i) => colorPalette[i % colorPalette.length].replace('0.7', '1')),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            responsive: true,
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: areaViewMode === 'rate' ? 'エリア別平均稼働率' : 'エリア別店舗数',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return areaViewMode === 'rate' ? 
+                      `稼働率: ${context.raw}%` : 
+                      `店舗数: ${context.raw}`;
+                  }
+                }
+              },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return areaViewMode === 'rate' ? `${value}%` : value;
+                }
+              }
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('エリアチャート更新エラー:', error);
+      }
+    }
+
+    // エリアテーブルの更新
+    function updateAreaTable(areaData) {
+      try {
+        const tableBody = document.getElementById('areaTableBody');
+        tableBody.innerHTML = '';
+        
+        // データの並べ替え
+        let sortedData;
+        if (areaViewMode === 'rate') {
+          sortedData = [...areaData].sort((a, b) => b.avg_rate - a.avg_rate);
+        } else {
+          sortedData = [...areaData].sort((a, b) => b.store_count - a.store_count);
+        }
+        
+        sortedData.forEach(area => {
+          const tr = document.createElement('tr');
+          tr.className = 'fade-in';
+          
+          const rateBadgeClass = area.avg_rate < 30 ? 'badge-success' : 
+            (area.avg_rate < 70 ? 'badge-warning' : 'badge-danger');
+          
+          tr.innerHTML = `
+            <td>${area.area}</td>
+            <td>${area.store_count}</td>
+            <td><span class="badge ${rateBadgeClass}">${parseFloat(area.avg_rate).toFixed(1)}%</span></td>
+          `;
+          
+          tableBody.appendChild(tr);
+        });
+        
+      } catch (error) {
+        console.error('エリアテーブル更新エラー:', error);
+      }
+    }
+
+    // 業種内ジャンルランキングタブの初期化
+    function initializeTypeTab() {
+      try {
+        // 業種選択肢を初期化
+        const typeSelector = document.getElementById('typeSelector');
+        typeSelector.innerHTML = '<option value="">すべての業種</option>';
+        
+        // 店舗データがなければAPIから取得
+        if (storeData.length === 0) {
+          fetch('/api/latest')
+            .then(response => response.json())
+            .then(data => {
+              storeData = data.stores;
+              populateTypeSelect();
+              loadGenreRanking();
+            })
+            .catch(error => console.error('店舗データの取得に失敗:', error));
+        } else {
+          populateTypeSelect();
+          loadGenreRanking();
+        }
+        
+        // 業種選択メニューを設定
+        function populateTypeSelect() {
+          const bizTypes = [...new Set(storeData.map(store => store.biz_type).filter(Boolean))].sort();
+          
+          bizTypes.forEach(bizType => {
+            const option = document.createElement('option');
+            option.value = bizType;
+            option.textContent = bizType;
+            typeSelector.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('業種タブ初期化エラー:', error);
+      }
+    }
+
+    // ジャンルランキングデータの読み込み
+    async function loadGenreRanking() {
+      try {
+        const bizType = document.getElementById('typeSelector').value;
+        
+        // ローディング表示
+        document.getElementById('genreLoadingIndicator').style.display = 'flex';
+        document.getElementById('genreErrorMessage').style.display = 'none';
+        document.getElementById('storeRankLoadingIndicator').style.display = 'flex';
+        
+        // APIからデータ取得
+        let url = '/api/ranking/genre';
+        if (bizType) {
+          url += `?biz_type=${encodeURIComponent(bizType)}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.genres || data.genres.length === 0) {
+          document.getElementById('genreErrorMessage').textContent = 'データがありません';
+          document.getElementById('genreErrorMessage').style.display = 'block';
+          document.getElementById('genreLoadingIndicator').style.display = 'none';
+          return;
+        }
+        
+        updateGenreRankingChart(data.genres);
+        
+        // 店舗ランキングも取得
+        loadStoreRanking(bizType);
+        
+      } catch (error) {
+        console.error('ジャンルランキングデータ読み込みエラー:', error);
+        document.getElementById('genreErrorMessage').textContent = `エラー: ${error.message}`;
+        document.getElementById('genreErrorMessage').style.display = 'block';
+      } finally {
+        document.getElementById('genreLoadingIndicator').style.display = 'none';
+      }
+    }
+
+    // ジャンルランキングチャートの更新
+    function updateGenreRankingChart(genreData) {
+      try {
+        const ctx = document.getElementById('genreRankingChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.genreRanking) charts.genreRanking.destroy();
+        
+        // データの整形
+        const sortedData = [...genreData].sort((a, b) => b.avg_rate - a.avg_rate);
+        
+        // 表示数を制限
+        const limitedData = sortedData.slice(0, 15);
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色の設定
+        function getColorByRate(rate) {
+          if (rate < 30) return 'rgba(40, 167, 69, 0.7)';
+          if (rate < 70) return 'rgba(255, 193, 7, 0.7)';
+          return 'rgba(220, 53, 69, 0.7)';
+        }
+        
+        // 新しいチャートを作成
+        charts.genreRanking = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: limitedData.map(genre => `${genre.genre} (${genre.store_count}店舗)`),
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: limitedData.map(genre => parseFloat(genre.avg_rate).toFixed(1)),
+              backgroundColor: limitedData.map(genre => getColorByRate(genre.avg_rate)),
+              borderColor: limitedData.map(genre => getColorByRate(genre.avg_rate).replace('0.7', '1')),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: 'ジャンル別平均稼働率',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `稼働率: ${context.raw}%`;
+                  }
+                }
+              },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return value + '%';
+                },
+                color: textColor,
+                font: { weight: 'bold' }
+              }
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('ジャンルランキングチャート更新エラー:', error);
+      }
+    }
+
+    // 店舗ランキングデータの読み込み
+    async function loadStoreRanking(bizType) {
+      try {
+        // APIからデータ取得
+        let url = '/api/ranking/average';
+        if (bizType) {
+          url += `?biz_type=${encodeURIComponent(bizType)}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.stores || data.stores.length === 0) {
+          return;
+        }
+        
+        updateStoreRankingChart(data.stores);
+        
+      } catch (error) {
+        console.error('店舗ランキングデータ読み込みエラー:', error);
+      } finally {
+        document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+      }
+    }
+
+    // 店舗ランキングチャートの更新
+    function updateStoreRankingChart(storeData) {
+      try {
+        const ctx = document.getElementById('storeRankingChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.storeRanking) charts.storeRanking.destroy();
+        
+        // 表示数を制限
+        const limitedData = storeData.slice(0, 15);
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色の設定
+        function getColorByRate(rate) {
+          if (rate < 30) return 'rgba(40, 167, 69, 0.7)';
+          if (rate < 70) return 'rgba(255, 193, 7, 0.7)';
+          return 'rgba(220, 53, 69, 0.7)';
+        }
+        
+        // 新しいチャートを作成
+        charts.storeRanking = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: limitedData.map(store => store.store_name),
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: limitedData.map(store => parseFloat(store.avg_rate).toFixed(1)),
+              backgroundColor: limitedData.map(store => getColorByRate(store.avg_rate)),
+              borderColor: limitedData.map(store => getColorByRate(store.avg_rate).replace('0.7', '1')),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: '店舗別平均稼働率ランキング',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              subtitle: {
+                display: true,
+                text: 'データ収集期間: 過去30日間',
+                color: textColor,
+                font: { size: 12 }
+              },
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const store = limitedData[context.dataIndex];
+                    return [
+                      `稼働率: ${context.raw}%`,
+                      `ジャンル: ${store.genre || '不明'}`,
+                      `エリア: ${store.area || '不明'}`,
+                      `サンプル数: ${store.sample_count}件`
+                    ];
+                  }
+                }
+              },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return value + '%';
+                },
+                color: textColor,
+                font: { weight: 'bold' }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('店舗ランキングチャート更新エラー:', error);
+      }
+    }
+
+    // エラーハンドリング
+    function handleError(functionName, error) {
+      console.error(`エラー (${functionName}):`, error);
+      // エラーログを表示する場所があればそこに表示
+    }
+
+    // データ保存用の汎用関数
+    function saveToCache(key, data, expirationMinutes = 10) {
+      try {
+        const item = {
+          timestamp: Date.now(),
+          data: data,
+          expiration: Date.now() + (expirationMinutes * 60 * 1000)
+        };
+        localStorage.setItem(key, JSON.stringify(item));
+      } catch (error) {
+        console.error('キャッシュ保存エラー:', error);
+      }
+    }
+
+    // データ取得用の汎用関数
+    function getFromCache(key) {
+      try {
+        const item = JSON.parse(localStorage.getItem(key));
+        if (!item) return null;
+        
+        if (Date.now() > item.expiration) {
+          localStorage.removeItem(key);
+          return null;
+        }
+        
+        return item.data;
+      } catch (error) {
+        console.error('キャッシュ取得エラー:', error);
+        return null;
+      }
+    }
+  </script>
+</body>
+</html>
