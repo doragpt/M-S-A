@@ -613,6 +613,11 @@ def api_data():
                 }
 
             app.logger.info("API /api/data レスポンス準備完了")
+            # フロントエンドが期待する形式（data:[]）として返す
+            if 'data' not in response:
+                # responseには既にdataキーが含まれているか確認し、なければ追加
+                data_content = response.pop('data', []) if 'data' in response else []
+                return jsonify({"data": data_content, "meta": response.get('meta', {})})
             return jsonify(response)
 
         except Exception as e:
