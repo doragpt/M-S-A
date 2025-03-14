@@ -2822,6 +2822,19 @@
       }
     }
     
+    // ランキング表示ボタンのイベントハンドラーを変更
+    document.addEventListener('DOMContentLoaded', function() {
+      const loadRankingBtn = document.getElementById('loadRanking');
+      if (loadRankingBtn) {
+        // 既存のイベントリスナーを削除して再設定
+        loadRankingBtn.removeEventListener('click', loadGenreRanking);
+        loadRankingBtn.addEventListener('click', function() {
+          const selectedType = document.getElementById('typeSelector').value;
+          loadGenreRanking(selectedType);
+        });
+      }
+    });
+    
     // 業種選択肢を設定する関数
     function populateTypeSelector(data) {
       const typeSelector = document.getElementById('typeSelector');
@@ -2902,18 +2915,65 @@
         document.getElementById('genreErrorMessage').style.display = 'none';
         document.getElementById('storeRankLoadingIndicator').style.display = 'flex';
 
-        // APIからデータの直接取得を試みる代わりに、既存の店舗データから集計
+        // storeDataが空の場合はAPIから取得
+        if (storeData.length === 0) {
+          try {
+            const response = await fetch('/api/data');
+            if (response.ok) {
+              const data = await response.json();
+              // APIレスポンス構造に対応
+              if (data.data) {
+                storeData = data.data;
+              } else {
+                storeData = data;
+              }
+              console.log(`APIからデータを取得しました: ${storeData.length}件`);
+            } else {
+              throw new Error(`APIエラー: ${response.status}`);
+            }
+          } catch (fetchError) {
+            console.error('データ取得エラー:', fetchError);
+            document.getElementById('genreErrorMessage').textContent = `データ取得エラー: ${fetchError.message}`;
+            document.getElementById('genreErrorMessage').style.display = 'block';
+            document.getElementById('genreLoadingIndicator').style.display = 'none';
+            document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+            return;
+          }
+        }
+
         if (storeData.length === 0) {
           throw new Error('店舗データが読み込まれていません');
         }
 
         // 選択された業種でフィルタリング
-        const filteredStores = bizType ? 
-          storeData.filter(store => store.biz_type === bizType) : 
-          storeData;
+        let filteredStores = [];
+        if (bizType && bizType !== '') {
+          filteredStores = storeData.filter(store => store.biz_type === bizType);
+        } else {
+          // 業種が選択されていない場合は全店舗を使用
+          filteredStores = storeData;
+        }
 
         if (filteredStores.length === 0) {
-          throw new Error('選択された業種の店舗データがありません');
+          // モックデータを生成（デモ表示用）
+          console.log('データがないため、デモデータを生成します');
+          const demoGenres = ['高級店', 'セクキャバ', 'ガールズバー', 'ラウンジ', '姉キャバ', '巨乳', '人妻'];
+          const genreData = demoGenres.map(genre => ({
+            genre: genre,
+            store_count: Math.floor(Math.random() * 10) + 1,
+            avg_rate: Math.floor(Math.random() * 70) + 30
+          }));
+          
+          updateGenreRankingChart(genreData);
+          
+          // デモの店舗ランキングデータも生成
+          generateDemoStoreRanking(bizType || '選択業種');
+          
+          document.getElementById('genreErrorMessage').textContent = '注意: 実際のデータがないため、デモデータを表示しています';
+          document.getElementById('genreErrorMessage').style.display = 'block';
+          document.getElementById('genreLoadingIndicator').style.display = 'none';
+          document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+          return;
         }
 
         console.log(`フィルタリング結果: ${filteredStores.length}件`);
@@ -2921,6 +2981,7 @@
         // ジャンル別にグループ化して平均稼働率を計算
         const genreGroups = {};
         filteredStores.forEach(store => {
+          if (!store) return; // nullチェック
           const genre = store.genre || '未分類';
           if (!genreGroups[genre]) {
             genreGroups[genre] = { 
@@ -2969,6 +3030,30 @@
         document.getElementById('genreErrorMessage').style.display = 'block';
       } finally {
         document.getElementById('genreLoadingIndicator').style.display = 'none';
+      }
+    }
+    
+    // デモ用の店舗ランキングデータを生成
+    function generateDemoStoreRanking(bizType) {
+      try {
+        const demoStores = [
+          { store_name: 'CLUB AQUA', avg_rate: 92.5, genre: 'VIP', area: '銀座' },
+          { store_name: 'LUXURY SALON', avg_rate: 88.3, genre: '高級店', area: '六本木' },
+          { store_name: 'TOKYO GIRLS', avg_rate: 82.7, genre: 'セクキャバ', area: '新宿' },
+          { store_name: 'DIAMOND CLUB', avg_rate: 79.4, genre: 'ラウンジ', area: '渋谷' },
+          { store_name: 'CHERRY BLOSSOM', avg_rate: 75.1, genre: 'ガールズバー', area: '池袋' },
+          { store_name: 'GOLD RUSH', avg_rate: 72.9, genre: '姉キャバ', area: '銀座' },
+          { store_name: 'PLATINUM LOUNGE', avg_rate: 68.5, genre: 'ラウンジ', area: '新宿' },
+          { store_name: 'PINK PARADISE', avg_rate: 65.2, genre: '巨乳', area: '池袋' },
+          { store_name: 'ROYAL GARDEN', avg_rate: 61.8, genre: 'ガールズバー', area: '渋谷' },
+          { store_name: 'BLUE MOON', avg_rate: 58.7, genre: '人妻', area: '新宿' }
+        ];
+        
+        updateStoreRankingChart(demoStores);
+      } catch (error) {
+        console.error('デモ店舗ランキングデータ生成エラー:', error);
+      } finally {
+        document.getElementById('storeRankLoadingIndicator').style.display = 'none';
       }
     }
     
@@ -3206,12 +3291,21 @@
                 callbacks: {
                   label: function(context) {
                     const store = limitedData[context.dataIndex];
-                    return [
-                      `稼働率: ${context.raw}%`,
-                      `ジャンル: ${store.genre || '不明'}`,
-                      `エリア: ${store.area || '不明'}`,
-                      `サンプル数: ${store.sample_count}件`
-                    ];
+                    const tooltipLines = [`稼働率: ${context.raw}%`];
+                    
+                    if (store.genre) {
+                      tooltipLines.push(`ジャンル: ${store.genre}`);
+                    }
+                    
+                    if (store.area) {
+                      tooltipLines.push(`エリア: ${store.area}`);
+                    }
+                    
+                    if (store.sample_count) {
+                      tooltipLines.push(`サンプル数: ${store.sample_count}件`);
+                    }
+                    
+                    return tooltipLines;
                   }
                 }
               },
