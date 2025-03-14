@@ -9,12 +9,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- DataTables CSS -->
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-  <!-- Chart.js -->
+  <!-- Chart.js - 必要な機能のみをロード -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Chart.js Zoom Plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
-  <!-- Chart.js Crosshair Plugin (FX風チャート用) -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0/dist/chartjs-plugin-crosshair.min.js"></script>
+  <!-- Chart.js Zoom Plugin - defer属性追加 -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
+  <!-- Crosshairプラグインは削除してパフォーマンス向上 -->
   <style>
     /* 共通スタイル */
     body {
@@ -1322,6 +1321,15 @@
           const borderColor = data.selectedStore ? "rgba(33, 150, 243, 1)" : "rgba(76, 175, 80, 1)";
           const backgroundColor = data.selectedStore ? "rgba(33, 150, 243, 0.1)" : "rgba(76, 175, 80, 0.1)";
 
+          // データポイント表示の最適化（データ量に応じて調整）
+          const pointRadius = (() => {
+            if (data.labels.length > 500) return 0;
+            if (data.labels.length > 200) return 0;
+            if (data.labels.length > 100) return 0;
+            if (data.labels.length > 50) return 1;
+            return 2;
+          })();
+          
           // データセット
           const datasets = [
             {
@@ -1329,14 +1337,16 @@
               data: numericRates,
               borderColor: borderColor,
               backgroundColor: backgroundColor,
-              borderWidth: 2,
-              fill: true,
+              borderWidth: data.labels.length > 100 ? 1 : 2, // データ量が多い場合は線を細く
+              fill: data.labels.length <= 100, // データ量が多い場合は塗りつぶしを無効化
               tension: 0.2,
-              pointRadius: data.labels.length > 100 ? 0 : 2,
+              pointRadius: pointRadius,
               pointHoverRadius: 6,
               pointBackgroundColor: borderColor,
               pointBorderColor: "#fff",
-              pointBorderWidth: 2
+              pointBorderWidth: 1,
+              // 間引き表示（データ量が多い場合にレンダリングを軽量化）
+              spanGaps: true
             }
           ];
 
@@ -1385,36 +1395,29 @@
                   padding: 10,
                   callbacks: { 
                     label: context => `稼働率: ${context.parsed.y.toFixed(1)}%` 
-                  } 
+                  },
+                  // ツールチップ表示最適化
+                  enabled: window.innerWidth > 768, // モバイルではツールチップを無効化
+                  mode: 'nearest',
+                  intersect: false,
+                  position: 'nearest'
                 },
                 zoom: {
                   pan: { 
                     enabled: true,
-                    mode: 'xy',
-                    threshold: 5
+                    mode: 'x', // 横方向のみにパン操作を制限
+                    threshold: 10 // しきい値を上げて誤操作を防止
                   },
                   zoom: { 
                     wheel: { enabled: true },
                     pinch: { enabled: true },
-                    mode: 'xy',
+                    mode: 'x', // 横方向のみにズーム操作を制限
                     onZoomComplete: function() {
                       if (resetZoomBtn) resetZoomBtn.style.display = 'block';
                     }
                   }
-                },
-                crosshair: {
-                  line: {
-                    color: 'rgba(100, 100, 100, 0.4)',
-                    width: 1,
-                    dashPattern: [5, 5]
-                  },
-                  sync: {
-                    enabled: true
-                  },
-                  zoom: {
-                    enabled: false
-                  }
                 }
+                // crosshairプラグインを削除してパフォーマンス向上
               },
               scales: {
                 y: { 
@@ -2009,16 +2012,7 @@
                     }
                   } 
                 },
-                crosshair: {
-                  line: {
-                    color: 'rgba(100, 100, 100, 0.4)',
-                    width: 1,
-                    dashPattern: [5, 5]
-                  },
-                  sync: {
-                    enabled: true
-                  }
-                }
+                // crosshairプラグインを無効化（パフォーマンス向上）
               },
               scales: {
                 y: { 
@@ -2245,20 +2239,30 @@
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                  duration: 500 // アニメーション時間を短縮
+                },
                 plugins: {
                   title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } },
-                  zoom: false, // ズーム機能を完全に無効化
+                  legend: { display: false }, // 凡例を非表示
                 },
                 scales: {
-                  y: { beginAtZero: true, max: 100, title: { display: true, text: "平均稼働率 (%)" } }
+                  y: { 
+                    beginAtZero: true, 
+                    max: 100, 
+                    title: { display: true, text: "平均稼働率 (%)" },
+                    grid: { display: false } // グリッド線を非表示に
+                  },
+                  x: {
+                    grid: { display: false } // グリッド線を非表示に
+                  }
                 },
-                // カーソルホバー時の動作カスタマイズ
-                onHover: null, // ホバーイベントを無効化
-                hover: {
-                  mode: null // ホバーモードを無効化
+                interaction: {
+                  mode: 'index',
+                  intersect: false
                 },
-                // ドラッグ操作を無効化
-                events: ['click', 'touchstart', 'touchmove']
+                // すべてのインタラクションを簡素化
+                events: ['mousemove', 'click']
               }
             });
 
@@ -3340,7 +3344,7 @@
           enhanceRankingTab();
         }
 
-        // タブ切り替え処理
+        // タブ切り替え処理の最適化（遅延読み込み導入）
         document.querySelectorAll('.nav-link').forEach(button => {
           button.addEventListener('click', function() {
             // すべてのタブボタンから active クラスを削除
@@ -3358,7 +3362,32 @@
 
             // クリックされたボタンのターゲットコンテンツを表示
             const targetId = this.getAttribute('href');
-            document.querySelector(targetId).classList.add('show', 'active');
+            const targetTab = document.querySelector(targetId);
+            targetTab.classList.add('show', 'active');
+            
+            // タブに応じた遅延データ読み込み
+            setTimeout(() => {
+              switch(targetId) {
+                case '#dashboard':
+                  if (!charts.currentRate) updateTop10Chart();
+                  break;
+                case '#history':
+                  // 履歴タブは手動更新するので何もしない
+                  break;
+                case '#hourly':
+                  if (!charts.hourly) updateHourlyAnalysis();
+                  break;
+                case '#area':
+                  if (!charts.area) updateAreaStatistics();
+                  break;
+                case '#type':
+                  if (!charts.type) updateIndustryRanking();
+                  break;
+                case '#ranking':
+                  // ランキングタブは手動更新するので何もしない
+                  break;
+              }
+            }, 100); // 少し遅延させてUIがフリーズしないようにする
           });
         });
 
