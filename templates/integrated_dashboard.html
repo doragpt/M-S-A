@@ -308,26 +308,34 @@
               </div>
             </div>
           </div>
-          <div class="chart-container">
-            <div id="hourlyAnalysisLoading" class="text-center py-5" style="display: none;">
-              <div class="spinner-border text-success mb-3" role="status">
-                <span class="visually-hidden">読み込み中...</span>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="chart-container" style="height: 400px; margin-bottom: 20px;">
+                <div id="hourlyAnalysisLoading" class="text-center py-5" style="display: none;">
+                  <div class="spinner-border text-success mb-3" role="status">
+                    <span class="visually-hidden">読み込み中...</span>
+                  </div>
+                  <p>時間帯別データを分析中...</p>
+                </div>
+                <div id="hourlyAnalysisContainer">
+                  <canvas id="hourlyChart"></canvas>
+                </div>
+                <div id="hourlyAnalysisError" class="alert alert-danger mt-3" style="display: none;">
+                  データの分析中にエラーが発生しました。もう一度お試しください。
+                </div>
               </div>
-              <p>時間帯別データを分析中...</p>
-            </div>
-            <div id="hourlyAnalysisContainer">
-              <canvas id="hourlyChart"></canvas>
-            </div>
-            <div id="hourlyAnalysisError" class="alert alert-danger mt-3" style="display: none;">
-              データの分析中にエラーが発生しました。もう一度お試しください。
             </div>
           </div>
-          <div class="card mt-3">
-            <div class="card-body">
-              <h5 class="card-title">集計結果</h5>
-              <p id="hourlyStats" class="mb-0">--</p>
-              <div id="peakHoursInfo" class="mt-2 small text-muted" style="display: none;">
-                ピーク時間帯: <span id="peakHoursRange">--</span>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">集計結果</h5>
+                  <p id="hourlyStats" class="mb-0">--</p>
+                  <div id="peakHoursInfo" class="mt-2 small text-muted" style="display: none;">
+                    ピーク時間帯: <span id="peakHoursRange">--</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -971,7 +979,41 @@
 
             // データが存在するか確認
             if (labels.length === 0 || effectiveRates.length === 0) {
-              throw new Error("該当するデータが見つかりませんでした");
+              // エラーをスローせず、情報メッセージを表示する
+              const historyStats = document.getElementById("historyStats");
+              if (historyStats) {
+                historyStats.textContent = "選択された期間のデータは見つかりませんでした。別の期間や店舗を選択してください。";
+              }
+              
+              // 空のチャートを表示
+              const ctx = document.getElementById("historyChart").getContext("2d");
+              if (charts.history) charts.history.destroy();
+              charts.history = new Chart(ctx, {
+                type: "line",
+                data: {
+                  labels: ["データなし"],
+                  datasets: [{
+                    label: "実働率 (%)",
+                    data: [0],
+                    borderColor: "rgba(200, 200, 200, 0.5)",
+                    backgroundColor: "rgba(200, 200, 200, 0.1)",
+                    fill: false
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: "データがありません",
+                      font: { size: 20 }
+                    }
+                  }
+                }
+              });
+              
+              return; // 処理を中断
             }
 
             // キャッシュに保存
