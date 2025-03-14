@@ -3736,13 +3736,16 @@
         }
         
         if (limit) {
-          params.push(`limit=${limit}`);
+          // 全店舗表示の場合は1000をセット
+          const actualLimit = limit === '9999' ? '1000' : limit;
+          params.push(`limit=${actualLimit}`);
         }
         
         if (params.length > 0) {
           apiUrl += '?' + params.join('&');
         }
         
+        console.log(`ランキングAPI呼び出し: ${apiUrl}`);
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
@@ -3754,6 +3757,8 @@
         if (!data || data.length === 0) {
           throw new Error('ランキングデータが見つかりませんでした');
         }
+        
+        console.log(`取得したランキングデータ: ${data.length}件`);
         
         // ランキングチャートとテーブルを更新
         updatePopularRankingChart(data);
@@ -3778,15 +3783,14 @@
         
         // 選択した件数で表示（9999は全店舗表示の特殊コード）
         const limit = parseInt(document.getElementById('rankingLimit').value);
-        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, limit);
+        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, Math.min(limit, rankingData.length));
         
-        // チャートの表示を最適化（100件以上の場合はサンプリング）
+        // チャートの表示を最適化（常に最大30件まで表示）
         let displayData = limitedData;
-        if (limitedData.length > 100) {
-          // チャート表示用に最大100件まで間引く
-          const sampleRate = Math.ceil(limitedData.length / 100);
-          displayData = limitedData.filter((_, index) => index % sampleRate === 0);
-          console.log(`チャート表示のため ${limitedData.length} 件のデータを ${displayData.length} 件に間引きました`);
+        if (limitedData.length > 30) {
+          // チャート表示用のトップ30件のみを使用
+          displayData = limitedData.slice(0, 30);
+          console.log(`チャート表示では ${limitedData.length} 件中トップ30件のみ表示`);
         }
         
         // テーマに合わせた色設定
@@ -3806,6 +3810,12 @@
         const rates = displayData.map(store => parseFloat(store.avg_rate).toFixed(1));
         const backgroundColors = displayData.map(store => getColorByRate(store.avg_rate));
         const borderColors = displayData.map(store => getColorByRate(store.avg_rate).replace('0.7', '1'));
+        
+        // グラフ表示用のサブタイトル生成
+        let subtitle = getPeriodLabel();
+        if (limitedData.length > 30) {
+          subtitle += ` (上位30件を表示)`;
+        }
         
         // 新しいチャートを作成
         charts.popularRanking = new Chart(ctx, {
@@ -3832,7 +3842,17 @@
                 grid: { color: gridColor }
               },
               y: {
-                ticks: { color: textColor },
+                ticks: { 
+                  color: textColor,
+                  // Y軸のラベルを短縮（長すぎる店舗名は省略）
+                  callback: function(value, index) {
+                    const label = this.getLabelForValue(index);
+                    if (label.length > 20) {
+                      return label.substr(0, 18) + '...';
+                    }
+                    return label;
+                  }
+                },
                 grid: { color: gridColor }
               }
             },
@@ -3845,7 +3865,7 @@
               },
               subtitle: {
                 display: true,
-                text: getPeriodLabel(),
+                text: subtitle,
                 color: textColor,
                 font: { size: 12 }
               },
@@ -3855,7 +3875,14 @@
               tooltip: {
                 callbacks: {
                   label: function(context) {
-                    const store = limitedData[context.dataIndex];
+                    // tooltipの店舗インデックスを正しく取得
+                    const storeIndex = context.dataIndex;
+                    const store = displayData[storeIndex];
+                    
+                    if (!store) {
+                      return [`稼働率: ${context.raw}%`];
+                    }
+                    
                     const tooltipLines = [`稼働率: ${context.raw}%`];
                     
                     if (store.biz_type) {
@@ -3903,10 +3930,14 @@
         
         // 選択した件数で表示
         const limit = parseInt(document.getElementById('rankingLimit').value);
-        // 9999は全店舗表示の特殊コード
-        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, Math.min(limit, rankingData.length));
         
-        console.log(`ランキングテーブル表示: 合計${rankingData.length}件中${limitedData.length}件を表示`);
+        // 9999は全店舗表示の特殊コード（APIから取得した全データを表示）
+        let limitedData = limit === 9999 ? rankingData : rankingData.slice(0, Math.min(limit, rankingData.length));
+        
+        // 全データが何件あるか（APIの制限で最大1000件）
+        const totalStores = limit === 9999 ? "全店舗" : rankingData.length;
+        
+        console.log(`ランキングテーブル表示: 合計${totalStores}件中${limitedData.length}件を表示`);
         
         limitedData.forEach((store, index) => {
           const tr = document.createElement('tr');
@@ -3944,9 +3975,24 @@
         });
         
         // テーブルの下に表示件数情報を追加
+        // 既存の情報表示を削除
+        const existingInfo = tableBody.parentNode.parentNode.querySelector('.text-center.mt-3');
+        if (existingInfo) {
+          existingInfo.remove();
+        }
+        
         const info = document.createElement('div');
         info.className = 'text-center mt-3';
-        info.innerHTML = `<small>${rankingData.length}件中 ${limitedData.length}件を表示しています</small>`;
+        
+        // 表示形式を調整
+        let displayText = '';
+        if (limit === 9999) {
+          displayText = `${limitedData.length}件の店舗データを表示しています`;
+        } else {
+          displayText = `${totalStores}件中 ${limitedData.length}件を表示しています`;
+        }
+        
+        info.innerHTML = `<small>${displayText}</small>`;
         tableBody.parentNode.parentNode.appendChild(info);
         
       } catch (error) {
