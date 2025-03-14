@@ -869,29 +869,38 @@
               } catch (aggregatedError) {
                 // 集計APIがない場合はhistoryから全データ取得（フォールバック）
                 console.warn("集計APIが利用できません。フォールバックを使用します。:", aggregatedError);
-                const data = await fetchWithRetry("/api/history?limit=1000", {}, 3, 2000);
-
-                // 日付ごとに集計
-                const dateMap = new Map();
-
-                data.forEach(record => {
-                  const d = new Date(record.timestamp);
-                  const dateKey = d.toLocaleDateString();
-
-                  if (!dateMap.has(dateKey)) {
-                    dateMap.set(dateKey, { sum: 0, count: 0 });
+                try {
+                  const data = await fetchWithRetry("/api/history?limit=1000", {}, 3, 2000);
+                  
+                  // データが配列であることを確認
+                  if (!Array.isArray(data)) {
+                    console.error("履歴データの形式が不正です:", data);
+                    throw new Error("データ形式エラー");
                   }
+                  
+                  // 日付ごとに集計
+                  const dateMap = new Map();
 
-                  // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
-                  const rate = record.rate ? record.rate :
-                    (record.working_staff > 0 ? 
-                    ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+                  data.forEach(record => {
+                    if (!record || !record.timestamp) return; // 無効なレコードはスキップ
+                    
+                    const d = new Date(record.timestamp);
+                    const dateKey = d.toLocaleDateString();
 
-                  if (rate > 0) {
-                    dateMap.get(dateKey).sum += rate;
-                    dateMap.get(dateKey).count += 1;
-                  }
-                });
+                    if (!dateMap.has(dateKey)) {
+                      dateMap.set(dateKey, { sum: 0, count: 0 });
+                    }
+
+                    // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
+                    const rate = record.rate ? record.rate :
+                      (record.working_staff > 0 ? 
+                      ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+
+                    if (rate > 0) {
+                      dateMap.get(dateKey).sum += rate;
+                      dateMap.get(dateKey).count += 1;
+                    }
+                  });
 
                 // 日付でソート
                 const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
@@ -914,9 +923,43 @@
             console.error("履歴グラフエラー:", error);
             console.error(error.stack);
             handleError(error, "updateHistoryChart");
+            
+            // エラー時のフォールバック表示
+            if (document.getElementById("historyStats")) {
+              document.getElementById("historyStats").textContent = "データ取得中にエラーが発生しました。";
+            }
+            
+            // 空のチャートを表示
+            const ctx = document.getElementById("historyChart");
+            if (ctx && ctx.getContext) {
+              if (charts.history) charts.history.destroy();
+              charts.history = new Chart(ctx.getContext("2d"), {
+                type: "line",
+                data: {
+                  labels: [],
+                  datasets: [{
+                    label: "実働率 (%)",
+                    data: [],
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    fill: false
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: "データ取得エラー",
+                      font: { size: 20 }
+                    }
+                  }
+                }
+              });
+            }
           } finally {
-            loadingElement.style.display = 'none';
-            containerElement.style.display = 'block';
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (containerElement) containerElement.style.display = 'block';
           }
         }
 

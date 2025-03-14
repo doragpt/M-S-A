@@ -828,32 +828,47 @@ def api_aggregated_data():
     """
     日付ごとに集計された平均稼働率データを返すエンドポイント
     """
-    # 日付ごとの集計クエリ
-    query = db.session.query(
-        func.date(StoreStatus.timestamp).label('date'),
-        func.avg(
-            (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-            func.nullif(StoreStatus.working_staff, 0)
-        ).label('avg_rate'),
-        func.count().label('sample_count')
-    ).filter(
-        StoreStatus.working_staff > 0
-    ).group_by(
-        func.date(StoreStatus.timestamp)
-    ).order_by(
-        func.date(StoreStatus.timestamp)
-    )
+    try:
+        # 日付ごとの集計クエリ
+        query = db.session.query(
+            func.date(StoreStatus.timestamp).label('date'),
+            func.avg(
+                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
+                func.nullif(StoreStatus.working_staff, 0)
+            ).label('avg_rate'),
+            func.count().label('sample_count')
+        ).filter(
+            StoreStatus.working_staff > 0
+        ).group_by(
+            func.date(StoreStatus.timestamp)
+        ).order_by(
+            func.date(StoreStatus.timestamp)
+        )
 
-    results = query.all()
+        results = query.all()
 
-    # 結果を整形
-    data = [{
-        'date': r.date.isoformat(),
-        'avg_rate': float(r.avg_rate),
-        'sample_count': r.sample_count
-    } for r in results]
+        # 結果を整形
+        data = []
+        for r in results:
+            # date属性がNoneの場合はスキップ
+            if r.date is None:
+                continue
+                
+            try:
+                data.append({
+                    'date': r.date.isoformat(),
+                    'avg_rate': float(r.avg_rate) if r.avg_rate is not None else 0.0,
+                    'sample_count': r.sample_count
+                })
+            except (AttributeError, TypeError, ValueError) as e:
+                app.logger.error(f"データ変換エラー: {e}, レコード: {r}")
+                continue
 
-    return jsonify(data)
+        return jsonify(data)
+    except Exception as e:
+        app.logger.error(f"API集計データ取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "集計データの取得中にエラーが発生しました"}), 500
 
 @app.route('/api/averages/daily')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
