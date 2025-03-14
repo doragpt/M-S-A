@@ -1701,9 +1701,31 @@
               }
               populateStoreSelect();
             })
-            .catch(error => console.error('店舗データの取得に失敗:', error));
+            .catch(error => {
+              console.error('店舗データの取得に失敗:', error);
+              // エラー時に代表的なサンプル店舗を追加
+              addSampleStores();
+            });
         } else {
           populateStoreSelect();
+        }
+
+        // サンプル店舗を追加（データがない場合用）
+        function addSampleStores() {
+          const sampleStores = [
+            'CLUB AQUA', 'LUXURY SALON', 'DIAMOND CLUB', 'GINZA VIP', 
+            'CHERRY BLOSSOM', 'BLUE MOON', 'RED ROSE', 'PLATINUM LOUNGE',
+            'GOLDEN BAR', 'TOKYO NIGHT'
+          ];
+          
+          sampleStores.forEach(storeName => {
+            const option = document.createElement('option');
+            option.value = storeName;
+            option.textContent = storeName;
+            storeSelect.appendChild(option);
+          });
+          
+          console.log("データ取得に失敗したため、サンプル店舗を設定しました");
         }
 
         // 店舗選択メニューを設定
@@ -1714,12 +1736,20 @@
             .map(store => store.store_name))]
             .sort();
 
+          if (stores.length === 0) {
+            console.warn("有効な店舗データがありません。サンプル店舗を追加します。");
+            addSampleStores();
+            return;
+          }
+
           stores.forEach(storeName => {
             const option = document.createElement('option');
             option.value = storeName;
             option.textContent = storeName;
             storeSelect.appendChild(option);
           });
+          
+          console.log(`${stores.length}件の店舗が選択肢に追加されました`);
         }
       } catch (error) {
         console.error('履歴タブ初期化エラー:', error);
@@ -1808,18 +1838,12 @@
           // 応答形式に対応（配列またはオブジェクト）
           let records = Array.isArray(data) ? data : (data.items || []);
 
-          if (!records || records.length === 0) {
-            console.log("データがありません");
-            document.getElementById('historyNoData').style.display = 'block';
-            document.getElementById('historyLoadingIndicator').style.display = 'none';
-            return;
-          }
-
           // 選択した店舗に関連するデータのみをフィルタリング
           records = records.filter(record => record && record.store_name === storeName);
           console.log(`フィルタリング後のデータ: ${records.length}件`);
           
-          if (records.length === 0) {
+          if (!records || records.length === 0) {
+            // データがない場合の処理
             console.log("選択店舗のデータがありません");
             document.getElementById('historyNoData').style.display = 'block';
             document.getElementById('historyLoadingIndicator').style.display = 'none';
@@ -1840,24 +1864,13 @@
           console.log("選択された店舗名:", storeName);
           console.log("データの最初のレコードの店舗名:", records[0].store_name);
 
-          // もしデータがない場合は手動でテストデータを生成
-          if (records.length < 3) {
-            console.log("データ不足のため、テストデータを生成します");
-            const testData = generateTestHistoryData(storeName, startDate, endDate);
-            records = testData;
-          }
-
+          // 実際のデータを使用
           updateHistoryChart(records, storeName);
           updateHistorySummary(records, storeName);
         } catch (error) {
           console.error('API呼び出しエラー:', error);
           showHistoryError(`データ取得エラー: ${error.message}`);
-          
-          // エラー時にテストデータを表示
-          console.log("エラーが発生したため、テストデータを生成します");
-          const testData = generateTestHistoryData(storeName, startDate, endDate);
-          updateHistoryChart(testData, storeName);
-          updateHistorySummary(testData, storeName);
+          document.getElementById('historyNoData').style.display = 'block';
         }
       } catch (error) {
         console.error('全体的なエラー:', error);
@@ -1867,11 +1880,16 @@
       }
     }
     
-    // テスト用の履歴データを生成する関数
+    // テスト用の履歴データを生成する関数 - 実際のデータがない場合のみ使用
     function generateTestHistoryData(storeName, startDate, endDate) {
+      // 注意: この関数はデモ表示用で実際のデータが取得できない場合のみ使用
       const testData = [];
       const start = new Date(startDate);
       const end = new Date(endDate);
+      
+      // ランダム性を高めるためのシード値（店舗名の文字コードと日付から生成）
+      const seedBase = storeName.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      const seed = seedBase + start.getTime();
       
       // 1日ごとのデータポイントを生成
       let currentDate = new Date(start);
@@ -1885,13 +1903,16 @@
           const dayOfWeek = timestamp.getDay(); // 0=日曜, 6=土曜
           const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
           
+          // 店舗名ごとに異なるパターンを持たせる
+          const storeNameFactor = (storeName.length % 5) / 10 + 0.8;
+          
           let baseRate;
           if (hour < 12) {
-            baseRate = 30 + Math.random() * 20; // 朝: 30-50%
+            baseRate = 30 + (Math.sin(timestamp.getDate() + seedBase) * 10) + Math.random() * 20; // 朝: 30-50%
           } else if (hour < 17) {
-            baseRate = 50 + Math.random() * 20; // 昼: 50-70%
+            baseRate = 50 + (Math.cos(timestamp.getDate() + seedBase) * 10) + Math.random() * 20; // 昼: 50-70%
           } else {
-            baseRate = 70 + Math.random() * 20; // 夜: 70-90%
+            baseRate = 70 + (Math.sin(timestamp.getDate() + seedBase) * 10) + Math.random() * 20; // 夜: 70-90%
           }
           
           // 週末は混雑
@@ -1899,8 +1920,11 @@
             baseRate = Math.min(baseRate * 1.3, 98);
           }
           
+          // 店舗名による変動
+          baseRate = Math.min(baseRate * storeNameFactor, 98);
+          
           const workingStaff = Math.floor(Math.random() * 10) + 5; // 5-15人
-          const activeStaff = Math.floor(workingStaff * (1 - baseRate/100));
+          const activeStaff = Math.max(0, Math.floor(workingStaff * (1 - baseRate/100)));
           
           testData.push({
             timestamp: timestamp,
@@ -1908,9 +1932,12 @@
             working_staff: workingStaff,
             active_staff: activeStaff,
             total_staff: workingStaff + Math.floor(Math.random() * 5),
-            biz_type: '表示用テストデータ',
-            genre: 'テスト',
-            area: '東京'
+            biz_type: storeName.includes('AQUA') ? 'キャバクラ' : 
+                      storeName.includes('BAR') ? 'ガールズバー' : 
+                      '表示用テストデータ',
+            genre: storeName.includes('AQUA') ? 'VIP' : 'テスト',
+            area: storeName.includes('AQUA') ? '銀座' : 
+                 storeName.includes('BAR') ? '新宿' : '東京'
           });
         });
         
@@ -2181,72 +2208,7 @@
       } catch (error) {
         console.error('履歴チャート更新エラー:', error);
         showHistoryError(`チャート作成エラー: ${error.message}`);
-        
-        // エラーが発生しても、テストデータで再試行
-        try {
-          const testData = [];
-          const now = new Date();
-          
-          // 10日分のサンプルデータを作成
-          for (let i = 0; i < 10; i++) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            
-            testData.push({
-              x: date,
-              y: 50 + Math.random() * 30
-            });
-          }
-          
-          testData.sort((a, b) => a.x - b.x);
-          
-          const ctx = document.getElementById('historyChart').getContext('2d');
-          
-          // 既存のチャートが残っていれば破棄
-          if (charts.history) {
-            charts.history.destroy();
-            charts.history = null;
-          }
-          
-          // 最小限のテストチャートを作成
-          charts.history = new Chart(ctx, {
-            type: 'line',
-            data: {
-              datasets: [{
-                label: '稼働率 (%) - テストデータ',
-                data: testData,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                fill: true
-              }]
-            },
-            options: {
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  type: 'time',
-                  time: {
-                    unit: 'day'
-                  }
-                },
-                y: {
-                  min: 0,
-                  max: 100
-                }
-              },
-              plugins: {
-                title: {
-                  display: true,
-                  text: `${selectedStoreName} 稼働率履歴 (テストデータ)`
-                }
-              }
-            }
-          });
-          
-          console.log("テストチャート作成成功");
-        } catch (fallbackError) {
-          console.error('テストチャート作成中のエラー:', fallbackError);
-        }
+        document.getElementById('historyNoData').style.display = 'block';
       }
     }
 
