@@ -37,6 +37,11 @@ def get_db_connection():
                     parts = s_decoded.split(' ')
                     if len(parts) >= 2:
                         s_decoded = f"{parts[0]}T{parts[1]}"
+                # マイクロ秒が7桁以上ある場合は6桁に制限
+                if '.' in s_decoded:
+                    parts = s_decoded.split('.')
+                    if len(parts) == 2 and len(parts[1]) > 6:
+                        s_decoded = f"{parts[0]}.{parts[1][:6]}"
                 return datetime.datetime.fromisoformat(s_decoded)
             elif isinstance(s, str):
                 # ISO形式の日付文字列にスペースが含まれている場合に対処
@@ -44,6 +49,11 @@ def get_db_connection():
                     parts = s.split(' ')
                     if len(parts) >= 2:
                         s = f"{parts[0]}T{parts[1]}"
+                # マイクロ秒が7桁以上ある場合は6桁に制限
+                if '.' in s:
+                    parts = s.split('.')
+                    if len(parts) == 2 and len(parts[1]) > 6:
+                        s = f"{parts[0]}.{parts[1][:6]}"
                 return datetime.datetime.fromisoformat(s)
             return s
         except (ValueError, TypeError) as e:
