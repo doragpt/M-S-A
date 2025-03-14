@@ -1099,18 +1099,7 @@
               }
             });
 
-            // リセットズームボタンを追加（なければ）
-            if (!document.getElementById('resetHistoryZoom')) {
-              const buttonHtml = '<button id="resetHistoryZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
-              document.getElementById('historyChartContainer').insertAdjacentHTML('afterbegin', buttonHtml);
-
-              document.getElementById('resetHistoryZoom').addEventListener('click', function() {
-                if (charts.history) {
-                  charts.history.resetZoom();
-                  this.style.display = 'none';
-                }
-              });
-            }
+            // ズーム機能を無効化したため、リセットボタンは不要
 
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
@@ -1262,28 +1251,6 @@
                       }
                     } 
                   },
-                  zoom: {
-                    pan: { 
-                      enabled: true, 
-                      mode: 'xy',
-                      overScaleMode: 'xy'
-                    },
-                    zoom: { 
-                      wheel: { 
-                        enabled: true,
-                        speed: 0.05
-                      },
-                      pinch: { 
-                        enabled: true 
-                      },
-                      mode: 'xy',
-                      onZoom: function() {
-                        // ズーム完了時に実行するコード
-                        const resetZoomButton = document.getElementById('resetHourlyZoom');
-                        if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
-                      }
-                    }
-                  },
                   crosshair: {
                     line: {
                       color: 'rgba(100, 100, 100, 0.4)',
@@ -1395,18 +1362,7 @@
               }
             });
 
-            // リセットズームボタンを追加（なければ）
-            if (!document.getElementById('resetHourlyZoom')) {
-              const buttonHtml = '<button id="resetHourlyZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
-              document.getElementById('hourlyAnalysisContainer').insertAdjacentHTML('afterbegin', buttonHtml);
-
-              document.getElementById('resetHourlyZoom').addEventListener('click', function() {
-                if (charts.hourly) {
-                  charts.hourly.resetZoom();
-                  this.style.display = 'none';
-                }
-              });
-            }
+            // ズーム機能を無効化したため、リセットボタンは不要
             hideSpinner();
           } catch (err) {
             console.error("時間帯別分析エラー:", err);
