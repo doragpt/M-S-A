@@ -410,20 +410,16 @@ def api_data():
     try:
         app.logger.info("API /api/data へのリクエスト開始")
 
-        # 新しいセッションを作成
-        session = db.session
-
         # ページネーションの有無を確認
         use_pagination = 'page' in request.args
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100件に制限
 
-        # セッション内でのクエリ実行
         try:
             # 各店舗の最新タイムスタンプをサブクエリで取得
             app.logger.debug("サブクエリの構築開始")
 
-            # サブクエリを明示的に構築
+            # SQLiteに最適化されたサブクエリを構築
             subq = db.session.query(
                 StoreStatus.store_name,
                 func.max(StoreStatus.timestamp).label("max_time")
@@ -441,10 +437,7 @@ def api_data():
             app.logger.debug("クエリ実行開始")
 
             try:
-                # データベース接続を直接使用
-                conn = get_db_connection()
-
-                # SQLiteのカスタム関数を使ってクエリを実行（エラー時のフォールバック用）
+                # クエリを直接実行
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
             except Exception as qe:
@@ -504,13 +497,47 @@ def api_data():
 
                 for item in items_to_format:
                     try:
+                        # 安全に属性にアクセス
+                        item_dict = {
+                            'id': getattr(item, 'id', None),
+                            'timestamp': getattr(item, 'timestamp', None),
+                            'store_name': getattr(item, 'store_name', '不明'),
+                            'biz_type': getattr(item, 'biz_type', '不明'),
+                            'genre': getattr(item, 'genre', '不明'),
+                            'area': getattr(item, 'area', '不明'),
+                            'total_staff': getattr(item, 'total_staff', 0),
+                            'working_staff': getattr(item, 'working_staff', 0),
+                            'active_staff': getattr(item, 'active_staff', 0),
+                            'url': getattr(item, 'url', ''),
+                            'shift_time': getattr(item, 'shift_time', '')
+                        }
+                        
                         # format_store_statusがNoneを返す場合に対処
                         formatted_item = format_store_status(item, jst)
                         if formatted_item:
                             formatted_data.append(formatted_item)
+                        else:
+                            # フォーマット関数が失敗した場合は手動でフォーマット
+                            if item_dict['timestamp'] and item_dict['timestamp'].tzinfo is None:
+                                item_dict['timestamp'] = jst.localize(item_dict['timestamp']).isoformat()
+                            elif item_dict['timestamp']:
+                                item_dict['timestamp'] = item_dict['timestamp'].isoformat()
+                            else:
+                                item_dict['timestamp'] = None
+                                
+                            # 稼働率計算
+                            working_staff = item_dict['working_staff'] or 0
+                            active_staff = item_dict['active_staff'] or 0
+                            rate = 0
+                            if working_staff > 0:
+                                rate = ((working_staff - active_staff) / working_staff) * 100
+                            item_dict['rate'] = round(rate, 1)
+                            
+                            formatted_data.append(item_dict)
                     except Exception as fmt_err:
                         error_count += 1
                         app.logger.error(f"アイテムフォーマットエラー: {str(fmt_err)}, item_id={getattr(item, 'id', 'unknown')}")
+                        app.logger.error(traceback.format_exc())
 
                 app.logger.info(f"データフォーマット完了: {len(formatted_data)}件成功, {error_count}件エラー")
                 return formatted_data
@@ -866,7 +893,13 @@ def api_average_ranking():
 
         app.logger.info(f"ランキング取得パラメータ: biz_type={biz_type}, limit={limit}, min_samples={min_samples}")
 
-        # サブクエリ: 店舗ごとのグループ化
+        # 最新データを取得するサブクエリ
+        latest_subq = db.session.query(
+            StoreStatus.store_name,
+            func.max(StoreStatus.timestamp).label('max_timestamp')
+        ).group_by(StoreStatus.store_name).subquery()
+        
+        # 店舗ごとの集計クエリ
         subq = db.session.query(
             StoreStatus.store_name,
             func.avg(
@@ -877,6 +910,12 @@ def api_average_ranking():
             func.max(StoreStatus.biz_type).label('biz_type'),
             func.max(StoreStatus.genre).label('genre'),
             func.max(StoreStatus.area).label('area')
+        ).join(
+            latest_subq,
+            and_(
+                StoreStatus.store_name == latest_subq.c.store_name,
+                StoreStatus.timestamp == latest_subq.c.max_timestamp
+            )
         ).filter(StoreStatus.working_staff > 0)
 
         # 業種でフィルタリング（指定があれば）
@@ -964,7 +1003,12 @@ def api_genre_ranking():
         return jsonify({"error": "業種(biz_type)の指定が必要です"}), 400
 
     try:
-        # 直接SQLクエリを実行
+        # 最新のデータのみを対象にするためのサブクエリ
+        latest_subq = db.session.query(
+            StoreStatus.store_name,
+            func.max(StoreStatus.timestamp).label('max_timestamp')
+        ).group_by(StoreStatus.store_name).subquery()
+        
         # 業種内のジャンル別平均稼働率とサンプル数を計算
         query = db.session.query(
             StoreStatus.genre,
@@ -973,6 +1017,12 @@ def api_genre_ranking():
                 (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
                 func.nullif(StoreStatus.working_staff, 0)
             ).label('avg_rate')
+        ).join(
+            latest_subq,
+            and_(
+                StoreStatus.store_name == latest_subq.c.store_name,
+                StoreStatus.timestamp == latest_subq.c.max_timestamp
+            )
         ).filter(
             StoreStatus.biz_type == biz_type,
             StoreStatus.working_staff > 0
@@ -991,11 +1041,24 @@ def api_genre_ranking():
         if not results:
             return jsonify([])
 
-        data = [{
-            "genre": r.genre if r.genre else "不明",
-            "store_count": r.store_count,
-            "avg_rate": round(float(r.avg_rate), 1)
-        } for r in results]
+        data = []
+        for result in results:
+            genre = result.genre if result.genre else "不明"
+            store_count = result.store_count
+            
+            # avg_rate の安全な取得と変換
+            avg_rate = 0
+            try:
+                if result.avg_rate is not None:
+                    avg_rate = float(result.avg_rate)
+            except (ValueError, TypeError) as e:
+                app.logger.warning(f"平均値の変換エラー: {e}, genre: {genre}")
+                
+            data.append({
+                "genre": genre,
+                "store_count": store_count,
+                "avg_rate": round(avg_rate, 1)
+            })
 
         return jsonify(data)
     except Exception as e:
@@ -1296,17 +1359,32 @@ def api_area_stats():
                 StoreStatus.store_name == subq.c.store_name,
                 StoreStatus.timestamp == subq.c.max_timestamp
             )
+        ).filter(
+            StoreStatus.working_staff > 0  # 稼働中のスタッフがいる店舗のみで計算
         ).group_by(StoreStatus.area)
 
         results = query.all()
 
         # 結果をフォーマット
         formatted_results = []
-        for area, store_count, avg_rate in results:
+        for result in results:
+            # 結果のアンパック - NULL安全対応
+            area = getattr(result, 'area', None) or '不明'
+            store_count = getattr(result, 'store_count', 0)
+            
+            # avg_rate の安全な取得と変換
+            avg_rate = 0
+            try:
+                raw_avg_rate = getattr(result, 'avg_rate', None)
+                if raw_avg_rate is not None:
+                    avg_rate = float(raw_avg_rate)
+            except (ValueError, TypeError) as e:
+                app.logger.warning(f"平均値の変換エラー: {e}, raw_value: {getattr(result, 'avg_rate', None)}")
+            
             formatted_results.append({
-                'area': area or '不明',
+                'area': area,
                 'store_count': store_count,
-                'avg_rate': round(float(avg_rate), 2) if avg_rate is not None else 0
+                'avg_rate': round(avg_rate, 2)
             })
 
         return jsonify(formatted_results)

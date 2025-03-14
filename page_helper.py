@@ -2,6 +2,7 @@ import pytz
 from datetime import datetime
 from flask import request, abort
 from math import ceil
+import logging
 
 def paginate_query_results(query, page, per_page, max_per_page=100):
     """
@@ -32,8 +33,7 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
     total_pages = ceil(total_count / per_page) if per_page > 0 else 0
 
     # 次のページと前のページがあるかどうか
-    has_next = page < total_pages
-    has_prev = page > 1
+    has_next = page < total_pagespahas_prev = page > 1
 
     # レスポンス生成
     return {
@@ -53,28 +53,40 @@ def format_store_status(item, timezone=None):
     StoreStatusモデルのレコードをAPIレスポンス用に整形する関数
     timezonがNoneの場合はタイムゾーンを考慮しない
     """
-    # タイムスタンプにタイムゾーン情報を追加してJSTにする
-    timestamp = item.timestamp
-    if timestamp and timezone and timestamp.tzinfo is None:
-        timestamp = timezone.localize(timestamp)
+    try:
+        # タイムスタンプにタイムゾーン情報を追加してJSTにする
+        timestamp = item.timestamp
+        if timestamp and timezone and timestamp.tzinfo is None:
+            timestamp = timezone.localize(timestamp)
 
-    formatted_timestamp = timestamp.isoformat() if timestamp else None
+        formatted_timestamp = timestamp.isoformat() if timestamp else None
 
-    # 稼働率の計算 - ゼロ除算エラー対策を追加
-    rate = 0
-    working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
-    active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
+        # 稼働率の計算 - ゼロ除算エラー対策を追加
+        rate = 0
+        working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
+        active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
 
-    if working_staff > 0:
-        rate = ((working_staff - active_staff) / working_staff) * 100
+        if working_staff > 0:
+            rate = ((working_staff - active_staff) / working_staff) * 100
 
-    # 結果を辞書にまとめる
-    return {
-        'id': item.id,
-        'timestamp': formatted_timestamp,
-        'store_name': item.store_name,
-        'biz_type': item.biz_type,
-        'genre': item.genre,
+        # 結果を辞書にまとめる
+        return {
+            'id': item.id,
+            'timestamp': formatted_timestamp,
+            'store_name': item.store_name,
+            'biz_type': item.biz_type if hasattr(item, 'biz_type') and item.biz_type else '不明',
+            'genre': item.genre if hasattr(item, 'genre') and item.genre else '不明',
+            'area': item.area if hasattr(item, 'area') and item.area else '不明',
+            'total_staff': working_staff + active_staff,
+            'working_staff': working_staff,
+            'active_staff': active_staff,
+            'rate': round(rate, 1),
+            'url': item.url if hasattr(item, 'url') and item.url else '',
+            'shift_time': item.shift_time if hasattr(item, 'shift_time') and item.shift_time else ''
+        }
+    except Exception as e:
+        logging.error(f"形式化エラー: {e}, item: {item}")
+        return None item.genre,
         'area': item.area,
         'total_staff': item.total_staff,
         'working_staff': item.working_staff,
