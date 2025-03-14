@@ -528,7 +528,7 @@
                 </div>
                 <p>データを読み込み中です...</p>
               </div>
-              <div id="typeChartContainer">
+              <div id="typeChartContainer" style="height: 500px;">
                 <canvas id="typeChart"></canvas>
               </div>
             </div>
@@ -731,6 +731,14 @@
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
     </div>
+    
+    <!-- エラー通知用トースト -->
+    <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="errorToastBody">エラーが発生しました</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
   </div>
 
   <!-- jQuery, DataTables, Bootstrap JS, Socket.IO -->
@@ -752,24 +760,72 @@
          ***********************************************/
         async function fetchWithRetry(url, options = {}, maxRetries = 3, delay = 2000) {
           let currentRetry = 0;
+          let lastError = null;
+          const exponentialBackoff = true; // 指数バックオフを使用するか
+          let currentDelay = delay;
 
           while (currentRetry < maxRetries) {
             try {
-              const response = await fetch(url, options);
-              if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
-              // データをパースして返す
-              return await response.json();
-            } catch (error) {
-              currentRetry++;
-              console.error(`Fetch error (${url}), attempt ${currentRetry}: ${error}`);
-              if (currentRetry >= maxRetries) {
-                throw error;
+              // フェッチ前にリクエストURLをコンソールに出力（デバッグ用）
+              if (currentRetry > 0) {
+                console.log(`リトライ ${currentRetry}/${maxRetries}: ${url}`);
               }
-              // Wait before retrying
-              await new Promise(r => setTimeout(r, delay));
+              
+              // タイムアウト付きフェッチ
+              const fetchPromise = fetch(url, {
+                ...options,
+                // キャッシュ制御を指定
+                cache: options.cache || 'no-cache',
+                headers: {
+                  ...options.headers,
+                  'X-Requested-With': 'XMLHttpRequest',
+                }
+              });
+              
+              // タイムアウト設定（最大10秒）
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+              );
+              
+              // タイムアウトまたは通常のレスポンスを待つ
+              const response = await Promise.race([fetchPromise, timeoutPromise]);
+              
+              // エラー以外のステータスコードをチェック
+              if (!response.ok) {
+                const errorText = await response.text().catch(() => 'No error text');
+                throw new Error(`HTTP error ${response.status}: ${errorText}`);
+              }
+
+              // JSONを解析
+              try {
+                const data = await response.json();
+                return data;
+              } catch (jsonError) {
+                throw new Error(`JSON parse error: ${jsonError.message || jsonError}`);
+              }
+            } catch (error) {
+              lastError = error;
+              currentRetry++;
+              
+              console.error(`Fetch error (${url}), attempt ${currentRetry}/${maxRetries}: ${error.message || error}`);
+              
+              if (currentRetry >= maxRetries) {
+                console.error('Max retries reached, giving up');
+                break;
+              }
+              
+              // 指数バックオフ（リトライごとに待機時間を増加）
+              if (exponentialBackoff) {
+                currentDelay = delay * Math.pow(1.5, currentRetry - 1);
+              }
+              
+              console.log(`Waiting ${currentDelay}ms before next retry...`);
+              await new Promise(r => setTimeout(r, currentDelay));
             }
           }
+          
+          // すべてのリトライが失敗した場合
+          throw lastError || new Error(`Failed to fetch ${url} after ${maxRetries} retries`);
         }
 
         /***********************************************
@@ -1044,8 +1100,24 @@
             if (startDate) params.append("start_date", startDate);
             if (endDate) params.append("end_date", endDate);
             
-            // データ取得
-            const data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
+            // データ取得（リトライ機能付き）
+            let data;
+            try {
+              data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
+            } catch (fetchError) {
+              console.error("履歴データAPI呼び出しエラー:", fetchError);
+              
+              // 代替APIを試行
+              try {
+                console.log("代替APIを使用して再試行...");
+                const fallbackUrl = "/api/history?";
+                const fallbackResponse = await fetchWithRetry(fallbackUrl + params.toString(), {}, 2, 1500);
+                data = fallbackResponse;
+              } catch (fallbackError) {
+                console.error("代替API呼び出しも失敗:", fallbackError);
+                throw new Error("データの取得に失敗しました。しばらく経ってから再試行してください。");
+              }
+            }
             
             // データが空の場合
             if (!data || !Array.isArray(data) || data.length === 0) {
@@ -1055,8 +1127,10 @@
             // データをグループ化して処理
             const processedData = processHistoryData(data, selectedStore);
             
-            // キャッシュに保存
-            historyChartCache[cacheKey] = processedData;
+            // キャッシュに保存（有効なデータのみ）
+            if (processedData && processedData.labels && processedData.labels.length > 0) {
+              historyChartCache[cacheKey] = processedData;
+            }
             
             // チャート表示
             updateHistoryChartDisplay(processedData);
@@ -1072,7 +1146,12 @@
             
             // 統計情報エリアにもエラーを表示
             if (historyStats) {
-              historyStats.textContent = "選択された条件に一致するデータがありません。別の期間や店舗を選択してください。";
+              historyStats.innerHTML = `
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  選択された条件に一致するデータがありません。別の期間や店舗を選択してください。
+                </div>
+              `;
             }
             
             // 空のチャートを表示
@@ -1522,8 +1601,28 @@
               apiUrl += `&store=${encodeURIComponent(selectedStore)}`;
             }
 
-            // データ取得
-            const data = await fetchWithRetry(apiUrl, {}, 3, 2000);
+            // データ取得（リトライ機能付き）
+            let data;
+            try {
+              data = await fetchWithRetry(apiUrl, {}, 3, 2000);
+            } catch (fetchError) {
+              console.error("時間帯分析API呼び出しエラー:", fetchError);
+              
+              // 代替APIを試行
+              try {
+                console.log("代替APIを使用して再試行...");
+                const fallbackUrl = "/api/history?";
+                if (selectedStore) {
+                  fallbackUrl += `store=${encodeURIComponent(selectedStore)}&`;
+                }
+                fallbackUrl += "limit=1000";
+                const fallbackResponse = await fetchWithRetry(fallbackUrl, {}, 2, 1500);
+                data = fallbackResponse;
+              } catch (fallbackError) {
+                console.error("代替API呼び出しも失敗:", fallbackError);
+                throw new Error("データの取得に失敗しました。しばらく経ってから再試行してください。");
+              }
+            }
             
             // データが空か確認
             if (!data || !Array.isArray(data) || 
@@ -1570,14 +1669,46 @@
             // 統計情報の表示
             if (hourlyStats) {
               const statsHtml = `
-                <div class="d-flex flex-wrap justify-content-between">
-                  <div><strong>総サンプル数:</strong> ${hourlyData.totalSamples}件</div>
-                  <div><strong>平均稼働率:</strong> ${hourlyData.overallAvg.toFixed(1)}%</div>
-                  <div><strong>最高稼働率:</strong> ${hourlyData.maxRate.toFixed(1)}% (${hourlyData.labels[hourlyData.maxRateHour]})</div>
-                  <div><strong>最低稼働率:</strong> ${hourlyData.minRate.toFixed(1)}% (${hourlyData.labels[hourlyData.minRateHour]})</div>
+                <div class="row">
+                  <div class="col-md-3 mb-2">
+                    <div class="card bg-light h-100">
+                      <div class="card-body text-center">
+                        <h6 class="card-title small text-secondary mb-2">総サンプル数</h6>
+                        <h4 class="mb-0">${hourlyData.totalSamples}<small class="text-muted">件</small></h4>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <div class="card bg-light h-100">
+                      <div class="card-body text-center">
+                        <h6 class="card-title small text-secondary mb-2">平均稼働率</h6>
+                        <h4 class="mb-0">${hourlyData.overallAvg.toFixed(1)}<small class="text-muted">%</small></h4>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <div class="card bg-light h-100">
+                      <div class="card-body text-center">
+                        <h6 class="card-title small text-secondary mb-2">最高稼働率</h6>
+                        <h4 class="mb-0">${hourlyData.maxRate.toFixed(1)}<small class="text-muted">%</small></h4>
+                        <div class="small text-muted">${hourlyData.labels[hourlyData.maxRateHour]}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <div class="card bg-light h-100">
+                      <div class="card-body text-center">
+                        <h6 class="card-title small text-secondary mb-2">最低稼働率</h6>
+                        <h4 class="mb-0">${hourlyData.minRate.toFixed(1)}<small class="text-muted">%</small></h4>
+                        <div class="small text-muted">${hourlyData.labels[hourlyData.minRateHour]}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="mt-2 small">
-                  <strong>稼働率が高い時間帯:</strong> ${peakInfo.peakHours.map(h => `${h}:00`).join(', ')}
+                  <div class="alert alert-info mb-0 py-2">
+                    <strong>稼働率が高い時間帯:</strong> ${peakInfo.peakHours.map(h => `${h}:00`).join(', ')}
+                  </div>
                 </div>
               `;
               hourlyStats.innerHTML = statsHtml;
@@ -1594,7 +1725,12 @@
             
             // 統計情報エリアにもエラーを表示
             if (hourlyStats) {
-              hourlyStats.textContent = "データの取得または分析中にエラーが発生しました。";
+              hourlyStats.innerHTML = `
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  データの取得または分析中にエラーが発生しました。選択内容を変更して再試行してください。
+                </div>
+              `;
             }
             
             // 空のチャートを表示
@@ -1991,15 +2127,53 @@
          * ・店舗数は /api/data から取得
          * ・平均稼働率は /api/history から計算
          ***********************************************/
+        // エリア統計データのキャッシュ
+        let areaStatsCache = null;
+        let areaStatsCacheTime = 0;
+        
         async function updateAreaStatistics() {
           try {
             showSpinner();
+            
+            // エリア統計データを取得（キャッシュ付き）
+            let areaData;
+            const now = Date.now();
+            const cacheTimeout = 5 * 60 * 1000; // 5分間キャッシュを保持
+            
+            if (areaStatsCache && (now - areaStatsCacheTime < cacheTimeout)) {
+              console.log("エリア統計: キャッシュデータを使用");
+              areaData = areaStatsCache;
+            } else {
+              console.log("エリア統計: 新規データを取得");
+              areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
+              // キャッシュを更新
+              areaStatsCache = areaData;
+              areaStatsCacheTime = now;
+            }
+            
+            // トップエリア統計の表示
+            if (areaData && areaData.length > 0) {
+              // 店舗数最大のエリア
+              const topStoreArea = areaData.reduce((prev, current) => 
+                (prev.store_count > current.store_count) ? prev : current);
+                
+              // 稼働率最大のエリア
+              const topRateArea = areaData.reduce((prev, current) => 
+                (prev.avg_rate > current.avg_rate) ? prev : current);
+                
+              // エリア総数
+              document.getElementById("totalAreaCount").textContent = areaData.length;
+              
+              // 最高稼働エリアの表示
+              document.getElementById("topRateArea").textContent = topRateArea.area;
+              document.getElementById("topRateAreaValue").textContent = `${topRateArea.avg_rate.toFixed(1)}%`;
+              
+              // 最多店舗エリアの表示
+              document.getElementById("topStoreArea").textContent = topStoreArea.area;
+              document.getElementById("topStoreCount").textContent = `${topStoreArea.store_count}店舗`;
+            }
 
-            // エリア統計データを取得
-            const areaData = await fetchWithRetry("/api/area-stats", {}, 3, 2000);
-            console.log("Area stats data:", areaData);
-
-            // テーブル表示用に、両方のデータを統合
+            // テーブル表示
             const areaTable = document.getElementById("areaTable");
             if (!areaTable) {
               console.error("areaTable element not found");
@@ -2010,20 +2184,35 @@
             areaTable.innerHTML = "";
             const labels = [];
             const avgRates = [];
+            const storeCounts = [];
+            
             areaData.forEach(item => {
               areaTable.insertAdjacentHTML("beforeend", `
                 <tr>
                   <td>${item.area}</td>
                   <td>${item.store_count}</td>
                   <td>${item.avg_rate.toFixed(1)}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary area-detail-btn" 
+                      data-area="${item.area}">詳細</button>
+                  </td>
                 </tr>
               `);
 
               labels.push(item.area);
               avgRates.push(item.avg_rate);
+              storeCounts.push(item.store_count);
             });
 
-            const ctx = document.getElementById("areaChart").getContext("2d");
+            // チャート表示
+            const areaChart = document.getElementById("areaChart");
+            if (!areaChart) {
+              console.error("areaChart element not found");
+              hideSpinner();
+              return;
+            }
+            
+            const ctx = areaChart.getContext("2d");
             if (!ctx) {
               console.error("areaChart canvas context not found");
               hideSpinner();
@@ -2031,6 +2220,15 @@
             }
 
             if (charts.area) charts.area.destroy();
+
+            // エリア数によってチャートの高さを動的に設定
+            const chartContainer = areaChart.parentElement;
+            if (chartContainer) {
+              const minHeight = 400; // 最小高さ
+              const heightPerItem = 20; // 項目あたりの高さ
+              const dynamicHeight = Math.max(minHeight, labels.length * heightPerItem);
+              chartContainer.style.height = `${dynamicHeight}px`;
+            }
 
             charts.area = new Chart(ctx, {
               type: "bar",
@@ -2065,6 +2263,16 @@
             });
 
             hideSpinner();
+            
+            // エリア詳細ボタンのイベントハンドラを設定
+            document.querySelectorAll('.area-detail-btn').forEach(btn => {
+              btn.addEventListener('click', function() {
+                const area = this.getAttribute('data-area');
+                // 選択されたエリアの店舗を取得して表示する処理
+                alert(`エリア「${area}」の詳細は開発中です。`);
+              });
+            });
+            
           } catch (error) {
             console.error("エリア統計エラー:", error);
             console.error(error.stack);
@@ -2792,21 +3000,76 @@
          ***********************************************/
         function handleError(error, context) {
           console.error(`エラー (${context}):`, error);
+          // スタックトレースがあれば表示
+          if (error && error.stack) {
+            console.error("詳細:", error.stack);
+          }
+          
           // エラー表示用の要素があれば利用する
           const errorContainer = document.getElementById('errorContainer');
           if (errorContainer) {
-            errorContainer.textContent = `エラーが発生しました (${context}): ${error.message || error}`;
+            const timestamp = new Date().toLocaleTimeString();
+            // エラーメッセージを整形
+            const errorMessage = `
+              <div class="d-flex align-items-center">
+                <div class="me-2 text-danger">
+                  <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.2rem;"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div><strong>${timestamp} - ${context}</strong></div>
+                  <div>${error.message || error}</div>
+                </div>
+                <button class="btn-close btn-sm ms-2" onclick="this.parentNode.parentNode.style.display='none'"></button>
+              </div>
+            `;
+            
+            errorContainer.innerHTML = errorMessage;
             errorContainer.style.display = 'block';
-            // 5秒後に非表示
+            
+            // 8秒後に自動的に非表示
             setTimeout(() => {
-              errorContainer.style.display = 'none';
-            }, 5000);
+              if (errorContainer.style.display !== 'none') {
+                errorContainer.style.display = 'none';
+              }
+            }, 8000);
+          }
+          
+          // トーストで通知する（UIでユーザーに伝える）
+          try {
+            const toast = new bootstrap.Toast(document.getElementById('errorToast'));
+            const errorToastBody = document.getElementById('errorToastBody');
+            if (errorToastBody) {
+              errorToastBody.textContent = `${context}: ${error.message || '不明なエラー'}`;
+              toast.show();
+            }
+          } catch (toastErr) {
+            console.error("トースト表示エラー:", toastErr);
           }
         }
 
+        // グローバルなエラーハンドリング
         window.addEventListener('error', function(event) {
-          handleError(event.error, 'global');
+          handleError(event.error || new Error(event.message), 'global');
         });
+        
+        // キャッチされなかったPromiseエラーのハンドリング
+        window.addEventListener('unhandledrejection', function(event) {
+          handleError(event.reason || new Error('Unhandled Promise rejection'), 'promise');
+        });
+        
+        // APIエラーハンドリングのユーティリティ
+        function handleApiError(error, endpoint, data = null) {
+          // API専用のエラーログ記録
+          const errorInfo = {
+            endpoint,
+            timestamp: new Date().toISOString(),
+            error: error.message || error,
+            data: data
+          };
+          
+          console.error("API Error:", errorInfo);
+          handleError(error, `API: ${endpoint}`);
+        }
 
         // 店舗稼働状況タブ機能強化
         document.getElementById("refreshDashboardBtn")?.addEventListener("click", () => {
