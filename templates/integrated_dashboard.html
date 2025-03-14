@@ -981,16 +981,16 @@
           updateLastUpdateTime(new Date(cachedData.timestamp));
         } else {
           // APIからデータ取得
-          const response = await fetch(`${apiBaseUrl}/latest`);
+          const response = await fetch(`${apiBaseUrl}/data`);
           if (!response.ok) throw new Error(`API error: ${response.status}`);
           const data = await response.json();
 
-          if (!data || !Array.isArray(data.stores)) {
+          if (!data || !Array.isArray(data.data)) {
             throw new Error('Invalid data format received from API');
           }
 
           // データの保存とキャッシュ
-          storeData = data.stores;
+          storeData = data.data;
           localStorage.setItem(cacheKey, JSON.stringify({
             timestamp: now,
             data: storeData
@@ -1672,10 +1672,10 @@
 
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
-          fetch(`${apiBaseUrl}/latest`)
+          fetch(`${apiBaseUrl}/data`)
             .then(response => response.json())
             .then(data => {
-              storeData = data.stores;
+              storeData = data.data;
               populateStoreSelect();
             })
             .catch(error => console.error('店舗データの取得に失敗:', error));
@@ -2079,10 +2079,10 @@
 
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
-          fetch(`${apiBaseUrl}/latest`)
+          fetch(`${apiBaseUrl}/data`)
             .then(response => response.json())
             .then(data => {
-              storeData = data.stores;
+              storeData = data.data;
               populateHourlySelects();
             })
             .catch(error => console.error('店舗データの取得に失敗:', error));
@@ -2539,7 +2539,7 @@
         });
 
       } catch (error) {
-        console.error('エリアチャート更新エラー:', error);
+        console.error('エリアチャート更新エラー:, error);
       }
     }
 
@@ -2590,10 +2590,10 @@
 
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
-          fetch(`${apiBaseUrl}/latest`)
+          fetch(`${apiBaseUrl}/data`)
             .then(response => response.json())
             .then(data => {
-              storeData = data.stores;
+              storeData = data.data;
               populateTypeSelect();
               loadGenreRanking();
             })
