@@ -2048,7 +2048,15 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                  title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } }
+                  title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } },
+                  zoom: {
+                    zoom: {
+                      wheel: { enabled: false },
+                      pinch: { enabled: false },
+                      mode: 'xy'
+                    },
+                    pan: { enabled: false }
+                  }
                 },
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "平均稼働率 (%)" } }
@@ -2861,6 +2869,13 @@
             charts.area.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.7)';
             charts.area.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
             charts.area.data.datasets[0].label = '店舗数';
+            
+            // ズーム機能を明示的に無効化
+            if (charts.area.options.plugins && charts.area.options.plugins.zoom) {
+              charts.area.options.plugins.zoom.zoom.wheel.enabled = false;
+              charts.area.options.plugins.zoom.zoom.pinch.enabled = false;
+              charts.area.options.plugins.zoom.pan.enabled = false;
+            }
             
             // タイトルの更新
             if (charts.area.options.plugins && charts.area.options.plugins.title) {
