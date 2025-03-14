@@ -442,7 +442,6 @@ def api_data():
 
             try:
                 # データベース接続を直接使用
-                from database import get_db_connection
                 conn = get_db_connection()
                 
                 # SQLiteのカスタム関数を使ってクエリを実行（エラー時のフォールバック用）

@@ -1,4 +1,3 @@
-
 import pytz
 from datetime import datetime
 from flask import request, abort
@@ -51,30 +50,6 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
 
 def format_store_status(item, timezone=None):
     """
-    StoreStatus モデルオブジェクトをJSON互換の辞書フォーマットに変換
-
-    引数:
-        item: StoreStatus モデルオブジェクト
-        timezone: 出力タイムスタンプに設定するタイムゾーン（pytzオブジェクト）
-
-    戻り値:
-        フォーマット済みの辞書
-    """
-    # タイムゾーンが指定されていない場合は JST を使用
-    if timezone is None:
-        timezone = pytz.timezone('Asia/Tokyo')
-
-    # タイムスタンプをタイムゾーン対応のフォーマットに変換
-    timestamp = item.timestamp
-    if timestamp.tzinfo is None:
-        # タイムゾーン情報がない場合は指定されたタイムゾーンを適用
-        timestamp = timezone.localize(timestamp)
-    else:
-        # 既にタイムゾーン情報がある場合は変換
-        timestamp = timestamp.astimezone(timezone)
-
-    # タイムスタンプをISO 8601形式の文字列に変def format_store_status(item, timezone=None):
-    """
     StoreStatusモデルのレコードをAPIレスポンス用に整形する関数
     timezonがNoneの場合はタイムゾーンを考慮しない
     """
@@ -89,10 +64,10 @@ def format_store_status(item, timezone=None):
     rate = 0
     working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
     active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
-    
+
     if working_staff > 0:
         # (勤務中 - 待機中) / 勤務中 × 100
-        rate = ((working_staff - active_staff) / working_staff) * 100e_staff) / item.working_staff) * 100
+        rate = ((working_staff - active_staff) / working_staff) * 100
 
     # 結果を辞書にまとめる
     return {
