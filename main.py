@@ -1,28 +1,28 @@
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-import uvicorn
+# main.py - アプリケーション起動用エントリーポイント
+from app import app, socketio
+import pytz
+from datetime import datetime
+import sys
 import os
-from starlette.responses import RedirectResponse
 
-app = FastAPI()
-
-# 静的ファイルを正しく提供するための設定
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    # インテグレーテッドダッシュボードを表示
-    return templates.TemplateResponse("integrated_dashboard.html", {"request": request})
-
-# APIルートをリダイレクト
-@app.get("/api/{path:path}")
-async def redirect_to_flask(path: str):
-    return RedirectResponse(url=f"http://0.0.0.0:5000/api/{path}")
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    # タイムゾーン設定を確認
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+    print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
+    
+    # データベースインデックス作成（初回のみ）
+    from create_indices import create_indices
+    create_indices()
+    
+    # 環境変数のタイムゾーンを強制的に設定
+    os.environ['TZ'] = 'Asia/Tokyo'
+    
+    try:
+        # 起動
+        print("アプリケーションを起動しています...")
+        socketio.run(app, host="0.0.0.0", port=5000, debug=True, allow_unsafe_werkzeug=True)
+    except Exception as e:
+        print(f"アプリケーション起動中にエラーが発生しました: {e}")
+        sys.exit(1)
