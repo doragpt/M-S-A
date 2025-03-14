@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -221,11 +220,11 @@
         flex-direction: column;
         align-items: stretch;
       }
-      
+
       .filter-control {
         width: 100%;
       }
-      
+
       .chart-container {
         height: 300px;
       }
@@ -417,7 +416,7 @@
       </a>
     </div>
   </div>
-  
+
   <script>
     // Chart.jsにデータラベルプラグインを登録
     Chart.register(ChartDataLabels);
@@ -582,7 +581,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 集計結果表示エリア -->
             <div class="card mt-3" id="historySummaryCard" style="display: none;">
               <div class="card-header">集計結果</div>
@@ -638,7 +637,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 集計結果表示エリア -->
             <div class="card mt-3" id="hourlyResultsCard">
               <div class="card-header">分析結果</div>
@@ -804,12 +803,12 @@
       search: ''
     };
     let areaViewMode = 'rate'; // 'rate' or 'stores'
-    
+
     // DOMのロード完了時に実行
     document.addEventListener('DOMContentLoaded', function() {
       // ダークモードの初期設定
       initializeDarkMode();
-      
+
       // タブ切り替え時のイベント
       document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', event => {
@@ -836,10 +835,10 @@
           }
         });
       });
-      
+
       // イベントリスナーを設定
       setupEventListeners();
-      
+
       // 最初のタブのデータを読み込む
       loadDashboardData();
     });
@@ -852,7 +851,7 @@
         document.getElementById('darkModeToggle').innerHTML = 
           '<i class="bi bi-sun"></i> <span class="d-none d-md-inline">ライトモード</span>';
       }
-      
+
       document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
     }
 
@@ -870,17 +869,17 @@
         document.getElementById('darkModeToggle').innerHTML = 
           '<i class="bi bi-sun"></i> <span class="d-none d-md-inline">ライトモード</span>';
       }
-      
+
       // チャートを更新（カラースキームを適用するため）
       updateChartsForTheme();
     }
-    
+
     // テーマに合わせてチャートを更新
     function updateChartsForTheme() {
       const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
       const textColor = isDarkMode ? '#e0e0e0' : '#333333';
       const gridColor = isDarkMode ? '#444' : '#ddd';
-      
+
       // すべてのチャートを更新
       Object.values(charts).forEach(chart => {
         if (chart) {
@@ -890,15 +889,15 @@
               if (scale.grid) scale.grid.color = gridColor;
             });
           }
-          
+
           if (chart.options && chart.options.plugins && chart.options.plugins.title) {
             chart.options.plugins.title.color = textColor;
           }
-          
+
           if (chart.options && chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
             chart.options.plugins.legend.labels.color = textColor;
           }
-          
+
           chart.update();
         }
       });
@@ -918,28 +917,28 @@
         }
         updateDashboardTable();
       });
-      
+
       // 店舗データの更新ボタン
       document.getElementById('refreshData').addEventListener('click', () => loadDashboardData(true));
-      
+
       // フィルターリセットボタン
       document.getElementById('filterReset').addEventListener('click', resetFilters);
-      
+
       // 並べ替えボタン
       document.getElementById('sortStore').addEventListener('click', () => sortTable('store'));
       document.getElementById('sortRate').addEventListener('click', () => sortTable('rate'));
-      
+
       // フィルター変更時の処理
       document.getElementById('bizTypeFilter').addEventListener('change', applyFilters);
       document.getElementById('genreFilter').addEventListener('change', applyFilters);
       document.getElementById('areaFilter').addEventListener('change', applyFilters);
-      
+
       // 検索入力時の処理
       document.getElementById('searchStore').addEventListener('input', function() {
         currentFilters.search = this.value.trim().toLowerCase();
         updateDashboardTable();
       });
-      
+
       // エリア表示切替ボタン
       document.getElementById('toggleAreaView').addEventListener('click', function() {
         areaViewMode = areaViewMode === 'rate' ? 'stores' : 'rate';
@@ -948,14 +947,14 @@
           '<i class="bi bi-arrow-repeat"></i> 稼働率表示';
         loadAreaStatistics();
       });
-      
+
       // 履歴タブのボタン
       document.getElementById('loadHistory').addEventListener('click', loadStoreHistory);
       document.getElementById('resetHistory').addEventListener('click', resetHistoryForm);
-      
+
       // 時間帯別分析ボタン
       document.getElementById('loadHourly').addEventListener('click', loadHourlyAnalysis);
-      
+
       // ジャンルランキングボタン
       document.getElementById('loadRanking').addEventListener('click', loadGenreRanking);
     }
@@ -966,16 +965,16 @@
         document.getElementById('loadingIndicator').style.display = 'flex';
         document.getElementById('storeTable').style.display = 'none';
         document.getElementById('noDataMessage').style.display = 'none';
-        
+
         // キャッシュ使用制御
         const cacheKey = 'dashboardData';
         const cacheTimeout = 5 * 60 * 1000; // 5分
         const cachedData = JSON.parse(localStorage.getItem(cacheKey) || '{"timestamp":0,"data":[]}');
         const now = Date.now();
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // キャッシュが有効かチェック
         if (!forceRefresh && (now - cachedData.timestamp) < cacheTimeout) {
           storeData = cachedData.data;
@@ -985,29 +984,29 @@
           const response = await fetch(`${apiBaseUrl}/latest`);
           if (!response.ok) throw new Error(`API error: ${response.status}`);
           const data = await response.json();
-          
+
           if (!data || !Array.isArray(data.stores)) {
             throw new Error('Invalid data format received from API');
           }
-          
+
           // データの保存とキャッシュ
           storeData = data.stores;
           localStorage.setItem(cacheKey, JSON.stringify({
             timestamp: now,
             data: storeData
           }));
-          
+
           updateLastUpdateTime(new Date());
         }
-        
+
         // フィルターのオプションを設定
         populateFilterOptions();
-        
+
         // テーブルとグラフを更新
         updateDashboardTable();
         updateTop10Chart();
         updateBizTypeChart();
-        
+
       } catch (error) {
         console.error('データ読み込みエラー:', error);
         document.getElementById('noDataMessage').textContent = `データの読み込みに失敗しました: ${error.message}`;
@@ -1035,13 +1034,13 @@
       const bizTypes = new Set();
       const genres = new Set();
       const areas = new Set();
-      
+
       storeData.forEach(store => {
         if (store.biz_type) bizTypes.add(store.biz_type);
         if (store.genre) genres.add(store.genre);
         if (store.area) areas.add(store.area);
       });
-      
+
       // 業種オプション
       const bizTypeSelect = document.getElementById('bizTypeFilter');
       bizTypeSelect.innerHTML = '<option value="all">すべて</option>';
@@ -1051,7 +1050,7 @@
         option.textContent = type;
         bizTypeSelect.appendChild(option);
       });
-      
+
       // ジャンルオプション
       const genreSelect = document.getElementById('genreFilter');
       genreSelect.innerHTML = '<option value="all">すべて</option>';
@@ -1061,7 +1060,7 @@
         option.textContent = genre;
         genreSelect.appendChild(option);
       });
-      
+
       // エリアオプション
       const areaSelect = document.getElementById('areaFilter');
       areaSelect.innerHTML = '<option value="all">すべて</option>';
@@ -1106,17 +1105,17 @@
         sortColumn = column;
         sortDirection = column === 'store' ? 'asc' : 'desc';
       }
-      
+
       // ソートアイコンの更新
       const storeHeader = document.getElementById('sortStore');
       const rateHeader = document.getElementById('sortRate');
-      
+
       storeHeader.innerHTML = 'Store Name ' + 
         (sortColumn === 'store' ? (sortDirection === 'asc' ? '<i class="bi bi-sort-alpha-down"></i>' : '<i class="bi bi-sort-alpha-up"></i>') : '<i class="bi bi-arrow-down-up"></i>');
-      
+
       rateHeader.innerHTML = 'Rate ' + 
         (sortColumn === 'rate' ? (sortDirection === 'asc' ? '<i class="bi bi-sort-numeric-down"></i>' : '<i class="bi bi-sort-numeric-down-alt"></i>') : '<i class="bi bi-arrow-down-up"></i>');
-      
+
       updateDashboardTable();
     }
 
@@ -1128,28 +1127,28 @@
         if (showOnlyFavorites && !favorites.includes(store.store_name)) {
           return false;
         }
-        
+
         // その他のフィルター
         if (currentFilters.bizType !== 'all' && store.biz_type !== currentFilters.bizType) {
           return false;
         }
-        
+
         if (currentFilters.genre !== 'all' && store.genre !== currentFilters.genre) {
           return false;
         }
-        
+
         if (currentFilters.area !== 'all' && store.area !== currentFilters.area) {
           return false;
         }
-        
+
         // 検索
         if (currentFilters.search && !store.store_name.toLowerCase().includes(currentFilters.search)) {
           return false;
         }
-        
+
         return true;
       });
-      
+
       // ソート
       filteredData.sort((a, b) => {
         if (sortColumn === 'store') {
@@ -1161,40 +1160,40 @@
             ((a.working_staff - a.active_staff) / a.working_staff) * 100 : 0;
           const rateB = b.working_staff > 0 ? 
             ((b.working_staff - b.active_staff) / b.working_staff) * 100 : 0;
-          
+
           return sortDirection === 'asc' ? rateA - rateB : rateB - rateA;
         }
       });
-      
+
       // ページネーション
       const totalPages = Math.ceil(filteredData.length / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
       }
-      
+
       const startIndex = (currentPage - 1) * itemsPerPage;
       const pagedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-      
+
       // テーブル本体の更新
       const tableBody = document.getElementById('storeListBody');
       tableBody.innerHTML = '';
-      
+
       if (pagedData.length === 0) {
         document.getElementById('storeTable').style.display = 'none';
         document.getElementById('noDataMessage').style.display = 'block';
         document.getElementById('pagination').innerHTML = '';
         return;
       }
-      
+
       pagedData.forEach(store => {
         const rate = store.working_staff > 0 ? 
           ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
-        
+
         const tr = document.createElement('tr');
         tr.className = 'fade-in';
-        
+
         const rateBadgeClass = rate < 30 ? 'badge-success' : (rate < 70 ? 'badge-warning' : 'badge-danger');
-        
+
         tr.innerHTML = `
           <td>
             <i class="bi ${favorites.includes(store.store_name) ? 'bi-star-fill' : 'bi-star'} toggle-favorite" 
@@ -1212,10 +1211,10 @@
             </button>
           </td>
         `;
-        
+
         tableBody.appendChild(tr);
       });
-      
+
       // お気に入りトグルイベントを設定
       document.querySelectorAll('.toggle-favorite').forEach(element => {
         element.addEventListener('click', function() {
@@ -1223,7 +1222,7 @@
           toggleFavorite(storeName, this);
         });
       });
-      
+
       // 詳細ボタンイベントを設定
       document.querySelectorAll('.view-details').forEach(element => {
         element.addEventListener('click', function() {
@@ -1231,11 +1230,11 @@
           showStoreDetails(storeName);
         });
       });
-      
+
       // テーブルを表示
       document.getElementById('storeTable').style.display = 'block';
       document.getElementById('noDataMessage').style.display = 'none';
-      
+
       // ページネーションの更新
       updatePagination(filteredData.length, totalPages);
     }
@@ -1244,12 +1243,12 @@
     function updatePagination(totalItems, totalPages) {
       const paginationDiv = document.getElementById('pagination');
       paginationDiv.innerHTML = '';
-      
+
       if (totalPages <= 1) return;
-      
+
       const ul = document.createElement('ul');
       ul.className = 'pagination';
-      
+
       // 前へボタン
       const prevLi = document.createElement('li');
       prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
@@ -1266,15 +1265,15 @@
       }
       prevLi.appendChild(prevA);
       ul.appendChild(prevLi);
-      
+
       // ページ番号
       let startPage = Math.max(1, currentPage - 2);
       let endPage = Math.min(totalPages, startPage + 4);
-      
+
       if (endPage - startPage < 4) {
         startPage = Math.max(1, endPage - 4);
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         const li = document.createElement('li');
         li.className = `page-item ${i === currentPage ? 'active' : ''}`;
@@ -1290,7 +1289,7 @@
         li.appendChild(a);
         ul.appendChild(li);
       }
-      
+
       // 次へボタン
       const nextLi = document.createElement('li');
       nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
@@ -1307,9 +1306,9 @@
       }
       nextLi.appendChild(nextA);
       ul.appendChild(nextLi);
-      
+
       paginationDiv.appendChild(ul);
-      
+
       // 表示件数情報
       const info = document.createElement('div');
       info.className = 'text-center mt-2';
@@ -1329,7 +1328,7 @@
         element.classList.remove('bi-star-fill');
         element.classList.add('bi-star');
       }
-      
+
       localStorage.setItem('favorites', JSON.stringify(favorites));
     }
 
@@ -1337,11 +1336,11 @@
     function showStoreDetails(storeName) {
       const store = storeData.find(s => s.store_name === storeName);
       if (!store) return;
-      
+
       // モーダルで表示する詳細内容を作成
       const rate = store.working_staff > 0 ? 
         ((store.working_staff - store.active_staff) / store.working_staff) * 100 : 0;
-      
+
       const details = `
         <h5>${store.store_name}</h5>
         <div class="table-responsive">
@@ -1387,7 +1386,7 @@
           </button>
         </div>
       `;
-      
+
       // モーダル要素を作成
       const modalWrapper = document.createElement('div');
       modalWrapper.className = 'modal fade';
@@ -1405,18 +1404,18 @@
           </div>
         </div>
       `;
-      
+
       document.body.appendChild(modalWrapper);
-      
+
       // モーダルのイベント設定
       const modal = new bootstrap.Modal(modalWrapper);
       modal.show();
-      
+
       // モーダルを閉じたら削除
       modalWrapper.addEventListener('hidden.bs.modal', function() {
         document.body.removeChild(modalWrapper);
       });
-      
+
       // お気に入りボタンのイベント
       modalWrapper.querySelector('#toggleFavBtn').addEventListener('click', function() {
         const icon = document.querySelector(`.toggle-favorite[data-store="${storeName}"]`);
@@ -1424,15 +1423,15 @@
         updateDashboardTable();
         modal.hide();
       });
-      
+
       // 履歴ボタンのイベント
       modalWrapper.querySelector('#viewHistory').addEventListener('click', function() {
         modal.hide();
-        
+
         // 履歴タブを選択
         const historyTab = document.querySelector('#history-tab');
         bootstrap.Tab.getInstance(historyTab).show();
-        
+
         // 店舗を選択して履歴を表示
         const storeSelect = document.getElementById('historyStore');
         if (storeSelect) {
@@ -1454,19 +1453,19 @@
           }))
           .sort((a, b) => b.rate - a.rate)
           .slice(0, 10);
-        
+
         if (sortedData.length === 0) return;
-        
+
         const ctx = document.getElementById('top10Chart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.top10) charts.top10.destroy();
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 新しいチャートを作成
         charts.top10 = new Chart(ctx, {
           type: 'bar',
@@ -1546,17 +1545,17 @@
         const bizTypeData = {};
         storeData.forEach(store => {
           if (!store.biz_type || store.working_staff <= 0) return;
-          
+
           const rate = ((store.working_staff - store.active_staff) / store.working_staff) * 100;
-          
+
           if (!bizTypeData[store.biz_type]) {
             bizTypeData[store.biz_type] = { sum: 0, count: 0 };
           }
-          
+
           bizTypeData[store.biz_type].sum += rate;
           bizTypeData[store.biz_type].count += 1;
         });
-        
+
         // 平均を計算
         const chartData = Object.entries(bizTypeData)
           .map(([bizType, data]) => ({
@@ -1565,19 +1564,19 @@
             count: data.count
           }))
           .sort((a, b) => b.avgRate - a.avgRate);
-        
+
         if (chartData.length === 0) return;
-        
+
         const ctx = document.getElementById('bizTypeChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.bizType) charts.bizType.destroy();
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 色パレット
         const colors = [
           'rgba(54, 162, 235, 0.7)',
@@ -1591,7 +1590,7 @@
           'rgba(54, 162, 235, 0.7)',
           'rgba(75, 192, 192, 0.7)'
         ];
-        
+
         // 新しいチャートを作成
         charts.bizType = new Chart(ctx, {
           type: 'bar',
@@ -1660,17 +1659,17 @@
         const today = new Date();
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(today.getDate() - 7);
-        
+
         document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
         document.getElementById('historyStartDate').value = oneWeekAgo.toISOString().split('T')[0];
-        
+
         // 店舗選択肢を初期化
         const storeSelect = document.getElementById('historyStore');
         storeSelect.innerHTML = '<option value="">-- 店舗を選択 --</option>';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
           fetch(`${apiBaseUrl}/latest`)
@@ -1683,11 +1682,11 @@
         } else {
           populateStoreSelect();
         }
-        
+
         // 店舗選択メニューを設定
         function populateStoreSelect() {
           const stores = [...new Set(storeData.map(store => store.store_name))].sort();
-          
+
           stores.forEach(storeName => {
             const option = document.createElement('option');
             option.value = storeName;
@@ -1703,18 +1702,18 @@
     // 履歴フォームのリセット
     function resetHistoryForm() {
       document.getElementById('historyStore').value = '';
-      
+
       const today = new Date();
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(today.getDate() - 7);
-      
+
       document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
       document.getElementById('historyStartDate').value = oneWeekAgo.toISOString().split('T')[0];
-      
+
       document.getElementById('historySummaryCard').style.display = 'none';
       document.getElementById('historyErrorMessage').style.display = 'none';
       document.getElementById('historyNoData').style.display = 'none';
-      
+
       if (charts.history) {
         charts.history.destroy();
         charts.history = null;
@@ -1729,46 +1728,46 @@
           showHistoryError('店舗を選択してください');
           return;
         }
-        
+
         const startDate = document.getElementById('historyStartDate').value;
         const endDate = document.getElementById('historyEndDate').value;
-        
+
         if (!startDate || !endDate) {
           showHistoryError('開始日と終了日を指定してください');
           return;
         }
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // ローディング表示
         document.getElementById('historyLoadingIndicator').style.display = 'flex';
         document.getElementById('historyErrorMessage').style.display = 'none';
         document.getElementById('historyNoData').style.display = 'none';
         document.getElementById('historySummaryCard').style.display = 'none';
-        
+
         // APIからデータ取得
         const url = `${apiBaseUrl}/history?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}&limit=1000`;
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.records || data.records.length === 0) {
           document.getElementById('historyNoData').style.display = 'block';
           document.getElementById('historyLoadingIndicator').style.display = 'none';
           return;
         }
-        
+
         // データの整形
         const records = data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        
+
         updateHistoryChart(records);
         updateHistorySummary(records);
-        
+
       } catch (error) {
         showHistoryError(`データ取得エラー: ${error.message}`);
       } finally {
@@ -1782,46 +1781,46 @@
         if (!records || records.length === 0) {
           throw new Error('該当するデータが見つかりませんでした');
         }
-        
+
         const ctx = document.getElementById('historyChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.history) charts.history.destroy();
-        
+
         // データの整形
         const datasets = [];
         const labels = [];
         const rateData = [];
         const activeData = [];
         const workingData = [];
-        
+
         records.forEach(record => {
           labels.push(new Date(record.timestamp));
-          
+
           const rate = record.working_staff > 0 ? 
             ((record.working_staff - record.active_staff) / record.working_staff) * 100 : 0;
-          
+
           rateData.push({
             x: new Date(record.timestamp),
             y: parseFloat(rate.toFixed(1))
           });
-          
+
           activeData.push({
             x: new Date(record.timestamp),
             y: record.active_staff
           });
-          
+
           workingData.push({
             x: new Date(record.timestamp),
             y: record.working_staff
           });
         });
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         datasets.push({
           label: '稼働率 (%)',
           data: rateData,
@@ -1833,7 +1832,7 @@
           yAxisID: 'y',
           fill: true
         });
-        
+
         datasets.push({
           label: '勤務中スタッフ',
           data: workingData,
@@ -1844,7 +1843,7 @@
           yAxisID: 'y1',
           hidden: true
         });
-        
+
         datasets.push({
           label: '待機中スタッフ',
           data: activeData,
@@ -1855,7 +1854,7 @@
           yAxisID: 'y1',
           hidden: true
         });
-        
+
         // グラフのオプション
         const options = {
           maintainAspectRatio: false,
@@ -1928,14 +1927,14 @@
             }
           }
         };
-        
+
         // 新しいチャートを作成
         charts.history = new Chart(ctx, {
           type: 'line',
           data: { datasets },
           options
         });
-        
+
       } catch (error) {
         console.error('履歴チャート更新エラー:', error);
         showHistoryError(`エラー (updateHistoryChart): ${error.message}`);
@@ -1946,43 +1945,43 @@
     function updateHistorySummary(records) {
       try {
         if (!records || records.length === 0) return;
-        
+
         // 集計データの計算
         const rates = records
           .filter(r => r.working_staff > 0)
           .map(r => ((r.working_staff - r.active_staff) / r.working_staff) * 100);
-        
+
         if (rates.length === 0) {
           document.getElementById('historySummary').innerHTML = 
             '<div class="alert alert-warning">稼働データが十分ではありません</div>';
           document.getElementById('historySummaryCard').style.display = 'block';
           return;
         }
-        
+
         // 基本統計量の計算
         const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
         const min = Math.min(...rates);
         const max = Math.max(...rates);
-        
+
         // 四分位数を計算
         const sortedRates = [...rates].sort((a, b) => a - b);
         const q1 = sortedRates[Math.floor(sortedRates.length * 0.25)];
         const median = sortedRates[Math.floor(sortedRates.length * 0.5)];
         const q3 = sortedRates[Math.floor(sortedRates.length * 0.75)];
-        
+
         // ピーク時間帯の特定
         const hourlyRates = {};
         records.forEach(r => {
           if (r.working_staff <= 0) return;
-          
+
           const hour = new Date(r.timestamp).getHours();
           const rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100;
-          
+
           if (!hourlyRates[hour]) hourlyRates[hour] = { sum: 0, count: 0 };
           hourlyRates[hour].sum += rate;
           hourlyRates[hour].count += 1;
         });
-        
+
         // 時間帯ごとの平均を計算
         const hourlyAverages = Object.entries(hourlyRates)
           .map(([hour, data]) => ({
@@ -1990,13 +1989,13 @@
             avg: data.sum / data.count
           }))
           .sort((a, b) => b.avg - a.avg);
-        
+
         // 最も混んでいる時間帯（TOP3）
         const busyHours = hourlyAverages.slice(0, 3);
-        
+
         // 最も空いている時間帯（TOP3）
         const quietHours = [...hourlyAverages].sort((a, b) => a.avg - b.avg).slice(0, 3);
-        
+
         // 集計結果をHTML形式で表示
         const summaryHTML = `
           <div class="mb-3">
@@ -2004,7 +2003,7 @@
             <p class="mb-1">${new Date(records[0].timestamp).toLocaleDateString()} ～ ${new Date(records[records.length - 1].timestamp).toLocaleDateString()}</p>
             <p class="mb-0">データ件数: ${rates.length}件</p>
           </div>
-          
+
           <div class="mb-3">
             <h6>基本統計</h6>
             <div class="row">
@@ -2022,7 +2021,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="mb-3">
             <h6>混雑ピーク時間帯</h6>
             <ul class="list-group list-group-flush">
@@ -2034,7 +2033,7 @@
               `).join('')}
             </ul>
           </div>
-          
+
           <div>
             <h6>空き時間帯</h6>
             <ul class="list-group list-group-flush">
@@ -2047,10 +2046,10 @@
             </ul>
           </div>
         `;
-        
+
         document.getElementById('historySummary').innerHTML = summaryHTML;
         document.getElementById('historySummaryCard').style.display = 'block';
-        
+
       } catch (error) {
         console.error('履歴集計エラー:', error);
       }
@@ -2070,14 +2069,14 @@
         // 店舗選択肢を初期化
         const storeSelect = document.getElementById('hourlyStore');
         storeSelect.innerHTML = '<option value="">-- 全店舗 --</option>';
-        
+
         // 業種選択肢を初期化
         const bizTypeSelect = document.getElementById('hourlyBizType');
         bizTypeSelect.innerHTML = '<option value="">-- すべて --</option>';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
           fetch(`${apiBaseUrl}/latest`)
@@ -2090,7 +2089,7 @@
         } else {
           populateHourlySelects();
         }
-        
+
         // 選択メニューを設定
         function populateHourlySelects() {
           // 店舗選択肢
@@ -2101,7 +2100,7 @@
             option.textContent = storeName;
             storeSelect.appendChild(option);
           });
-          
+
           // 業種選択肢
           const bizTypes = [...new Set(storeData.map(store => store.biz_type).filter(Boolean))].sort();
           bizTypes.forEach(bizType => {
@@ -2111,10 +2110,10 @@
             bizTypeSelect.appendChild(option);
           });
         }
-        
+
         // 初期データ表示
         loadHourlyAnalysis();
-        
+
       } catch (error) {
         console.error('時間帯別分析タブ初期化エラー:', error);
       }
@@ -2125,43 +2124,43 @@
       try {
         const storeName = document.getElementById('hourlyStore').value;
         const bizType = document.getElementById('hourlyBizType').value;
-        
+
         // ローディング表示
         document.getElementById('hourlyLoadingIndicator').style.display = 'flex';
         document.getElementById('hourlyResults').innerHTML = '';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // APIからデータ取得
         let url = `${apiBaseUrl}/hourly`;
         const params = [];
-        
+
         if (storeName) params.push(`store=${encodeURIComponent(storeName)}`);
         if (bizType) params.push(`biz_type=${encodeURIComponent(bizType)}`);
-        
+
         if (params.length > 0) {
           url += '?' + params.join('&');
         }
-        
+
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.hourly_data || data.hourly_data.length === 0) {
           document.getElementById('hourlyResults').innerHTML = 
             '<div class="alert alert-info">該当するデータがありません</div>';
           document.getElementById('hourlyLoadingIndicator').style.display = 'none';
           return;
         }
-        
+
         updateHourlyChart(data.hourly_data);
         updateHourlyResults(data.hourly_data);
-        
+
       } catch (error) {
         console.error('時間帯別分析エラー:', error);
         document.getElementById('hourlyResults').innerHTML = 
@@ -2175,19 +2174,19 @@
     function updateHourlyChart(hourlyData) {
       try {
         const ctx = document.getElementById('hourlyChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.hourly) charts.hourly.destroy();
-        
+
         // データの整形
         const labels = hourlyData.map(item => `${item.hour}:00`);
         const rateData = hourlyData.map(item => parseFloat(item.rate));
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 色の設定（時間帯に応じて変化）
         const getColor = (hour) => {
           // 朝（6-10時）
@@ -2201,9 +2200,9 @@
           // 夜間（22-6時）
           return 'rgba(153, 102, 255, ';
         };
-        
+
         const colors = hourlyData.map(item => getColor(item.hour));
-        
+
         // 新しいチャートを作成
         charts.hourly = new Chart(ctx, {
           type: 'line',
@@ -2282,7 +2281,7 @@
             }
           }
         });
-        
+
       } catch (error) {
         console.error('時間帯別チャート更新エラー:', error);
       }
@@ -2293,10 +2292,10 @@
       try {
         // ピーク時間と空き時間を特定
         const sortedData = [...hourlyData].sort((a, b) => b.rate - a.rate);
-        
+
         const peakHours = sortedData.slice(0, 3);
         const quietHours = sortedData.slice(-3).reverse();
-        
+
         // 朝/昼/夕/夜の平均
         const timeGroups = {
           morning: { hours: [6, 7, 8, 9], rates: [], avg: 0 },
@@ -2305,11 +2304,11 @@
           evening: { hours: [18, 19, 20, 21], rates: [], avg: 0 },
           night: { hours: [22, 23, 0, 1, 2, 3, 4, 5], rates: [], avg: 0 }
         };
-        
+
         hourlyData.forEach(item => {
           const hour = item.hour;
           const rate = parseFloat(item.rate);
-          
+
           for (const [key, group] of Object.entries(timeGroups)) {
             if (group.hours.includes(hour)) {
               group.rates.push(rate);
@@ -2317,33 +2316,33 @@
             }
           }
         });
-        
+
         // 時間帯グループごとの平均を計算
         for (const group of Object.values(timeGroups)) {
           if (group.rates.length > 0) {
             group.avg = group.rates.reduce((a, b) => a + b, 0) / group.rates.length;
           }
         }
-        
+
         // 全体の平均を計算
         const totalAvg = hourlyData.reduce((sum, item) => sum + parseFloat(item.rate), 0) / hourlyData.length;
-        
+
         // 店舗名またはフィルター条件を取得
         const storeName = document.getElementById('hourlyStore').value;
         const bizType = document.getElementById('hourlyBizType').value;
-        
+
         let title = '時間帯別分析結果';
         if (storeName) title = `${storeName} 時間帯別分析`;
         else if (bizType) title = `${bizType} 業種の時間帯別分析`;
-        
+
         // 分析結果をHTML形式で表示
         const resultsHTML = `
           <h6>${title}</h6>
-          
+
           <div class="mb-3">
             <p><strong>平均稼働率: ${totalAvg.toFixed(1)}%</strong></p>
           </div>
-          
+
           <div class="row mb-3">
             <div class="col-md-6">
               <h6>ピーク時間帯 (最も混雑)</h6>
@@ -2356,7 +2355,7 @@
                 `).join('')}
               </ul>
             </div>
-            
+
             <div class="col-md-6">
               <h6>空き時間帯 (最も空いている)</h6>
               <ul class="list-group">
@@ -2369,7 +2368,7 @@
               </ul>
             </div>
           </div>
-          
+
           <div class="mb-3">
             <h6>時間帯別平均</h6>
             <div class="table-responsive">
@@ -2395,15 +2394,15 @@
               </table>
             </div>
           </div>
-          
+
           <div class="alert alert-info">
             <i class="bi bi-info-circle me-2"></i>
             <small>混雑時は予約や時間変更を検討しましょう。空いている時間帯の利用がおすすめです。</small>
           </div>
         `;
-        
+
         document.getElementById('hourlyResults').innerHTML = resultsHTML;
-        
+
       } catch (error) {
         console.error('時間帯別分析結果エラー:', error);
       }
@@ -2414,27 +2413,27 @@
       try {
         // ローディング表示
         document.getElementById('areaLoadingIndicator').style.display = 'flex';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // APIからデータ取得
         const response = await fetch(`${apiBaseUrl}/area_stats`);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.areas || data.areas.length === 0) {
           document.getElementById('areaLoadingIndicator').style.display = 'none';
           return;
         }
-        
+
         updateAreaChart(data.areas);
         updateAreaTable(data.areas);
-        
+
       } catch (error) {
         console.error('エリア統計データ読み込みエラー:', error);
       } finally {
@@ -2446,10 +2445,10 @@
     function updateAreaChart(areaData) {
       try {
         const ctx = document.getElementById('areaChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.area) charts.area.destroy();
-        
+
         // データの整形と並べ替え
         let sortedData;
         if (areaViewMode === 'rate') {
@@ -2457,15 +2456,15 @@
         } else {
           sortedData = [...areaData].sort((a, b) => b.store_count - a.store_count);
         }
-        
+
         // 上位15件のみ表示
         const limitedData = sortedData.slice(0, 15);
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 色の設定
         const colorPalette = [
           'rgba(54, 162, 235, 0.7)',
@@ -2476,10 +2475,10 @@
           'rgba(153, 102, 255, 0.7)',
           'rgba(201, 203, 207, 0.7)'
         ];
-        
+
         const dataKey = areaViewMode === 'rate' ? 'avg_rate' : 'store_count';
         const dataLabel = areaViewMode === 'rate' ? '平均稼働率 (%)' : '店舗数';
-        
+
         // 新しいチャートを作成
         charts.area = new Chart(ctx, {
           type: 'bar',
@@ -2538,7 +2537,7 @@
             }
           }
         });
-        
+
       } catch (error) {
         console.error('エリアチャート更新エラー:', error);
       }
@@ -2549,7 +2548,7 @@
       try {
         const tableBody = document.getElementById('areaTableBody');
         tableBody.innerHTML = '';
-        
+
         // データの並べ替え
         let sortedData;
         if (areaViewMode === 'rate') {
@@ -2557,23 +2556,23 @@
         } else {
           sortedData = [...areaData].sort((a, b) => b.store_count - a.store_count);
         }
-        
+
         sortedData.forEach(area => {
           const tr = document.createElement('tr');
           tr.className = 'fade-in';
-          
+
           const rateBadgeClass = area.avg_rate < 30 ? 'badge-success' : 
             (area.avg_rate < 70 ? 'badge-warning' : 'badge-danger');
-          
+
           tr.innerHTML = `
             <td>${area.area}</td>
             <td>${area.store_count}</td>
             <td><span class="badge ${rateBadgeClass}">${parseFloat(area.avg_rate).toFixed(1)}%</span></td>
           `;
-          
+
           tableBody.appendChild(tr);
         });
-        
+
       } catch (error) {
         console.error('エリアテーブル更新エラー:', error);
       }
@@ -2585,10 +2584,10 @@
         // 業種選択肢を初期化
         const typeSelector = document.getElementById('typeSelector');
         typeSelector.innerHTML = '<option value="">すべての業種</option>';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // 店舗データがなければAPIから取得
         if (storeData.length === 0) {
           fetch(`${apiBaseUrl}/latest`)
@@ -2603,11 +2602,11 @@
           populateTypeSelect();
           loadGenreRanking();
         }
-        
+
         // 業種選択メニューを設定
         function populateTypeSelect() {
           const bizTypes = [...new Set(storeData.map(store => store.biz_type).filter(Boolean))].sort();
-          
+
           bizTypes.forEach(bizType => {
             const option = document.createElement('option');
             option.value = bizType;
@@ -2624,41 +2623,41 @@
     async function loadGenreRanking() {
       try {
         const bizType = document.getElementById('typeSelector').value;
-        
+
         // ローディング表示
         document.getElementById('genreLoadingIndicator').style.display = 'flex';
         document.getElementById('genreErrorMessage').style.display = 'none';
         document.getElementById('storeRankLoadingIndicator').style.display = 'flex';
-        
+
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // APIからデータ取得
         let url = `${apiBaseUrl}/ranking/genre`;
         if (bizType) {
           url += `?biz_type=${encodeURIComponent(bizType)}`;
         }
-        
+
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.genres || data.genres.length === 0) {
           document.getElementById('genreErrorMessage').textContent = 'データがありません';
           document.getElementById('genreErrorMessage').style.display = 'block';
           document.getElementById('genreLoadingIndicator').style.display = 'none';
           return;
         }
-        
+
         updateGenreRankingChart(data.genres);
-        
+
         // 店舗ランキングも取得
         loadStoreRanking(bizType);
-        
+
       } catch (error) {
         console.error('ジャンルランキングデータ読み込みエラー:', error);
         document.getElementById('genreErrorMessage').textContent = `エラー: ${error.message}`;
@@ -2672,28 +2671,28 @@
     function updateGenreRankingChart(genreData) {
       try {
         const ctx = document.getElementById('genreRankingChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.genreRanking) charts.genreRanking.destroy();
-        
+
         // データの整形
         const sortedData = [...genreData].sort((a, b) => b.avg_rate - a.avg_rate);
-        
+
         // 表示数を制限
         const limitedData = sortedData.slice(0, 15);
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 色の設定
         function getColorByRate(rate) {
           if (rate < 30) return 'rgba(40, 167, 69, 0.7)';
           if (rate < 70) return 'rgba(255, 193, 7, 0.7)';
           return 'rgba(220, 53, 69, 0.7)';
         }
-        
+
         // 新しいチャートを作成
         charts.genreRanking = new Chart(ctx, {
           type: 'bar',
@@ -2751,7 +2750,7 @@
             }
           }
         });
-        
+
       } catch (error) {
         console.error('ジャンルランキングチャート更新エラー:', error);
       }
@@ -2761,28 +2760,28 @@
     async function loadStoreRanking(bizType) {
       try {
         // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = ':5000/api';
-        
+        const apiBaseUrl = '/api';
+
         // APIからデータ取得
         let url = `${apiBaseUrl}/ranking/average`;
         if (bizType) {
           url += `?biz_type=${encodeURIComponent(bizType)}`;
         }
-        
+
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.stores || data.stores.length === 0) {
           return;
         }
-        
+
         updateStoreRankingChart(data.stores);
-        
+
       } catch (error) {
         console.error('店舗ランキングデータ読み込みエラー:', error);
       } finally {
@@ -2794,25 +2793,25 @@
     function updateStoreRankingChart(storeData) {
       try {
         const ctx = document.getElementById('storeRankingChart').getContext('2d');
-        
+
         // 既存のチャートを破棄
         if (charts.storeRanking) charts.storeRanking.destroy();
-        
+
         // 表示数を制限
         const limitedData = storeData.slice(0, 15);
-        
+
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
         const textColor = isDarkMode ? '#e0e0e0' : '#333333';
         const gridColor = isDarkMode ? '#444' : '#ddd';
-        
+
         // 色の設定
         function getColorByRate(rate) {
           if (rate < 30) return 'rgba(40, 167, 69, 0.7)';
           if (rate < 70) return 'rgba(255, 193, 7, 0.7)';
           return 'rgba(220, 53, 69, 0.7)';
         }
-        
+
         // 新しいチャートを作成
         charts.storeRanking = new Chart(ctx, {
           type: 'bar',
@@ -2912,12 +2911,12 @@
       try {
         const item = JSON.parse(localStorage.getItem(key));
         if (!item) return null;
-        
+
         if (Date.now() > item.expiration) {
           localStorage.removeItem(key);
           return null;
         }
-        
+
         return item.data;
       } catch (error) {
         console.error('キャッシュ取得エラー:', error);
