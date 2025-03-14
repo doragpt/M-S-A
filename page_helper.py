@@ -315,8 +315,9 @@ def format_store_status(item, timezone=None):
 def prepare_data_for_integrated_dashboard():
     """統合ダッシュボード用のデータを準備"""
     # 日本のタイムゾーンに設定
-    now = datetime.now()
-    jst_now = now.strftime('%Y年%m月%d日 %H:%M:%S')
+    jst = pytz.timezone('Asia/Tokyo')
+    now = datetime.now(jst)
+    jst_now = now.strftime('%Y年%m月%d日 %H:%M:%S %Z%z')
 
     return {
         'title': '統合ダッシュボード',

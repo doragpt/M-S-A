@@ -27,9 +27,10 @@ if __name__ == '__main__':
     os.environ['TZ'] = 'Asia/Tokyo'
     
     try:
-        # 起動
-        print("アプリケーションを起動しています...")
-        socketio.run(app, host="0.0.0.0", port=5000, debug=True, allow_unsafe_werkzeug=True)
+        # Flask-SocketIOを使用してアプリケーションを起動
+        port = int(os.environ.get("PORT", 5000))
+        print(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
+        socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
     except Exception as e:
         logger.error(f"アプリケーション起動中にエラーが発生しました: {e}")
         sys.exit(1)

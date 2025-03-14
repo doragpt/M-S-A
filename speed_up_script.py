@@ -8,9 +8,9 @@ import asyncio
 import logging
 import time
 from datetime import datetime
-from sqlalchemy import create_engine
+import pytz
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text
 import gc
 import os
 import sys
@@ -31,59 +31,55 @@ engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
 def get_all_store_urls():
-    """データベースから全店舗URLを取得"""
+    """データベースから全ての店舗URLを取得"""
     session = Session()
     try:
-        results = session.execute(text("SELECT store_url FROM store_urls")).fetchall()
-        return [r[0] for r in results]
+        # StoreURLテーブルから全URLを取得
+        result = session.execute(text("SELECT store_url FROM store_urls"))
+        urls = [row[0] for row in result]
+        logger.info(f"{len(urls)}件の店舗URLを取得しました")
+        return urls
+    except Exception as e:
+        logger.error(f"店舗URL取得エラー: {e}")
+        return []
     finally:
         session.close()
 
-def bulk_insert_store_statuses(results):
+def bulk_insert_results(results, timestamp):
     """スクレイピング結果を一括でデータベースに挿入"""
-    if not results:
-        logger.warning("挿入するデータがありません")
-        return 0
-    
     session = Session()
     try:
-        # 現在時刻（全レコード共通）
-        now = datetime.now()
-        
-        # SQLite用のバルクインサート文を構築
+        # バルクインサート用のデータを準備
         insert_values = []
-        for r in results:
-            if not r:  # 空のレコードはスキップ
+        for record in results:
+            if not record or 'store_name' not in record:
                 continue
-                
-            store_name = r.get('store_name', '')
-            if not store_name or store_name == '不明':
+
+            # NULLチェック
+            store_name = record.get('store_name', '不明')
+            if not store_name or store_name == '':
                 continue
-                
-            # 値の挿入
+
+            # レコードをバルクインサート用の形式に変換
             insert_values.append({
-                'timestamp': now,
+                'timestamp': timestamp,
                 'store_name': store_name,
-                'biz_type': r.get('biz_type', ''),
-                'genre': r.get('genre', ''),
-                'area': r.get('area', ''),
-                'total_staff': r.get('total_staff', 0),
-                'working_staff': r.get('working_staff', 0),
-                'active_staff': r.get('active_staff', 0),
-                'url': r.get('url', ''),
-                'shift_time': r.get('shift_time', '')
+                'biz_type': record.get('biz_type', '不明'),
+                'genre': record.get('genre', '不明'),
+                'area': record.get('area', '不明'),
+                'total_staff': record.get('total_staff', 0) or 0,
+                'working_staff': record.get('working_staff', 0) or 0,
+                'active_staff': record.get('active_staff', 0) or 0,
+                'url': record.get('url', ''),
+                'shift_time': record.get('shift_time', '')
             })
-        
-        if not insert_values:
-            return 0
-            
+
         # バルクインサートの実行
-        session.execute(
-            text("""
-            INSERT INTO store_status (
-                timestamp, store_name, biz_type, genre, area, 
-                total_staff, working_staff, active_staff, url, shift_time
-            ) VALUES (
+        session.execute(text("""
+            INSERT INTO store_status 
+            (timestamp, store_name, biz_type, genre, area, 
+             total_staff, working_staff, active_staff, url, shift_time)
+            VALUES (
                 :timestamp, :store_name, :biz_type, :genre, :area,
                 :total_staff, :working_staff, :active_staff, :url, :shift_time
             )
@@ -113,22 +109,34 @@ def main():
     logger.info(f"スクレイピング対象: {len(store_urls)}店舗")
     
     # スクレイピング実行
-    results = scrape_store_data(store_urls)
-    logger.info(f"スクレイピング完了: {len(results)}件の結果を取得")
-    
-    # 結果をデータベースに保存
-    inserted = bulk_insert_store_statuses(results)
-    logger.info(f"データベース保存完了: {inserted}件のレコードを挿入")
-    
-    # メモリ解放
-    results = None
-    gc.collect()
-    
-    # 処理時間計測
-    elapsed_time = time.time() - start_time
-    minutes = int(elapsed_time // 60)
-    seconds = int(elapsed_time % 60)
-    logger.info(f"処理完了時間: {minutes}分{seconds}秒")
+    try:
+        # 処理時間計測スタート
+        scrape_start = time.time()
+        
+        # スクレイピング実行
+        results = scrape_store_data(store_urls)
+        
+        scrape_end = time.time()
+        logger.info(f"スクレイピング完了: {len(results)}件 ({scrape_end - scrape_start:.2f}秒)")
+        
+        # データベースに保存
+        timestamp = datetime.now(pytz.timezone('Asia/Tokyo'))
+        inserted = bulk_insert_results(results, timestamp)
+        
+        store_end = time.time()
+        logger.info(f"データベース保存完了: {inserted}件 ({store_end - scrape_end:.2f}秒)")
+        
+        # 合計処理時間
+        total_time = time.time() - start_time
+        logger.info(f"全処理完了: 合計{total_time:.2f}秒")
+        
+        # メモリ解放
+        gc.collect()
+        
+    except Exception as e:
+        logger.error(f"処理中にエラーが発生しました: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
