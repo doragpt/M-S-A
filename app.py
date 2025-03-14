@@ -9,6 +9,7 @@ from flask import Flask, request, render_template, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from sqlalchemy import func, exc
+from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
+CORS(app, resources={r"/api/*": {"origins": "*"}})  # APIエンドポイントに対してCORSを有効化
 
 # ローカル環境専用：SQLiteデータベースを使用
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
