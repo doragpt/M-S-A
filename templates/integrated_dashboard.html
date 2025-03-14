@@ -19,7 +19,7 @@
     const DateTime = window.luxon.DateTime;
 
     // 日付アダプターが正しく登録されているか確認
-    console.log("日付アダプター確認:", Chart.defaults.adapters.date);
+    console.log("日付アダプター確認:", Chart._adapters._date);
   </script>
   <style>
     :root {
@@ -1837,11 +1837,6 @@
         const activeData = [];
         const workingData = [];
 
-        // 日付フォーマット用に関数を定義
-        function formatDate(date) {
-          return date.toISOString();
-        }
-
         records.forEach(record => {
           // タイムスタンプがDateオブジェクトか確認
           let date = record.timestamp;
@@ -1856,17 +1851,17 @@
           }
 
           rateData.push({
-            x: formatDate(date),
+            x: date,
             y: parseFloat(rate.toFixed(1))
           });
 
           activeData.push({
-            x: formatDate(date),
+            x: date,
             y: record.active_staff || 0
           });
 
           workingData.push({
-            x: formatDate(date),
+            x: date,
             y: record.working_staff || 0
           });
         });
@@ -1921,6 +1916,9 @@
           scales: {
             x: {
               type: 'time',
+              adapters: {
+                date: window.luxon.DateTime
+              },
               time: {
                 unit: 'day',
                 displayFormats: {
@@ -1993,7 +1991,7 @@
 
         // デバッグ情報を出力
         console.log("Chart作成: データ件数=", rateData.length);
-        console.log("データ例(最初の要素):", rateData[0].x, "タイプ:", typeof rateData[0].x);
+        console.log("データサンプル:", rateData[0]);
 
         // 新しいチャートを作成
         charts.history = new Chart(ctx, {
