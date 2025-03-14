@@ -2861,9 +2861,29 @@
             charts.area.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.7)';
             charts.area.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
             charts.area.data.datasets[0].label = '店舗数';
-            charts.area.options.plugins.title.text = 'エリア別 店舗数';
-            charts.area.options.scales.y.title.text = '店舗数';
-            charts.area.options.scales.y.max = Math.max(...areaData.map(d => d.storeCount)) * 1.1;
+            
+            // タイトルの更新
+            if (charts.area.options.plugins && charts.area.options.plugins.title) {
+              charts.area.options.plugins.title.text = 'エリア別 店舗数';
+            }
+            
+            // Y軸スケールの適切な更新
+            if (charts.area.options.scales && charts.area.options.scales.y) {
+              const maxStoreCount = Math.max(...areaData.map(d => d.storeCount));
+              charts.area.options.scales.y.max = Math.ceil(maxStoreCount * 1.1);
+              
+              // タイトルの更新
+              if (charts.area.options.scales.y.title) {
+                charts.area.options.scales.y.title.display = true;
+                charts.area.options.scales.y.title.text = '店舗数';
+              } else {
+                charts.area.options.scales.y.title = { 
+                  display: true, 
+                  text: '店舗数',
+                  font: { weight: 'bold' }
+                };
+              }
+            }
           } else {
             // 稼働率でソート
             areaData.sort((a, b) => b.rate - a.rate);
@@ -2873,9 +2893,28 @@
             charts.area.data.datasets[0].backgroundColor = 'rgba(153, 102, 255, 0.7)';
             charts.area.data.datasets[0].borderColor = 'rgba(153, 102, 255, 1)';
             charts.area.data.datasets[0].label = '平均稼働率 (%)';
-            charts.area.options.plugins.title.text = 'エリア別 平均稼働率';
-            charts.area.options.scales.y.title.text = '平均稼働率 (%)';
-            charts.area.options.scales.y.max = 100;
+            
+            // タイトルの更新
+            if (charts.area.options.plugins && charts.area.options.plugins.title) {
+              charts.area.options.plugins.title.text = 'エリア別 平均稼働率';
+            }
+            
+            // Y軸スケールの適切な更新
+            if (charts.area.options.scales && charts.area.options.scales.y) {
+              charts.area.options.scales.y.max = 100;
+              
+              // タイトルの更新
+              if (charts.area.options.scales.y.title) {
+                charts.area.options.scales.y.title.display = true;
+                charts.area.options.scales.y.title.text = '平均稼働率 (%)';
+              } else {
+                charts.area.options.scales.y.title = { 
+                  display: true, 
+                  text: '平均稼働率 (%)',
+                  font: { weight: 'bold' }
+                };
+              }
+            }
           }
           
           charts.area.update();
