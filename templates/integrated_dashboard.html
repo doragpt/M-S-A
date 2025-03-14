@@ -12,6 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Chart.js Zoom Plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <!-- Chart.js Crosshair Plugin (FX風チャート用) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0/dist/chartjs-plugin-crosshair.min.js"></script>
   <style>
     /* 共通スタイル */
     body {
@@ -991,48 +993,148 @@
                 datasets: [{
                   label: "実働率 (%)",
                   data: effectiveRates,
-                  borderColor: "rgba(255, 99, 132, 1)",
-                  backgroundColor: "rgba(255, 99, 132, 0.2)",
-                  fill: false,
-                  tension: 0.3,
-                  pointRadius: labels.length > 100 ? 0 : 3, // データ点が多い場合は非表示に
-                  pointHoverRadius: 5
+                  borderColor: "rgba(33, 150, 243, 1)",
+                  backgroundColor: "rgba(33, 150, 243, 0.1)",
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.2,
+                  pointRadius: labels.length > 100 ? 0 : 2,
+                  pointHoverRadius: 6,
+                  pointBackgroundColor: "rgba(33, 150, 243, 1)",
+                  pointBorderColor: "#fff",
+                  pointBorderWidth: 2
                 }]
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                  mode: 'index',
+                  intersect: false,
+                },
                 plugins: {
                   title: {
                     display: true,
                     text: (document.getElementById("storeSelectHistory")?.value === "") 
                           ? "全店舗の平均稼働率（期間指定）"
                           : `店舗(${document.getElementById("storeSelectHistory")?.value})の履歴グラフ`,
-                    font: { size: 20 }
+                    font: { size: 20, weight: 'bold' }
                   },
-                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
+                  tooltip: { 
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: { weight: 'bold' },
+                    bodyFont: { size: 14 },
+                    padding: 10,
+                    callbacks: { 
+                      label: context => `稼働率: ${context.parsed.y}%` 
+                    } 
+                  },
                   zoom: {
-                    pan: { enabled: true, mode: 'xy' },
+                    pan: { 
+                      enabled: true, 
+                      mode: 'xy',
+                      overScaleMode: 'xy'
+                    },
                     zoom: { 
-                      wheel: { enabled: true },
-                      drag: { enabled: true },
-                      mode: 'xy' 
+                      wheel: { 
+                        enabled: true,
+                        speed: 0.05
+                      },
+                      drag: { 
+                        enabled: true,
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderColor: 'rgba(33, 150, 243, 0.5)'
+                      },
+                      mode: 'xy',
+                      onZoom: function() {
+                        // ズーム完了時に実行するコード
+                        const resetZoomButton = document.getElementById('resetHistoryZoom');
+                        if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
+                      }
+                    }
+                  },
+                  crosshair: {
+                    line: {
+                      color: 'rgba(100, 100, 100, 0.4)',
+                      width: 1,
+                      dashPattern: [5, 5]
+                    },
+                    sync: {
+                      enabled: true
+                    },
+                    zoom: {
+                      enabled: true
                     }
                   }
                 },
                 scales: {
-                  y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
-                  x: { 
-                    title: { display: true, text: "日時" },
-                    // データが多い場合に表示を間引く
+                  y: { 
+                    beginAtZero: true, 
+                    max: 100, 
+                    title: { 
+                      display: true, 
+                      text: "実働率 (%)",
+                      font: { 
+                        weight: 'bold',
+                        size: 14
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(200, 200, 200, 0.3)',
+                      lineWidth: 1,
+                      drawBorder: true,
+                      drawTicks: true
+                    },
                     ticks: {
-                      maxTicksLimit: Math.min(labels.length, 20)  // 最大20目盛りに制限
+                      font: { size: 12 },
+                      padding: 5
+                    }
+                  },
+                  x: { 
+                    title: { 
+                      display: true, 
+                      text: "日時",
+                      font: { 
+                        weight: 'bold',
+                        size: 14
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(200, 200, 200, 0.3)',
+                      lineWidth: 1,
+                      drawBorder: true,
+                      drawTicks: true
+                    },
+                    ticks: {
+                      maxTicksLimit: Math.min(labels.length, 15),
+                      font: { size: 11 },
+                      padding: 5,
+                      maxRotation: 45,
+                      minRotation: 45
                     }
                   }
                 },
-                animation: { duration: 500 } // アニメーション時間短縮
+                animation: { duration: 400 },
+                elements: {
+                  line: {
+                    tension: 0.3
+                  }
+                }
               }
             });
+            
+            // リセットズームボタンを追加（なければ）
+            if (!document.getElementById('resetHistoryZoom')) {
+              const buttonHtml = '<button id="resetHistoryZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
+              document.getElementById('historyChartContainer').insertAdjacentHTML('afterbegin', buttonHtml);
+              
+              document.getElementById('resetHistoryZoom').addEventListener('click', function() {
+                if (charts.history) {
+                  charts.history.resetZoom();
+                  this.style.display = 'none';
+                }
+              });
+            }
 
             const historyStats = document.getElementById("historyStats");
             if (effectiveRates.length > 0) {
@@ -1144,36 +1246,191 @@
                 datasets: [{
                   label: "平均実働率 (%)",
                   data: avgRates,
-                  borderColor: "rgba(255, 159, 64, 1)",
-                  backgroundColor: "rgba(255, 159, 64, 0.2)",
-                  fill: false,
-                  tension: 0.3,
-                  pointRadius: 3,
-                  pointHoverRadius: 5
+                  borderColor: "rgba(76, 175, 80, 1)",
+                  backgroundColor: "rgba(76, 175, 80, 0.1)",
+                  borderWidth: 2.5,
+                  fill: true,
+                  tension: 0.4,
+                  pointRadius: 4,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: "rgba(76, 175, 80, 1)",
+                  pointBorderColor: "#fff",
+                  pointBorderWidth: 2
                 }]
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                  mode: 'index',
+                  intersect: false,
+                },
                 plugins: {
-                  title: { display: true, text: "時間帯別分析", font: { size: 20 } },
-                  tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
+                  title: { 
+                    display: true, 
+                    text: "時間帯別分析", 
+                    font: { 
+                      size: 20,
+                      weight: 'bold'
+                    } 
+                  },
+                  tooltip: { 
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: { weight: 'bold' },
+                    bodyFont: { size: 14 },
+                    padding: 10,
+                    callbacks: { 
+                      label: context => `稼働率: ${context.parsed.y}%`,
+                      title: (items) => {
+                        return `${items[0].label} の統計`;
+                      }
+                    } 
+                  },
                   zoom: {
-                    pan: { enabled: true, mode: 'xy' },
+                    pan: { 
+                      enabled: true, 
+                      mode: 'xy',
+                      overScaleMode: 'xy'
+                    },
+                    zoom: { 
+                      wheel: { 
+                        enabled: true,
+                        speed: 0.05
+                      },
+                      pinch: { 
+                        enabled: true 
+                      },
+                      mode: 'xy',
+                      onZoom: function() {
+                        // ズーム完了時に実行するコード
+                        const resetZoomButton = document.getElementById('resetHourlyZoom');
+                        if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
+                      }
+                    }
+                  },
+                  crosshair: {
+                    line: {
+                      color: 'rgba(100, 100, 100, 0.4)',
+                      width: 1,
+                      dashPattern: [5, 5]
+                    },
+                    sync: {
+                      enabled: true
+                    },
                     zoom: {
-                      wheel: { enabled: true },
-                      pinch: { enabled: true },
-                      mode: 'xy'
+                      enabled: true
                     }
                   }
                 },
                 scales: {
-                  y: { beginAtZero: true, max: 100, title: { display: true, text: "実働率 (%)" } },
-                  x: { title: { display: true, text: "時間帯" } }
+                  y: { 
+                    beginAtZero: true, 
+                    max: 100, 
+                    title: { 
+                      display: true, 
+                      text: "実働率 (%)",
+                      font: { 
+                        weight: 'bold',
+                        size: 14
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(200, 200, 200, 0.3)',
+                      lineWidth: 1,
+                      drawBorder: true,
+                      drawTicks: true
+                    },
+                    ticks: {
+                      font: { size: 12 },
+                      padding: 5,
+                      // 0,25,50,75,100のtickに特別スタイルを適用
+                      callback: function(value) {
+                        if ([0, 25, 50, 75, 100].includes(value)) {
+                          return value + '%';
+                        }
+                        return value;
+                      }
+                    }
+                  },
+                  x: { 
+                    title: { 
+                      display: true, 
+                      text: "時間帯",
+                      font: { 
+                        weight: 'bold',
+                        size: 14
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(200, 200, 200, 0.3)',
+                      lineWidth: 1,
+                      drawBorder: true,
+                      drawTicks: true,
+                      // 深夜と日中で背景色を少し変える
+                      z: -1,
+                      drawOnChartArea: true
+                    },
+                    ticks: {
+                      font: { size: 12 },
+                      padding: 8
+                    },
+                    afterDraw: function(chart) {
+                      // 深夜時間帯（22時～6時）をハイライト
+                      const meta = chart.getDatasetMeta(0);
+                      const xScale = chart.scales.x;
+                      const yScale = chart.scales.y;
+                      const ctx = chart.ctx;
+                      
+                      ctx.save();
+                      ctx.fillStyle = 'rgba(200, 200, 200, 0.05)';
+                      
+                      for (let i = 22; i <= 23; i++) {
+                        if (xScale.getPixelForValue(i) !== undefined) {
+                          ctx.fillRect(
+                            xScale.getPixelForValue(i),
+                            yScale.top,
+                            xScale.getPixelForValue(i+1) - xScale.getPixelForValue(i),
+                            yScale.height
+                          );
+                        }
+                      }
+                      
+                      for (let i = 0; i <= 5; i++) {
+                        if (xScale.getPixelForValue(i) !== undefined) {
+                          ctx.fillRect(
+                            xScale.getPixelForValue(i),
+                            yScale.top,
+                            xScale.getPixelForValue(i+1) - xScale.getPixelForValue(i),
+                            yScale.height
+                          );
+                        }
+                      }
+                      
+                      ctx.restore();
+                    }
+                  }
                 },
-                animation: { duration: 1000 }
+                animation: { duration: 800 },
+                elements: {
+                  line: {
+                    tension: 0.4
+                  }
+                }
               }
             });
+            
+            // リセットズームボタンを追加（なければ）
+            if (!document.getElementById('resetHourlyZoom')) {
+              const buttonHtml = '<button id="resetHourlyZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
+              document.getElementById('hourlyAnalysisContainer').insertAdjacentHTML('afterbegin', buttonHtml);
+              
+              document.getElementById('resetHourlyZoom').addEventListener('click', function() {
+                if (charts.hourly) {
+                  charts.hourly.resetZoom();
+                  this.style.display = 'none';
+                }
+              });
+            }
             hideSpinner();
           } catch (err) {
             console.error("時間帯別分析エラー:", err);
@@ -1780,28 +2037,87 @@
                 type: 'line',
                 data: {
                   labels: sortedDates,
-                  datasets: datasets
+                  datasets: datasets.map((dataset, index) => {
+                    // データセットごとに線の太さ・スタイルを少しずつ変える
+                    return {
+                      ...dataset,
+                      borderWidth: 2 + (index * 0.5 > 2 ? 2 : index * 0.5),
+                      pointRadius: 3,
+                      pointHoverRadius: 6,
+                      pointBackgroundColor: dataset.borderColor,
+                      pointBorderColor: '#fff',
+                      pointBorderWidth: 1.5,
+                      tension: 0.3,
+                      fill: false
+                    };
+                  })
                 },
                 options: {
                   responsive: true,
                   maintainAspectRatio: false,
+                  interaction: {
+                    mode: 'index',
+                    intersect: false,
+                  },
                   plugins: {
                     title: {
                       display: true,
                       text: '店舗比較分析 - 日別平均稼働率',
-                      font: { size: 18 }
+                      font: { size: 20, weight: 'bold' }
                     },
                     tooltip: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      titleFont: { weight: 'bold' },
+                      bodyFont: { size: 14 },
+                      padding: 10,
                       callbacks: {
                         label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
                       }
                     },
                     zoom: {
-                      pan: { enabled: true, mode: 'xy' },
+                      pan: { 
+                        enabled: true, 
+                        mode: 'xy',
+                        overScaleMode: 'xy'
+                      },
                       zoom: { 
-                        wheel: { enabled: true },
-                        drag: { enabled: true },
-                        mode: 'xy'
+                        wheel: { 
+                          enabled: true,
+                          speed: 0.05
+                        },
+                        drag: { 
+                          enabled: true,
+                          backgroundColor: 'rgba(128, 128, 128, 0.2)',
+                          borderColor: 'rgba(128, 128, 128, 0.4)'
+                        },
+                        mode: 'xy',
+                        onZoom: function() {
+                          // ズーム完了時に実行するコード
+                          const resetZoomButton = document.getElementById('resetCompareZoom');
+                          if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
+                        }
+                      }
+                    },
+                    crosshair: {
+                      line: {
+                        color: 'rgba(100, 100, 100, 0.4)',
+                        width: 1,
+                        dashPattern: [5, 5]
+                      },
+                      sync: {
+                        enabled: true
+                      },
+                      zoom: {
+                        enabled: true
+                      }
+                    },
+                    legend: {
+                      position: 'top',
+                      labels: {
+                        boxWidth: 15,
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                       }
                     }
                   },
@@ -1809,14 +2125,70 @@
                     y: {
                       beginAtZero: true,
                       max: 100,
-                      title: { display: true, text: '稼働率 (%)' }
+                      title: { 
+                        display: true, 
+                        text: '稼働率 (%)',
+                        font: { 
+                          weight: 'bold',
+                          size: 14
+                        }
+                      },
+                      grid: {
+                        color: 'rgba(200, 200, 200, 0.3)',
+                        lineWidth: 1,
+                        drawBorder: true,
+                        drawTicks: true
+                      },
+                      ticks: {
+                        font: { size: 12 },
+                        padding: 5
+                      }
                     },
                     x: {
-                      title: { display: true, text: '日付' }
+                      title: { 
+                        display: true, 
+                        text: '日付',
+                        font: { 
+                          weight: 'bold',
+                          size: 14
+                        }
+                      },
+                      grid: {
+                        color: 'rgba(200, 200, 200, 0.3)',
+                        lineWidth: 1,
+                        drawBorder: true,
+                        drawTicks: true
+                      },
+                      ticks: {
+                        maxTicksLimit: Math.min(sortedDates.length, 12),
+                        font: { size: 11 },
+                        padding: 5,
+                        maxRotation: 45,
+                        minRotation: 45
+                      }
+                    }
+                  },
+                  animation: { duration: 800 },
+                  elements: {
+                    line: {
+                      tension: 0.3
                     }
                   }
                 }
               });
+              
+              // リセットズームボタンを追加（なければ）
+              if (!document.getElementById('resetCompareZoom')) {
+                const buttonHtml = '<button id="resetCompareZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
+                document.querySelector('#compareModal .modal-body').insertAdjacentHTML('afterbegin', buttonHtml);
+                
+                document.getElementById('resetCompareZoom').addEventListener('click', function() {
+                  if (charts.compare) {
+                    charts.compare.resetZoom();
+                    this.style.display = 'none';
+                  }
+                });
+              }
             })
             .catch(error => {
               console.error('比較分析データ取得エラー:', error);
