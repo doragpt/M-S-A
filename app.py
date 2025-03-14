@@ -1152,6 +1152,27 @@ def api_area_stats():
         app.logger.error(traceback.format_exc())
         return jsonify({"error": "エリア統計の取得中にエラーが発生しました"}), 500
 
+# すべての店舗名を取得するAPIエンドポイント
+@app.route('/api/store-names')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_store_names():
+    """
+    データベースに登録されているすべての店舗名を返すエンドポイント
+    """
+    try:
+        # 重複を除去した店舗名のリストを取得
+        store_names = db.session.query(StoreStatus.store_name).distinct().all()
+        # タプルのリストからプレーンな文字列のリストに変換
+        store_names = [name[0] for name in store_names if name[0]]
+        # アルファベット順にソート
+        store_names.sort(key=lambda x: x.lower())
+        
+        return jsonify(store_names)
+    except Exception as e:
+        app.logger.error(f"店舗名リスト取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "店舗名リストの取得中にエラーが発生しました"}), 500
+
 # トップランキングを提供するエンドポイント
 @app.route('/api/ranking/top')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
