@@ -471,6 +471,11 @@
           <i class="bi bi-bar-chart"></i> ジャンルランキング
         </a>
       </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="popular-tab" data-bs-toggle="tab" href="#popular" role="tab" aria-controls="popular" aria-selected="false">
+          <i class="bi bi-star"></i> 人気店舗ランキング
+        </a>
+      </li>
     </ul>
 
     <!-- タブコンテンツ -->
@@ -795,6 +800,88 @@
         </div>
       </div>
 
+      <!-- 人気店舗ランキングタブ -->
+      <div class="tab-pane fade" id="popular" role="tabpanel" aria-labelledby="popular-tab">
+        <div class="row mt-3">
+          <div class="col-lg-4 mb-3">
+            <div class="card">
+              <div class="card-header">ランキング設定</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="rankingPeriod" class="form-label">集計期間</label>
+                  <select class="form-select" id="rankingPeriod">
+                    <option value="day">直近24時間</option>
+                    <option value="week" selected>直近1週間</option>
+                    <option value="month">直近1ヶ月</option>
+                    <option value="all">全期間</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="rankingBizType" class="form-label">業種選択</label>
+                  <select class="form-select" id="rankingBizType">
+                    <option value="">すべての業種</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="rankingLimit" class="form-label">表示件数</label>
+                  <select class="form-select" id="rankingLimit">
+                    <option value="10">10件</option>
+                    <option value="20" selected>20件</option>
+                    <option value="50">50件</option>
+                    <option value="100">100件</option>
+                  </select>
+                </div>
+                <div class="d-grid">
+                  <button id="loadPopularRanking" class="btn btn-primary">ランキングを表示</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">人気店舗ランキング</div>
+              <div class="card-body">
+                <div id="rankingLoadingIndicator" class="loading-indicator" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span>データ読み込み中...</span>
+                </div>
+                <div id="rankingErrorMessage" class="error-message" style="display: none;"></div>
+                <div class="chart-container" style="height: 500px; width: 100%;">
+                  <canvas id="popularRankingChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">詳細データ</div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>順位</th>
+                        <th>店舗名</th>
+                        <th>業種</th>
+                        <th>ジャンル</th>
+                        <th>エリア</th>
+                        <th>平均稼働率</th>
+                        <th>詳細</th>
+                      </tr>
+                    </thead>
+                    <tbody id="popularRankingTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -802,7 +889,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // グローバル変数
-    const charts = {};
+    const charts = {
+      popularRanking: null
+    };
     let storeData = [];
     let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     let showOnlyFavorites = false;
@@ -815,7 +904,8 @@
       history: false,
       hourly: false,
       area: false,
-      type: false
+      type: false,
+      popular: false
     };
     let currentFilters = {
       bizType: 'all',
@@ -850,6 +940,9 @@
                 break;
               case 'type':
                 initializeTypeTab();
+                break;
+              case 'popular':
+                initializePopularRankingTab();
                 break;
             }
             loadedTabs[targetId] = true;
@@ -978,6 +1071,9 @@
 
       // ジャンルランキングボタン
       document.getElementById('loadRanking').addEventListener('click', loadGenreRanking);
+      
+      // 人気店舗ランキングボタン
+      document.getElementById('loadPopularRanking').addEventListener('click', loadPopularRanking);
     }
 
     // 店舗一覧データの読み込み
@@ -3537,6 +3633,318 @@
     }
 
     // エラーハンドリング
+    // 人気店舗ランキングタブの初期化
+    function initializePopularRankingTab() {
+      try {
+        // 業種選択肢を初期化
+        const bizTypeSelect = document.getElementById('rankingBizType');
+        bizTypeSelect.innerHTML = '<option value="">すべての業種</option>';
+        
+        // ローディング表示
+        document.getElementById('rankingLoadingIndicator').style.display = 'flex';
+        document.getElementById('rankingErrorMessage').style.display = 'none';
+        
+        // 既存の店舗データから業種を抽出
+        if (storeData && storeData.length > 0) {
+          populateRankingBizTypes(storeData);
+        } else {
+          // storeDataがない場合は/api/dataから取得
+          fetch('/api/data')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              // APIレスポンス構造に対応
+              let fetchedData = [];
+              if (data.data) {
+                fetchedData = data.data;
+              } else {
+                fetchedData = data;
+              }
+              
+              storeData = fetchedData; // グローバル変数を更新
+              populateRankingBizTypes(fetchedData);
+            })
+            .catch(error => {
+              console.error('データ取得エラー:', error);
+              document.getElementById('rankingErrorMessage').textContent = `データ取得エラー: ${error.message}`;
+              document.getElementById('rankingErrorMessage').style.display = 'block';
+              document.getElementById('rankingLoadingIndicator').style.display = 'none';
+            });
+        }
+        
+        // 最初のランキングデータを読み込む
+        loadPopularRanking();
+      } catch (error) {
+        console.error('人気店舗ランキングタブ初期化エラー:', error);
+        document.getElementById('rankingLoadingIndicator').style.display = 'none';
+        document.getElementById('rankingErrorMessage').textContent = `初期化エラー: ${error.message}`;
+        document.getElementById('rankingErrorMessage').style.display = 'block';
+      }
+    }
+    
+    // 業種選択肢を設定する関数
+    function populateRankingBizTypes(data) {
+      const bizTypeSelect = document.getElementById('rankingBizType');
+      
+      // 店舗データから業種を抽出
+      const bizTypes = [...new Set(data
+        .filter(store => store && store.biz_type) // nullチェックを追加
+        .map(store => store.biz_type))].sort();
+      
+      if (bizTypes.length === 0) {
+        document.getElementById('rankingErrorMessage').textContent = '業種データが見つかりませんでした';
+        document.getElementById('rankingErrorMessage').style.display = 'block';
+        document.getElementById('rankingLoadingIndicator').style.display = 'none';
+        return;
+      }
+      
+      // 業種選択肢を設定
+      bizTypes.forEach(bizType => {
+        const option = document.createElement('option');
+        option.value = bizType;
+        option.textContent = bizType;
+        bizTypeSelect.appendChild(option);
+      });
+      
+      document.getElementById('rankingLoadingIndicator').style.display = 'none';
+    }
+    
+    // 人気店舗ランキングデータの読み込み
+    async function loadPopularRanking() {
+      try {
+        // 選択されたオプションを取得
+        const period = document.getElementById('rankingPeriod').value;
+        const bizType = document.getElementById('rankingBizType').value;
+        const limit = document.getElementById('rankingLimit').value;
+        
+        // ローディング表示
+        document.getElementById('rankingLoadingIndicator').style.display = 'flex';
+        document.getElementById('rankingErrorMessage').style.display = 'none';
+        
+        // 期間に応じたAPIエンドポイントを選択
+        let apiUrl = '/api/ranking/average';
+        const params = [];
+        
+        if (bizType) {
+          params.push(`biz_type=${encodeURIComponent(bizType)}`);
+        }
+        
+        if (limit) {
+          params.push(`limit=${limit}`);
+        }
+        
+        if (params.length > 0) {
+          apiUrl += '?' + params.join('&');
+        }
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+          throw new Error('ランキングデータが見つかりませんでした');
+        }
+        
+        // ランキングチャートとテーブルを更新
+        updatePopularRankingChart(data);
+        updatePopularRankingTable(data);
+        
+      } catch (error) {
+        console.error('人気店舗ランキングデータ読み込みエラー:', error);
+        document.getElementById('rankingErrorMessage').textContent = `エラー: ${error.message}`;
+        document.getElementById('rankingErrorMessage').style.display = 'block';
+      } finally {
+        document.getElementById('rankingLoadingIndicator').style.display = 'none';
+      }
+    }
+    
+    // 人気店舗ランキングチャートの更新
+    function updatePopularRankingChart(rankingData) {
+      try {
+        const ctx = document.getElementById('popularRankingChart').getContext('2d');
+        
+        // 既存のチャートを破棄
+        if (charts.popularRanking) charts.popularRanking.destroy();
+        
+        // 上位20件のみ表示（既にAPIのlimitパラメータで制限済みの場合もある）
+        const limitedData = rankingData.slice(0, parseInt(document.getElementById('rankingLimit').value));
+        
+        // テーマに合わせた色設定
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#e0e0e0' : '#333333';
+        const gridColor = isDarkMode ? '#444' : '#ddd';
+        
+        // 色の設定
+        function getColorByRate(rate) {
+          if (rate < 30) return 'rgba(40, 167, 69, 0.7)'; // 低稼働（緑）
+          if (rate < 70) return 'rgba(255, 193, 7, 0.7)'; // 中稼働（黄）
+          return 'rgba(220, 53, 69, 0.7)';               // 高稼働（赤）
+        }
+        
+        // データの準備
+        const labels = limitedData.map(store => store.store_name);
+        const rates = limitedData.map(store => parseFloat(store.avg_rate).toFixed(1));
+        const backgroundColors = limitedData.map(store => getColorByRate(store.avg_rate));
+        const borderColors = limitedData.map(store => getColorByRate(store.avg_rate).replace('0.7', '1'));
+        
+        // 新しいチャートを作成
+        charts.popularRanking = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '平均稼働率 (%)',
+              data: rates,
+              backgroundColor: backgroundColors,
+              borderColor: borderColors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            responsive: true,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: '人気店舗平均稼働率ランキング',
+                color: textColor,
+                font: { size: 16, weight: 'bold' }
+              },
+              subtitle: {
+                display: true,
+                text: getPeriodLabel(),
+                color: textColor,
+                font: { size: 12 }
+              },
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const store = limitedData[context.dataIndex];
+                    const tooltipLines = [`稼働率: ${context.raw}%`];
+                    
+                    if (store.biz_type) {
+                      tooltipLines.push(`業種: ${store.biz_type}`);
+                    }
+                    
+                    if (store.genre) {
+                      tooltipLines.push(`ジャンル: ${store.genre}`);
+                    }
+                    
+                    if (store.area) {
+                      tooltipLines.push(`エリア: ${store.area}`);
+                    }
+                    
+                    if (store.sample_count) {
+                      tooltipLines.push(`データ数: ${store.sample_count}件`);
+                    }
+                    
+                    return tooltipLines;
+                  }
+                }
+              },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                formatter: function(value) {
+                  return value + '%';
+                },
+                color: textColor,
+                font: { weight: 'bold' }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('人気店舗ランキングチャート更新エラー:', error);
+      }
+    }
+    
+    // 人気店舗ランキングテーブルの更新
+    function updatePopularRankingTable(rankingData) {
+      try {
+        const tableBody = document.getElementById('popularRankingTableBody');
+        tableBody.innerHTML = '';
+        
+        // 選択した件数で表示
+        const limit = parseInt(document.getElementById('rankingLimit').value);
+        const limitedData = rankingData.slice(0, limit);
+        
+        limitedData.forEach((store, index) => {
+          const tr = document.createElement('tr');
+          tr.className = 'fade-in';
+          
+          const rateBadgeClass = store.avg_rate < 30 ? 'badge-success' : 
+            (store.avg_rate < 70 ? 'badge-warning' : 'badge-danger');
+          
+          tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${store.store_name}</td>
+            <td>${store.biz_type || '-'}</td>
+            <td>${store.genre || '-'}</td>
+            <td>${store.area || '-'}</td>
+            <td><span class="badge ${rateBadgeClass}">${parseFloat(store.avg_rate).toFixed(1)}%</span></td>
+            <td>
+              <button class="icon-button view-store-details" data-store="${store.store_name}">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </td>
+          `;
+          
+          tableBody.appendChild(tr);
+        });
+        
+        // 詳細ボタンのイベントリスナーを追加
+        document.querySelectorAll('.view-store-details').forEach(button => {
+          button.addEventListener('click', function() {
+            const storeName = this.getAttribute('data-store');
+            const storeData = limitedData.find(s => s.store_name === storeName);
+            if (storeData) {
+              showStoreDetails(storeName);
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('人気店舗ランキングテーブル更新エラー:', error);
+      }
+    }
+    
+    // 期間ラベルの取得
+    function getPeriodLabel() {
+      const period = document.getElementById('rankingPeriod').value;
+      switch (period) {
+        case 'day': return '集計期間: 直近24時間';
+        case 'week': return '集計期間: 直近1週間';
+        case 'month': return '集計期間: 直近1ヶ月';
+        case 'all': return '集計期間: 全期間';
+        default: return '集計期間: 直近1週間';
+      }
+    }
+
     function handleError(functionName, error) {
       console.error(`エラー (${functionName}):`, error);
       // エラーログを表示する場所があればそこに表示
