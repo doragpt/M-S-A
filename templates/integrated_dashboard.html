@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -6,10 +7,10 @@
   <title>統合ダッシュボード</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <style>
     :root {
       --primary-color: #007bff;
@@ -1756,14 +1757,14 @@
 
         const data = await response.json();
 
-        if (!data.records || data.records.length === 0) {
+        if (!data || data.length === 0) {
           document.getElementById('historyNoData').style.display = 'block';
           document.getElementById('historyLoadingIndicator').style.display = 'none';
           return;
         }
 
         // データの整形
-        const records = data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const records = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         updateHistoryChart(records);
         updateHistorySummary(records);
@@ -2260,23 +2261,6 @@
                     return `稼働率: ${context.raw}%`;
                   }
                 }
-              },
-              annotation: {
-                annotations: {
-                  line1: {
-                    type: 'line',
-                    yMin: 50,
-                    yMax: 50,
-                    borderColor: 'rgba(255, 99, 132, 0.5)',
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    label: {
-                      content: '混雑目安 (50%)',
-                      enabled: true,
-                      position: 'end'
-                    }
-                  }
-                }
               }
             }
           }
@@ -2426,13 +2410,13 @@
 
         const data = await response.json();
 
-        if (!data.areas || data.areas.length === 0) {
+        if (!data || !Array.isArray(data)) {
           document.getElementById('areaLoadingIndicator').style.display = 'none';
           return;
         }
 
-        updateAreaChart(data.areas);
-        updateAreaTable(data.areas);
+        updateAreaChart(data);
+        updateAreaTable(data);
 
       } catch (error) {
         console.error('エリア統計データ読み込みエラー:', error);
@@ -2539,7 +2523,7 @@
         });
 
       } catch (error) {
-        console.error('エリアチャート更新エラー:, error);
+        console.error('エリアチャート更新エラー:', error);
       }
     }
 
@@ -2646,14 +2630,14 @@
 
         const data = await response.json();
 
-        if (!data.genres || data.genres.length === 0) {
+        if (!data || data.length === 0) {
           document.getElementById('genreErrorMessage').textContent = 'データがありません';
           document.getElementById('genreErrorMessage').style.display = 'block';
           document.getElementById('genreLoadingIndicator').style.display = 'none';
           return;
         }
 
-        updateGenreRankingChart(data.genres);
+        updateGenreRankingChart(data);
 
         // 店舗ランキングも取得
         loadStoreRanking(bizType);
@@ -2776,11 +2760,11 @@
 
         const data = await response.json();
 
-        if (!data.stores || data.stores.length === 0) {
+        if (!data || data.length === 0) {
           return;
         }
 
-        updateStoreRankingChart(data.stores);
+        updateStoreRankingChart(data);
 
       } catch (error) {
         console.error('店舗ランキングデータ読み込みエラー:', error);
