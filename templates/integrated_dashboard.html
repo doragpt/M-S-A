@@ -14,7 +14,7 @@
   <script>
     // Chart.jsのデータラベルプラグインを登録
     Chart.register(ChartDataLabels);
-    
+
     // Luxon のDateTime オブジェクトを便宜上グローバル変数として保持
     const DateTime = window.luxon.DateTime;
   </script>
@@ -825,7 +825,7 @@
                 break;
               case 'history':
                 initializeHistoryTab();
-                break;
+                break```js
               case 'hourly':
                 initializeHourlyTab();
                 break;
@@ -1722,7 +1722,7 @@
       document.getElementById('historyStartDate').value = oneWeekAgo.toISOString().split('T')[0];
 
       document.getElementById('historySummaryCard').style.display = 'none';
-      document.getElementById('historyErrorMessage').style.display = 'none';
+      document.getElementById('historyErrorMessage`.style.display = 'none';
       document.getElementById('historyNoData').style.display = 'none';
 
       if (charts.history) {
@@ -1760,7 +1760,7 @@
         try {
           // API URLを正しく設定（正式エンドポイントを使用）
           let url = `${apiBaseUrl}/history/optimized?store=${encodeURIComponent(storeName)}`;
-          
+
           // 日付パラメータを追加
           if (startDate) {
             url += `&start_date=${startDate}`;
@@ -1768,7 +1768,7 @@
           if (endDate) {
             url += `&end_date=${endDate}`;
           }
-          
+
           console.log(`店舗履歴データをロード中: ${url}`);
           const response = await fetch(url);
 
@@ -1840,7 +1840,7 @@
           if (!(date instanceof Date)) {
             date = new Date(record.timestamp);
           }
-          
+
           // working_staffが0の場合は稼働率0%とする
           let rate = 0;
           if (record.working_staff > 0) {
@@ -1913,11 +1913,6 @@
           scales: {
             x: {
               type: 'time',
-              adapters: {
-                date: {
-                  locale: 'ja'
-                }
-              },
               time: {
                 unit: 'day',
                 displayFormats: {
@@ -2198,76 +2193,76 @@
           // APIパラメータの設定（/history_optimized から /history/optimized に修正）
           let url = '/api/history/optimized';
           const params = [];
-          
+
           if (storeName) {
             params.push(`store=${encodeURIComponent(storeName)}`);
           }
-          
+
           // 開始日と終了日を設定（直近7日間のデータを取得）
           const today = new Date();
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(today.getDate() - 7);
-          
+
           params.push(`start_date=${oneWeekAgo.toISOString().split('T')[0]}`);
           params.push(`end_date=${today.toISOString().split('T')[0]}`);
-          
+
           if (params.length > 0) {
             url += '?' + params.join('&');
           }
-          
+
           const response = await fetch(url);
-          
+
           if (!response.ok) {
             throw new Error(`API error: ${response.status}`);
           }
-          
+
           const data = await response.json();
-          
+
           // レスポンスデータ形式に対応
           let historyData = data;
           if (data.items) {
             historyData = data.items;
           }
-          
+
           if (!historyData || historyData.length === 0) {
             throw new Error('データが見つかりませんでした');
           }
-          
+
           // 業種フィルタが指定されている場合
           if (bizType) {
             historyData = historyData.filter(item => item.biz_type === bizType);
           }
-          
+
           // 時間帯別にデータを集計
           const hourlyStats = {};
-          
+
           historyData.forEach(record => {
             if (record.working_staff <= 0) return;
-            
+
             const date = new Date(record.timestamp);
             const hour = date.getHours();
             const rate = ((record.working_staff - record.active_staff) / record.working_staff) * 100;
-            
+
             if (!hourlyStats[hour]) {
               hourlyStats[hour] = { total: 0, count: 0 };
             }
-            
+
             hourlyStats[hour].total += rate;
             hourlyStats[hour].count++;
           });
-          
+
           // 集計データから時間帯別平均を算出
           const hourlyData = [];
           for (let hour = 0; hour < 24; hour++) {
             const stats = hourlyStats[hour] || { total: 0, count: 0 };
             const rate = stats.count > 0 ? stats.total / stats.count : 0;
-            
+
             hourlyData.push({
               hour: hour,
               rate: parseFloat(rate.toFixed(1))
             });
           }
-          
+
           if (hourlyData.some(item => item.rate > 0)) {
             updateHourlyChart(hourlyData);
             updateHourlyResults(hourlyData);
@@ -2288,33 +2283,33 @@
                 } else {
                   rate = 10 + Math.random() * 20; // 深夜: 10-30%
                 }
-                
+
                 if (storeName) {
                   if (storeName.includes('AQUA')) rate = Math.min(rate * 1.2, 95);
                   else if (storeName.includes('CLUB')) rate = Math.min(rate * 1.3, 98);
                   else if (bizType === 'キャバクラ') rate = Math.min(rate * 1.1, 90);
                 }
-                
+
                 return {
                   hour: hour,
                   rate: parseFloat(rate.toFixed(1))
                 };
               });
             };
-            
+
             const simulatedData = generateHourlyData();
             updateHourlyChart(simulatedData);
             updateHourlyResults(simulatedData);
-            
+
             // 注意メッセージを表示
             document.getElementById('hourlyResults').innerHTML = 
               `<div class="alert alert-warning">十分なデータがないため、シミュレーションデータを表示しています。</div>` + 
               document.getElementById('hourlyResults').innerHTML;
           }
-          
+
         } catch (error) {
           console.error('API呼び出しエラー:', error);
-          
+
           // エラーの場合はシミュレーションデータを使用
           const generateHourlyData = () => {
             const hours = Array.from({length: 24}, (_, i) => i);
@@ -2331,24 +2326,24 @@
               } else {
                 rate = 10 + Math.random() * 20;
               }
-              
+
               if (storeName) {
                 if (storeName.includes('AQUA')) rate = Math.min(rate * 1.2, 95);
                 else if (storeName.includes('CLUB')) rate = Math.min(rate * 1.3, 98);
                 else if (bizType === 'キャバクラ') rate = Math.min(rate * 1.1, 90);
               }
-              
+
               return {
                 hour: hour,
                 rate: parseFloat(rate.toFixed(1))
               };
             });
           };
-          
+
           const simulatedData = generateHourlyData();
           updateHourlyChart(simulatedData);
           updateHourlyResults(simulatedData);
-          
+
           // 注意メッセージを表示
           document.getElementById('hourlyResults').innerHTML = 
             `<div class="alert alert-warning">API呼び出しエラーのため、シミュレーションデータを表示しています。(${error.message})</div>` + 
