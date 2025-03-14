@@ -620,7 +620,7 @@ def api_data():
                 }
 
             app.logger.info("API /api/data レスポンス準備完了")
-            
+
             # 常に統一された形式で返す
             if isinstance(response, dict) and 'data' in response:
                 # すでに data キーがある場合はそのまま使用
