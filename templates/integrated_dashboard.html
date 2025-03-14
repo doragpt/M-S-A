@@ -3904,7 +3904,9 @@
         // 選択した件数で表示
         const limit = parseInt(document.getElementById('rankingLimit').value);
         // 9999は全店舗表示の特殊コード
-        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, limit);
+        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, Math.min(limit, rankingData.length));
+        
+        console.log(`ランキングテーブル表示: 合計${rankingData.length}件中${limitedData.length}件を表示`);
         
         limitedData.forEach((store, index) => {
           const tr = document.createElement('tr');
@@ -3940,6 +3942,12 @@
             }
           });
         });
+        
+        // テーブルの下に表示件数情報を追加
+        const info = document.createElement('div');
+        info.className = 'text-center mt-3';
+        info.innerHTML = `<small>${rankingData.length}件中 ${limitedData.length}件を表示しています</small>`;
+        tableBody.parentNode.parentNode.appendChild(info);
         
       } catch (error) {
         console.error('人気店舗ランキングテーブル更新エラー:', error);
