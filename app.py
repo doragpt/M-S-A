@@ -37,13 +37,21 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_pre_ping': True,  # 接続が生きているか確認
-    'pool_recycle': 300,    # 5分ごとに接続をリサイクル
-    'pool_timeout': 30,     # 接続タイムアウト30秒
-    'pool_size': 10,        # コネクションプールサイズ
-    'max_overflow': 20      # 最大オーバーフロー接続数
-}
+# データベースがSQLiteの場合は最小限のオプションを使用し、
+# PostgreSQLなどの場合は完全なプールオプションを適用する
+if DATABASE_URL.startswith('sqlite'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True  # 接続が生きているか確認（SQLiteでも動作）
+    }
+else:
+    # PostgreSQLなどの本番環境用DB向けの完全なオプション
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,  # 接続が生きているか確認
+        'pool_recycle': 300,    # 5分ごとに接続をリサイクル
+        'pool_timeout': 30,     # 接続タイムアウト30秒
+        'pool_size': 10,        # コネクションプールサイズ
+        'max_overflow': 20      # 最大オーバーフロー接続数
+    }
 
 # キャッシュ設定（環境に応じて自動選択）
 if os.environ.get('REDIS_URL'):
