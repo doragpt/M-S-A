@@ -1,0 +1,110 @@
+以下の点を確認・修正してください。
+
+---
+
+### 1. 日付アダプターの自動登録を利用する
+
+Chart.js v4 では、chartjs-adapter‑luxon が正しく読み込まれていれば自動でアダプターが登録されます。そのため、各チャートの x 軸設定でアダプターを明示的に指定する必要はありません。
+
+**修正例（updateHistoryChart 内）**
+
+**修正前：**
+
+```js
+scales: {
+  x: {
+    type: 'time',
+    adapters: {
+      date: window.luxon.DateTime
+    },
+    time: {
+      unit: 'day',
+      displayFormats: { day: 'MM/dd' },
+      tooltipFormat: 'yyyy/MM/dd HH:mm'
+    },
+    // …省略…
+  },
+  // …省略…
+}
+```
+
+**修正後：**
+
+```js
+scales: {
+  x: {
+    type: 'time',
+    time: {
+      unit: 'day',
+      displayFormats: { day: 'MM/dd' },
+      tooltipFormat: 'yyyy/MM/dd HH:mm'
+    },
+    // …省略…
+  },
+  // …省略…
+}
+```
+
+つまり、`adapters: { date: window.luxon.DateTime }` の記述は削除してください。
+
+---
+
+### 2. アダプターの参照方法の注意
+
+以前は `Chart.defaults.adapters.date` を使用していましたが、Chart.js v4 では内部プロパティ `Chart._adapters._date` に変更されています。  
+もしログなどで確認する場合は、以下のように記述してください。
+
+```js
+console.log("日付アダプター確認:", Chart._adapters._date);
+```
+
+※ただし、通常の使用時は自動登録されていれば明示的に参照する必要はありません。
+
+---
+
+### 3. スクリプトの読み込み順序を確認する
+
+現在の読み込み順序は以下の通りで正しいです：
+
+1. **Luxon**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+   ```
+2. **Chart.js**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+   ```
+3. **chartjs-adapter‑luxon**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.2/dist/chartjs-adapter-luxon.min.js"></script>
+   ```
+4. **chartjs-plugin-datalabels**  
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+   ```
+
+この順番で読み込むことで、Luxon アダプターが Chart.js に自動登録されます。
+
+---
+
+### 4. まとめ
+
+- **削除するコード：**  
+  `adapters: { date: window.luxon.DateTime }` の記述を x 軸オプションから削除する
+
+- **確認するコード：**  
+  コンソールに出力する場合は `Chart._adapters._date` を参照する
+
+- **スクリプト順序は問題ないのでそのままでOK**
+
+---
+
+これらの修正により、  
+- 「Cannot read properties of undefined (reading 'date')」  
+- 「This method is not implemented: Check that a complete date adapter is provided.」  
+
+というエラーが解消され、履歴チャートが正しく表示されるはずです。
+
+---
+
+エンジニアの方へ：上記の通り、各チャート設定の x 軸から不要なアダプター指定を削除し、Luxon アダプターは自動登録（または必要に応じて Chart._adapters._date を参照）するように修正してください。
