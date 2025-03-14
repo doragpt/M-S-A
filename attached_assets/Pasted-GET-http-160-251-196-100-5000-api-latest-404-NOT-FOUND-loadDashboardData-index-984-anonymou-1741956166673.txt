@@ -1,0 +1,211 @@
+GET http://160.251.196.100:5000/api/latest 404 (NOT FOUND)
+loadDashboardData @ (index):984
+(anonymous) @ (index):843Understand this errorAI
+(index):1011 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):985:35)
+loadDashboardData @ (index):1011
+await in loadDashboardData
+(anonymous) @ (index):843Understand this errorAI
+(index):1675 
+            
+            
+           GET http://160.251.196.100:5000/api/latest 404 (NOT FOUND)
+initializeHistoryTab @ (index):1675
+(anonymous) @ (index):822
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):1681 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):1681
+Promise.catch
+initializeHistoryTab @ (index):1681
+(anonymous) @ (index):822
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2146 
+            
+            
+           GET http://160.251.196.100:5000/api/hourly 404 (NOT FOUND)
+loadHourlyAnalysis @ (index):2146
+initializeHourlyTab @ (index):2115
+(anonymous) @ (index):825
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2165 時間帯別分析エラー: Error: API error: 404
+    at loadHourlyAnalysis ((index):2149:17)
+loadHourlyAnalysis @ (index):2165
+await in loadHourlyAnalysis
+initializeHourlyTab @ (index):2115
+(anonymous) @ (index):825
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2082 
+            
+            
+           GET http://160.251.196.100:5000/api/latest 404 (NOT FOUND)
+initializeHourlyTab @ (index):2082
+(anonymous) @ (index):825
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2088 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2088
+Promise.catch
+initializeHourlyTab @ (index):2088
+(anonymous) @ (index):825
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2421 
+            
+            
+           GET http://160.251.196.100:5000/api/area_stats 404 (NOT FOUND)
+loadAreaStatistics @ (index):2421
+(anonymous) @ (index):828
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2438 エリア統計データ読み込みエラー: Error: API error: 404
+    at loadAreaStatistics ((index):2424:17)
+loadAreaStatistics @ (index):2438
+await in loadAreaStatistics
+(anonymous) @ (index):828
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2593 
+            
+            
+           GET http://160.251.196.100:5000/api/latest 404 (NOT FOUND)
+initializeTypeTab @ (index):2593
+(anonymous) @ (index):831
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2600 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2600
+Promise.catch
+initializeTypeTab @ (index):2600
+(anonymous) @ (index):831
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):2641 
+            
+            
+           GET http://160.251.196.100:5000/api/ranking/genre 400 (BAD REQUEST)
+loadGenreRanking @ (index):2641Understand this errorAI
+(index):2662 ジャンルランキングデータ読み込みエラー: Error: API error: 400
+    at HTMLButtonElement.loadGenreRanking ((index):2644:17)
+loadGenreRanking @ (index):2662Understand this errorAI
+(index):2421 
+            
+            
+           GET http://160.251.196.100:5000/api/area_stats 404 (NOT FOUND)
+loadAreaStatistics @ (index):2421
+(anonymous) @ (index):948Understand this errorAI
+(index):2438 エリア統計データ読み込みエラー: Error: API error: 404
+    at loadAreaStatistics ((index):2424:17)
+loadAreaStatistics @ (index):2438
+await in loadAreaStatistics
+(anonymous) @ (index):948Understand this errorAI
+(index):2146 
+            
+            
+           GET http://160.251.196.100:5000/api/hourly 404 (NOT FOUND)
+loadHourlyAnalysis @ (index):2146Understand this errorAI
+(index):2165 時間帯別分析エラー: Error: API error: 404
+    at HTMLButtonElement.loadHourlyAnalysis ((index):2149:17)
+loadHourlyAnalysis @ (index):2165Understand this errorAI
+(index):984 
+            
+            
+           GET http://160.251.196.100:5000/api/latest 404 (NOT FOUND)
+loadDashboardData @ (index):984
+(anonymous) @ (index):819
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
+(index):1011 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):985:35)
+loadDashboardData @ (index):1011
+await in loadDashboardData
+(anonymous) @ (index):819
+trigger @ event-handler.js:290
+(anonymous) @ tab.js:120
+p @ index.js:226
+m @ index.js:231
+_queueCallback @ base-component.js:49
+_activate @ tab.js:125
+show @ tab.js:98
+(anonymous) @ tab.js:288
+n @ event-handler.js:118Understand this errorAI
