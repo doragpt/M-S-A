@@ -1029,30 +1029,6 @@
                       label: context => `稼働率: ${context.parsed.y}%` 
                     } 
                   },
-                  zoom: {
-                    pan: { 
-                      enabled: true, 
-                      mode: 'xy',
-                      overScaleMode: 'xy'
-                    },
-                    zoom: { 
-                      wheel: { 
-                        enabled: true,
-                        speed: 0.05
-                      },
-                      drag: { 
-                        enabled: true,
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        borderColor: 'rgba(33, 150, 243, 0.5)'
-                      },
-                      mode: 'xy',
-                      onZoom: function() {
-                        // ズーム完了時に実行するコード
-                        const resetZoomButton = document.getElementById('resetHistoryZoom');
-                        if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
-                      }
-                    }
-                  },
                   crosshair: {
                     line: {
                       color: 'rgba(100, 100, 100, 0.4)',
@@ -1063,7 +1039,7 @@
                       enabled: true
                     },
                     zoom: {
-                      enabled: true
+                      enabled: false
                     }
                   }
                 },
@@ -1122,12 +1098,12 @@
                 }
               }
             });
-            
+
             // リセットズームボタンを追加（なければ）
             if (!document.getElementById('resetHistoryZoom')) {
               const buttonHtml = '<button id="resetHistoryZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
               document.getElementById('historyChartContainer').insertAdjacentHTML('afterbegin', buttonHtml);
-              
+
               document.getElementById('resetHistoryZoom').addEventListener('click', function() {
                 if (charts.history) {
                   charts.history.resetZoom();
@@ -1380,10 +1356,10 @@
                       const xScale = chart.scales.x;
                       const yScale = chart.scales.y;
                       const ctx = chart.ctx;
-                      
+
                       ctx.save();
                       ctx.fillStyle = 'rgba(200, 200, 200, 0.05)';
-                      
+
                       for (let i = 22; i <= 23; i++) {
                         if (xScale.getPixelForValue(i) !== undefined) {
                           ctx.fillRect(
@@ -1394,7 +1370,7 @@
                           );
                         }
                       }
-                      
+
                       for (let i = 0; i <= 5; i++) {
                         if (xScale.getPixelForValue(i) !== undefined) {
                           ctx.fillRect(
@@ -1405,7 +1381,7 @@
                           );
                         }
                       }
-                      
+
                       ctx.restore();
                     }
                   }
@@ -1418,12 +1394,12 @@
                 }
               }
             });
-            
+
             // リセットズームボタンを追加（なければ）
             if (!document.getElementById('resetHourlyZoom')) {
               const buttonHtml = '<button id="resetHourlyZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
               document.getElementById('hourlyAnalysisContainer').insertAdjacentHTML('afterbegin', buttonHtml);
-              
+
               document.getElementById('resetHourlyZoom').addEventListener('click', function() {
                 if (charts.hourly) {
                   charts.hourly.resetZoom();
@@ -1663,7 +1639,7 @@
             hideSpinner();
           } catch (error) {
             console.error("業種内ジャンルランキングエラー:", error);
-            handleError(error, "updateIndustryRanking");
+            handleError(error, ""updateIndustryRanking");
             hideSpinner();
           }
         }
@@ -2176,12 +2152,12 @@
                   }
                 }
               });
-              
+
               // リセットズームボタンを追加（なければ）
               if (!document.getElementById('resetCompareZoom')) {
                 const buttonHtml = '<button id="resetCompareZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
                 document.querySelector('#compareModal .modal-body').insertAdjacentHTML('afterbegin', buttonHtml);
-                
+
                 document.getElementById('resetCompareZoom').addEventListener('click', function() {
                   if (charts.compare) {
                     charts.compare.resetZoom();
