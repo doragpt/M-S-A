@@ -620,22 +620,41 @@ def api_data():
                 }
 
             app.logger.info("API /api/data レスポンス準備完了")
-            # フロントエンドが期待する形式（data:[]）として返す
-            if 'data' not in response:
-                # responseには既にdataキーが含まれているか確認し、なければ追加
-                data_content = response.pop('data', []) if 'data' in response else []
-                return jsonify({"data": data_content, "meta": response.get('meta', {})})
-            return jsonify(response)
+            
+            # 常に統一された形式で返す
+            if isinstance(response, dict) and 'data' in response:
+                # すでに data キーがある場合はそのまま使用
+                return jsonify(response)
+            else:
+                # data キーがない場合は適切な形式に変換
+                if isinstance(response, dict):
+                    data_content = response.pop('data', []) if 'data' in response else []
+                    return jsonify({"data": data_content, "meta": response.get('meta', {})})
+                else:
+                    # responseが辞書でない場合（リストなど）
+                    return jsonify({"data": response if response is not None else [], "meta": {}})
 
         except Exception as e:
             app.logger.error(f"クエリ実行中の例外: {str(e)}")
             app.logger.error(traceback.format_exc())
-            return jsonify({"error": "データベースクエリの実行中にエラーが発生しました", "details": str(e)}), 500
+            # 統一形式でエラーレスポンスを返す
+            return jsonify({
+                "data": [],
+                "meta": {},
+                "error": "クエリ実行中にエラーが発生しました",
+                "details": str(e)
+            }), 500
 
     except Exception as e:
         app.logger.error(f"API /api/data 全体での例外: {str(e)}")
         app.logger.error(traceback.format_exc())
-        return jsonify({"error": "APIの処理中にエラーが発生しました", "details": str(e)}), 500
+        # 統一形式でエラーレスポンスを返す
+        return jsonify({
+            "data": [],
+            "meta": {},
+            "error": "APIの処理中にエラーが発生しました",
+            "details": str(e)
+        }), 500
 
 
 @app.route('/bulk_add_store_urls', methods=['POST'])

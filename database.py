@@ -30,32 +30,50 @@ def get_db_connection():
         if s is None:
             return None
         try:
+            # 文字列に変換
             if isinstance(s, bytes):
                 s_decoded = s.decode()
-                # ISO形式の日付文字列にスペースが含まれている場合に対処
-                if ' ' in s_decoded and 'T' not in s_decoded:
-                    parts = s_decoded.split(' ')
-                    if len(parts) >= 2:
-                        s_decoded = f"{parts[0]}T{parts[1]}"
-                # マイクロ秒が7桁以上ある場合は6桁に制限
-                if '.' in s_decoded:
-                    parts = s_decoded.split('.')
-                    if len(parts) == 2 and len(parts[1]) > 6:
-                        s_decoded = f"{parts[0]}.{parts[1][:6]}"
+            else:
+                s_decoded = str(s) if not isinstance(s, str) else s
+                
+            # 日付文字列の標準化
+            if ' ' in s_decoded and 'T' not in s_decoded:
+                parts = s_decoded.split(' ')
+                if len(parts) >= 2:
+                    s_decoded = f"{parts[0]}T{parts[1]}"
+                    
+            # マイクロ秒の処理（6桁に制限）
+            if '.' in s_decoded:
+                date_part, fraction_part = s_decoded.split('.', 1)
+                # マイクロ秒部分とそれ以降（タイムゾーン情報など）を分離
+                microsec_part = fraction_part
+                timezone_part = ""
+                if '+' in fraction_part:
+                    microsec_part, timezone_part = fraction_part.split('+', 1)
+                    timezone_part = '+' + timezone_part
+                elif '-' in fraction_part and fraction_part.index('-') > 0:  # 日付の区切りではなくタイムゾーンの場合
+                    microsec_part, timezone_part = fraction_part.split('-', 1)
+                    timezone_part = '-' + timezone_part
+                elif 'Z' in fraction_part:
+                    microsec_part, timezone_part = fraction_part.split('Z', 1)
+                    timezone_part = 'Z' + timezone_part
+                
+                # マイクロ秒を6桁に制限
+                if len(microsec_part) > 6:
+                    microsec_part = microsec_part[:6]
+                
+                # 再構築
+                s_decoded = f"{date_part}.{microsec_part}{timezone_part}"
+                
+            # 実際の日時オブジェクト作成
+            try:
                 return datetime.datetime.fromisoformat(s_decoded)
-            elif isinstance(s, str):
-                # ISO形式の日付文字列にスペースが含まれている場合に対処
-                if ' ' in s and 'T' not in s:
-                    parts = s.split(' ')
-                    if len(parts) >= 2:
-                        s = f"{parts[0]}T{parts[1]}"
-                # マイクロ秒が7桁以上ある場合は6桁に制限
-                if '.' in s:
-                    parts = s.split('.')
-                    if len(parts) == 2 and len(parts[1]) > 6:
-                        s = f"{parts[0]}.{parts[1][:6]}"
-                return datetime.datetime.fromisoformat(s)
-            return s
+            except ValueError:
+                # fromisoformatがサポートしていない形式の場合、別の方法を試す
+                import dateutil.parser
+                return dateutil.parser.parse(s_decoded)
+            
+            return s_decoded
         except (ValueError, TypeError) as e:
             # エラーの詳細をログに出力
             print(f"日付変換エラー: {e}, 入力値: {repr(s)}")
