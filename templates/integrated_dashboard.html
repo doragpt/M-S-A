@@ -829,6 +829,8 @@
                     <option value="20" selected>20件</option>
                     <option value="50">50件</option>
                     <option value="100">100件</option>
+                    <option value="1000">1000件</option>
+                    <option value="9999">全店舗</option>
                   </select>
                 </div>
                 <div class="d-grid">
@@ -3774,8 +3776,18 @@
         // 既存のチャートを破棄
         if (charts.popularRanking) charts.popularRanking.destroy();
         
-        // 上位20件のみ表示（既にAPIのlimitパラメータで制限済みの場合もある）
-        const limitedData = rankingData.slice(0, parseInt(document.getElementById('rankingLimit').value));
+        // 選択した件数で表示（9999は全店舗表示の特殊コード）
+        const limit = parseInt(document.getElementById('rankingLimit').value);
+        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, limit);
+        
+        // チャートの表示を最適化（100件以上の場合はサンプリング）
+        let displayData = limitedData;
+        if (limitedData.length > 100) {
+          // チャート表示用に最大100件まで間引く
+          const sampleRate = Math.ceil(limitedData.length / 100);
+          displayData = limitedData.filter((_, index) => index % sampleRate === 0);
+          console.log(`チャート表示のため ${limitedData.length} 件のデータを ${displayData.length} 件に間引きました`);
+        }
         
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
@@ -3790,10 +3802,10 @@
         }
         
         // データの準備
-        const labels = limitedData.map(store => store.store_name);
-        const rates = limitedData.map(store => parseFloat(store.avg_rate).toFixed(1));
-        const backgroundColors = limitedData.map(store => getColorByRate(store.avg_rate));
-        const borderColors = limitedData.map(store => getColorByRate(store.avg_rate).replace('0.7', '1'));
+        const labels = displayData.map(store => store.store_name);
+        const rates = displayData.map(store => parseFloat(store.avg_rate).toFixed(1));
+        const backgroundColors = displayData.map(store => getColorByRate(store.avg_rate));
+        const borderColors = displayData.map(store => getColorByRate(store.avg_rate).replace('0.7', '1'));
         
         // 新しいチャートを作成
         charts.popularRanking = new Chart(ctx, {
@@ -3891,7 +3903,8 @@
         
         // 選択した件数で表示
         const limit = parseInt(document.getElementById('rankingLimit').value);
-        const limitedData = rankingData.slice(0, limit);
+        // 9999は全店舗表示の特殊コード
+        const limitedData = limit === 9999 ? rankingData : rankingData.slice(0, limit);
         
         limitedData.forEach((store, index) => {
           const tr = document.createElement('tr');
