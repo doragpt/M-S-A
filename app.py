@@ -721,7 +721,7 @@ def manual_scrape():
         scheduler.modify_job('scrape_job', next_run_time=next_time)
         flash("手動スクレイピングを実行しました。次回は {} に実行されます。".format(next_time.strftime("%Y-%m-%d %H:%M:%S")), "success")
     except Exception as e:
-        flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
+                flash("スクレイピングジョブの次回実行時刻更新に失敗しました: " + str(e), "warning")
     return redirect(url_for('manage_store_urls'))
 
 
@@ -731,25 +731,25 @@ def manual_scrape():
 
 # 新規エンドポイント: 平均稼働ランキング
 @app.route('/api/ranking/average')
-@cache.memoize(timeout=600)  # キャッシュ：10分間間有効
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
 def api_average_ranking():
     """
     店舗の平均稼働率ランキングを返すエンドポイント
 
     クエリパラメータ:
         biz_type: 業種でフィルタリング
-        limit: 上位何件を返すか（デフォルト1000件）
+        limit: 上位何件を返すか（デフォルト10000件）
         min_samples: 最小サンプル数（デフォルト1件）
     """
     try:
         # フィルタリング条件
         biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 1000, type=int)  # デフォルト値は1000
+        limit = request.args.get('limit', 10000, type=int)  # デフォルト値を10000に引き上げ
         min_samples = request.args.get('min_samples', 1, type=int)  # サンプル数の最小値（デフォルト1）
 
-        # 最大値を制限
-        if limit > 5000:  # 最大値を5000に引き上げ
-            limit = 5000
+        # 最大値を制限（実質無制限に）
+        if limit > 100000:  # 最大値を10万件に引き上げ
+            limit = 100000
 
         # サブクエリ: 店舗ごとのグループ化
         subq = db.session.query(
@@ -800,12 +800,12 @@ def api_average_ranking():
                 func.max(StoreStatus.genre).label('genre'),
                 func.max(StoreStatus.area).label('area')
             ).filter(StoreStatus.working_staff > 0)
-            
+
             if biz_type:
                 subq = subq.filter(StoreStatus.biz_type == biz_type)
-                
+
             subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 1).subquery()
-            
+
             query = db.session.query(
                 subq.c.store_name,
                 subq.c.avg_rate,
@@ -814,7 +814,7 @@ def api_average_ranking():
                 subq.c.genre,
                 subq.c.area
             ).order_by(subq.c.avg_rate.desc()).limit(limit)
-            
+
             results = query.all()
             app.logger.info(f"条件緩和後の取得件数: {len(results)}件")
 
