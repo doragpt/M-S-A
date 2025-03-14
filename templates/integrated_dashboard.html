@@ -2006,30 +2006,7 @@
                         label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
                       }
                     },
-                    zoom: {
-                      pan: { 
-                        enabled: true, 
-                        mode: 'xy',
-                        overScaleMode: 'xy'
-                      },
-                      zoom: { 
-                        wheel: { 
-                          enabled: true,
-                          speed: 0.05
-                        },
-                        drag: { 
-                          enabled: true,
-                          backgroundColor: 'rgba(128, 128, 128, 0.2)',
-                          borderColor: 'rgba(128, 128, 128, 0.4)'
-                        },
-                        mode: 'xy',
-                        onZoom: function() {
-                          // ズーム完了時に実行するコード
-                          const resetZoomButton = document.getElementById('resetCompareZoom');
-                          if (resetZoomButton) resetZoomButton.style.display = 'inline-block';
-                        }
-                      }
-                    },
+                    // ズーム機能を無効化
                     crosshair: {
                       line: {
                         color: 'rgba(100, 100, 100, 0.4)',
@@ -2109,18 +2086,7 @@
                 }
               });
 
-              // リセットズームボタンを追加（なければ）
-              if (!document.getElementById('resetCompareZoom')) {
-                const buttonHtml = '<button id="resetCompareZoom" class="btn btn-sm btn-outline-secondary mt-2 mb-3" style="display:none;">ズームリセット</button>';
-                document.querySelector('#compareModal .modal-body').insertAdjacentHTML('afterbegin', buttonHtml);
-
-                document.getElementById('resetCompareZoom').addEventListener('click', function() {
-                  if (charts.compare) {
-                    charts.compare.resetZoom();
-                    this.style.display = 'none';
-                  }
-                });
-              }
+              // ズーム機能を無効化したため、リセットボタンは不要
             })
             .catch(error => {
               console.error('比較分析データ取得エラー:', error);
