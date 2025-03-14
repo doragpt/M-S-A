@@ -88,7 +88,6 @@ def format_store_status(item, timezone=None):
     except Exception as e:
         logging.error(f"形式化エラー: {e}, item: {item}")
         return None
-    }
 
 def prepare_data_for_integrated_dashboard():
     """統合ダッシュボード用のデータを準備"""
