@@ -1903,9 +1903,10 @@
           // タイムスタンプの処理（ISO文字列からDateオブジェクトへ変換）
           let date;
           if (typeof record.timestamp === 'string') {
-            date = new Date(record.timestamp);
+            // 日付文字列を Luxon の DateTime に変換
+            date = DateTime.fromISO(record.timestamp);
           } else {
-            date = record.timestamp;
+            date = DateTime.fromJSDate(new Date(record.timestamp));
           }
           
           // working_staffが0の場合は稼働率0%とする
@@ -1975,6 +1976,11 @@
           scales: {
             x: {
               type: 'time',
+              adapters: {
+                date: {
+                  locale: 'ja'
+                }
+              },
               time: {
                 unit: 'day',
                 displayFormats: {
