@@ -988,6 +988,91 @@ def api_daily_averages():
 
     results = AggregatedData.get_daily_averages()
 
+# データ品質・メタデータを提供するAPIエンドポイント
+@app.route('/api/data-quality')
+@cache.memoize(timeout=300)  # キャッシュ：5分間有効
+def api_data_quality():
+    """
+    データ品質とメタデータ情報を返すエンドポイント
+    """
+    try:
+        # 最終データ更新時刻を取得
+        last_update = db.session.query(func.max(StoreStatus.timestamp)).scalar()
+        
+        # スクレイピング成功率の計算（最新データを基に）
+        total_urls = db.session.query(func.count(StoreURL.id)).scalar() or 0
+        recent_records = db.session.query(func.count(func.distinct(StoreStatus.store_name))).filter(
+            StoreStatus.timestamp >= (datetime.now() - timedelta(hours=2))
+        ).scalar() or 0
+        
+        # スクレイピング成功率
+        success_rate = (recent_records / total_urls * 100) if total_urls > 0 else 0
+        
+        # レコード総数
+        total_records = db.session.query(func.count(StoreStatus.id)).scalar() or 0
+        
+        # 日ごとのデータ完全性 (過去7日間)
+        daily_completeness = []
+        for i in range(7):
+            date = datetime.now() - timedelta(days=i)
+            date_start = datetime(date.year, date.month, date.day, 0, 0, 0)
+            date_end = datetime(date.year, date.month, date.day, 23, 59, 59)
+            
+            # その日の店舗カバレッジ
+            day_stores = db.session.query(func.count(func.distinct(StoreStatus.store_name))).filter(
+                StoreStatus.timestamp.between(date_start, date_end)
+            ).scalar() or 0
+            
+            # カバレッジ率
+            coverage_rate = (day_stores / total_urls * 100) if total_urls > 0 else 0
+            
+            daily_completeness.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'coverage': round(coverage_rate, 1),
+                'store_count': day_stores
+            })
+        
+        # 異常値検出 (稼働率が100%または0%のレコード数)
+        extremes_count = db.session.query(func.count(StoreStatus.id)).filter(
+            ((StoreStatus.working_staff > 0) & (StoreStatus.active_staff == 0)) |
+            ((StoreStatus.working_staff > 0) & (StoreStatus.active_staff == StoreStatus.working_staff))
+        ).scalar() or 0
+        
+        # データベースサイズの取得 (SQLiteの場合)
+        db_size = 0
+        try:
+            import os
+            db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+            if os.path.exists(db_path):
+                db_size = os.path.getsize(db_path) / (1024 * 1024)  # MBに変換
+        except Exception as e:
+            app.logger.warning(f"データベースサイズ取得エラー: {e}")
+        
+        # データ品質スコア (0-100) の計算
+        # 複数の指標を組み合わせて総合的なスコアを算出
+        quality_score = (
+            (success_rate * 0.4) +                     # スクレイピング成功率 (40%)
+            (min(daily_completeness[0]['coverage'], 100) * 0.3) +  # 最新のカバレッジ (30%)
+            (max(0, 100 - (extremes_count / total_records * 100)) * 0.3)  # 異常値の少なさ (30%)
+        )
+        
+        return jsonify({
+            'last_update': last_update.isoformat() if last_update else None,
+            'success_rate': round(success_rate, 1),
+            'total_urls': total_urls,
+            'total_records': total_records,
+            'daily_completeness': daily_completeness,
+            'extremes_count': extremes_count,
+            'extremes_percentage': round((extremes_count / total_records * 100), 1) if total_records > 0 else 0,
+            'db_size_mb': round(db_size, 2),
+            'quality_score': round(min(quality_score, 100), 1)
+        })
+    except Exception as e:
+        app.logger.error(f"データ品質API取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "データ品質情報の取得中にエラーが発生しました"}), 500
+
+
     jst = pytz.timezone('Asia/Tokyo')
     data = [{
         'store_name': r.store_name,
