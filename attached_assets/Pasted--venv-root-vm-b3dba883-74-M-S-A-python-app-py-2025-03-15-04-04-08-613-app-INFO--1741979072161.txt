@@ -1,0 +1,84 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python app.py
+2025-03-15 04:04:08,613 - app - INFO - データベーステーブルを作成しています...
+2025-03-15 04:04:08,613 - app - INFO - モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage
+2025-03-15 04:04:08,613 - app - INFO - 登録テーブル数: 6
+2025-03-15 04:04:08,613 - app - ERROR - テーブル作成中にエラーが発生しました: Invalid argument(s) 'pool_timeout','pool_size','max_overflow' sent to create_engine(), using configuration SQLiteDialect_pysqlite/NullPool/Engine.  Please check that the keyword arguments are appropriate for this combination of components.
+2025-03-15 04:04:08,615 - app - ERROR - Traceback (most recent call last):
+  File "/root/M-S-A/app.py", line 174, in <module>
+    db.create_all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1094, in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1086, in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1017, in get_engine
+    return connector.get_engine()
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 594, in get_engine
+    self._engine = rv = self._sa.create_engine(sa_url, options)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1027, in create_engine
+    return sqlalchemy.create_engine(sa_url, **engine_opts)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in create_engine
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 375, in warned
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 636, in create_engine
+    raise TypeError(
+TypeError: Invalid argument(s) 'pool_timeout','pool_size','max_overflow' sent to create_engine(), using configuration SQLiteDialect_pysqlite/NullPool/Engine.  Please check that the keyword arguments are appropriate for this combination of components.
+
+2025-03-15 04:04:08,781 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 04:04:08,784 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 04:04:08,785 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-15 04:04:08,785 - apscheduler.scheduler - INFO - Added job "maintenance_task" to job store "default"
+2025-03-15 04:04:08,785 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-15 04:04:08 JST+0900
+サーバーを起動しています: http://0.0.0.0:5000
+ * Serving Flask app 'app' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+2025-03-15 04:04:08,801 - werkzeug - WARNING -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2025-03-15 04:04:08,802 - werkzeug - INFO -  * Running on http://160.251.196.100:5000/ (Press CTRL+C to quit)
+2025-03-15 04:04:08,802 - werkzeug - INFO -  * Restarting with stat
+2025-03-15 04:04:09,382 - app - INFO - データベーステーブルを作成しています...
+2025-03-15 04:04:09,382 - app - INFO - モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage
+2025-03-15 04:04:09,382 - app - INFO - 登録テーブル数: 6
+2025-03-15 04:04:09,383 - app - ERROR - テーブル作成中にエラーが発生しました: Invalid argument(s) 'pool_timeout','pool_size','max_overflow' sent to create_engine(), using configuration SQLiteDialect_pysqlite/NullPool/Engine.  Please check that the keyword arguments are appropriate for this combination of components.
+2025-03-15 04:04:09,385 - app - ERROR - Traceback (most recent call last):
+  File "/root/M-S-A/app.py", line 174, in <module>
+    db.create_all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1094, in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1086, in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1017, in get_engine
+    return connector.get_engine()
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 594, in get_engine
+    self._engine = rv = self._sa.create_engine(sa_url, options)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_sqlalchemy/__init__.py", line 1027, in create_engine
+    return sqlalchemy.create_engine(sa_url, **engine_opts)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in create_engine
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 375, in warned
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 636, in create_engine
+    raise TypeError(
+TypeError: Invalid argument(s) 'pool_timeout','pool_size','max_overflow' sent to create_engine(), using configuration SQLiteDialect_pysqlite/NullPool/Engine.  Please check that the keyword arguments are appropriate for this combination of components.
+
+2025-03-15 04:04:09,551 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 04:04:09,553 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 04:04:09,554 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-15 04:04:09,554 - apscheduler.scheduler - INFO - Added job "maintenance_task" to job store "default"
+2025-03-15 04:04:09,554 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-15 04:04:09 JST+0900
+サーバーを起動しています: http://0.0.0.0:5000
+2025-03-15 04:04:09,569 - werkzeug - WARNING -  * Debugger is active!
+2025-03-15 04:04:09,572 - werkzeug - INFO -  * Debugger PIN: 749-046-
