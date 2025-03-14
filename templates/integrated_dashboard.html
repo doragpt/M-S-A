@@ -698,6 +698,7 @@
               options: {
                 indexAxis: "y",
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: {
                     display: true,
@@ -742,7 +743,7 @@
           const containerElement = document.getElementById('historyChartContainer');
 
           if (!loadingElement || !containerElement) {
-            console.error('History chart elements not found in the DOM');
+            console.error('History chart elements not found in theDOM');
             return;
           }
 
@@ -960,6 +961,7 @@
                 },
                 options: {
                   responsive: true,
+                  maintainAspectRatio: false,
                   plugins: {
                     title: {
                       display: true,
@@ -999,6 +1001,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: {
                     display: true,
@@ -1151,6 +1154,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: { display: true, text: "時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
@@ -1279,6 +1283,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: { display: true, text: "エリア別平均稼働率", font: { size: 18 } }
                 },
@@ -1392,6 +1397,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                   y: { beginAtZero: true, max: 100, title: { display: true, text: "平均稼働率 (%)" } }
                 }
@@ -1437,6 +1443,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: { display: true, text: "店舗履歴グラフ", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
@@ -1505,6 +1512,7 @@
               },
               options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   title: { display: true, text: "店舗詳細 時間帯別分析", font: { size: 20 } },
                   tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
@@ -1776,6 +1784,7 @@
                 },
                 options: {
                   responsive: true,
+                  maintainAspectRatio: false,
                   plugins: {
                     title: {
                       display: true,
