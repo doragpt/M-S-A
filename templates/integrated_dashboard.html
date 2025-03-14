@@ -803,24 +803,28 @@
                 // 全店舗かつ期間指定の場合は日付で集計
                 const dateMap = new Map();
 
-                data.forEach(record => {
-                  const d = new Date(record.timestamp);
-                  const dateKey = d.toLocaleDateString();
+                try {
+                  data.forEach(record => {
+                    const d = new Date(record.timestamp);
+                    const dateKey = d.toLocaleDateString();
 
-                  if (!dateMap.has(dateKey)) {
-                    dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
-                  }
+                    if (!dateMap.has(dateKey)) {
+                      dateMap.set(dateKey, { sum: 0, count: 0, rateSum: 0, rateSamples: 0 });
+                    }
 
-                  // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
-                  const rate = record.rate ? record.rate :
-                    (record.working_staff > 0 ? 
-                    ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+                    // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
+                    const rate = record.rate ? record.rate :
+                      (record.working_staff > 0 ? 
+                      ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
 
-                  if (rate > 0) {
-                    dateMap.get(dateKey).sum += rate;
-                    dateMap.get(dateKey).count += 1;
-                  }
-                });
+                    if (rate > 0) {
+                      dateMap.get(dateKey).sum += rate;
+                      dateMap.get(dateKey).count += 1;
+                    }
+                  });
+                } catch (dataError) {
+                  console.error("データ処理エラー:", dataError);
+                }
 
                 // 日付でソート
                 const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
@@ -871,45 +875,53 @@
                 console.warn("集計APIが利用できません。フォールバックを使用します。:", aggregatedError);
                 try {
                   const data = await fetchWithRetry("/api/history?limit=1000", {}, 3, 2000);
-                  
+
                   // データが配列であることを確認
                   if (!Array.isArray(data)) {
                     console.error("履歴データの形式が不正です:", data);
                     throw new Error("データ形式エラー");
                   }
-                  
+
                   // 日付ごとに集計
                   const dateMap = new Map();
 
-                  data.forEach(record => {
-                    if (!record || !record.timestamp) return; // 無効なレコードはスキップ
-                    
-                    const d = new Date(record.timestamp);
-                    const dateKey = d.toLocaleDateString();
+                  try {
+                    data.forEach(record => {
+                      if (!record || !record.timestamp) return; // 無効なレコードはスキップ
 
-                    if (!dateMap.has(dateKey)) {
-                      dateMap.set(dateKey, { sum: 0, count: 0 });
-                    }
+                      const d = new Date(record.timestamp);
+                      const dateKey = d.toLocaleDateString();
 
-                    // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
-                    const rate = record.rate ? record.rate :
-                      (record.working_staff > 0 ? 
-                      ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+                      if (!dateMap.has(dateKey)) {
+                        dateMap.set(dateKey, { sum: 0, count: 0 });
+                      }
 
-                    if (rate > 0) {
-                      dateMap.get(dateKey).sum += rate;
-                      dateMap.get(dateKey).count += 1;
-                    }
+                      // 稼働率を取得（既に計算済みのrateフィールドか、計算する）
+                      const rate = record.rate ? record.rate :
+                        (record.working_staff > 0 ? 
+                        ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0);
+
+                      if (rate > 0) {
+                        dateMap.get(dateKey).sum += rate;
+                        dateMap.get(dateKey).count += 1;
+                      }
+                    });
+                  } catch (dataError) {
+                    console.error("データ処理エラー:", dataError);
+                  }
+
+                  // 日付でソート
+                  const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
+
+                  labels = sortedDates;
+                  effectiveRates = sortedDates.map(date => {
+                    const entry = dateMap.get(date);
+                    return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
                   });
-
-                // 日付でソート
-                const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
-
-                labels = sortedDates;
-                effectiveRates = sortedDates.map(date => {
-                  const entry = dateMap.get(date);
-                  return entry.count > 0 ? (entry.sum / entry.count).toFixed(1) : "0.0";
-                });
+                } catch (historyFallbackError) {
+                  console.error("履歴データ取得エラー(フォールバック):", historyFallbackError);
+                  handleError(historyFallbackError, "updateHistoryChart-fallback");
+                }
               }
             }
 
@@ -923,12 +935,12 @@
             console.error("履歴グラフエラー:", error);
             console.error(error.stack);
             handleError(error, "updateHistoryChart");
-            
+
             // エラー時のフォールバック表示
             if (document.getElementById("historyStats")) {
               document.getElementById("historyStats").textContent = "データ取得中にエラーが発生しました。";
             }
-            
+
             // 空のチャートを表示
             const ctx = document.getElementById("historyChart");
             if (ctx && ctx.getContext) {
