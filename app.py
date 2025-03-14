@@ -406,18 +406,18 @@ def api_data():
         per_page: 1ページあたりの項目数（最大100）
     """
     from page_helper import paginate_query_results, format_store_status
-    
+
     try:
         app.logger.info("API /api/data へのリクエスト開始")
-        
+
         # 新しいセッションを作成
         session = db.session
-        
+
         # ページネーションの有無を確認
         use_pagination = 'page' in request.args
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100件に制限
-        
+
         # セッション内でのクエリ実行
         try:
             # 各店舗の最新タイムスタンプをサブクエリで取得
@@ -427,7 +427,7 @@ def api_data():
                 StoreStatus.store_name,
                 func.max(StoreStatus.timestamp).label("max_time")
             ).group_by(StoreStatus.store_name).subquery()
-            
+
             # メインクエリの構築
             app.logger.debug("メインクエリの構築開始")
             query = session.query(StoreStatus).join(
@@ -435,29 +435,29 @@ def api_data():
                 (StoreStatus.store_name == subq.c.store_name) &
                 (StoreStatus.timestamp == subq.c.max_time)
             ).order_by(StoreStatus.timestamp.desc())
-            
+
             # クエリの全結果を取得（集計値の計算用+全データ返却用）
             app.logger.debug("クエリ実行開始")
-            
+
             try:
                 # SQLiteのdatetime解析エラーを回避するための設定
                 from sqlite3 import register_adapter, register_converter
                 import datetime
-                
+
                 def adapt_datetime(dt):
                     return dt.isoformat()
-                
+
                 def convert_datetime(s):
                     try:
                         return datetime.datetime.fromisoformat(s.decode())
                     except ValueError:
                         # ISO形式でない場合は文字列として返す
                         return s.decode()
-                
+
                 # SQLiteにカスタムの変換関数を登録
                 register_adapter(datetime.datetime, adapt_datetime)
                 register_converter("timestamp", convert_datetime)
-                
+
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
             except exc.OperationalError as oe:
@@ -468,25 +468,25 @@ def api_data():
                 app.logger.error(f"クエリ実行エラー: {str(qe)}")
                 app.logger.error(traceback.format_exc())
                 return jsonify({"error": "クエリ実行中にエラーが発生しました", "details": str(qe)}), 500
-            
+
             # セッション完了後の処理
             if len(all_results) == 0:
                 app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
                 return jsonify({"data": [], "meta": {"total_count": 0, "message": "データが見つかりません"}}), 200  # 404から200に変更
-            
+
             # 集計値の計算
             total_store_count = len(all_results)
             total_working_staff = 0
             total_active_staff = 0
             valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
             max_rate = 0
-            
+
             app.logger.debug("集計値の計算開始")
             for r in all_results:
                 # NULL値チェック
                 working_staff = r.working_staff or 0
                 active_staff = r.active_staff or 0
-                
+
                 # 集計用データの収集
                 if working_staff > 0:
                     valid_stores += 1
@@ -502,7 +502,7 @@ def api_data():
                     except Exception as calc_err:
                         app.logger.warning(f"計算エラー: {str(calc_err)}, working_staff={working_staff}, active_staff={active_staff}")
                         pass
-            
+
             # 全体平均稼働率の計算
             avg_rate = 0
             if valid_stores > 0 and total_working_staff > 0:
@@ -514,14 +514,14 @@ def api_data():
                 except Exception as avg_err:
                     app.logger.warning(f"全体平均計算エラー: {str(avg_err)}")
                     avg_rate = 0
-            
+
             # データのフォーマット - JSTタイムゾーンを明示的に設定
             jst = pytz.timezone('Asia/Tokyo')
             # 現在時刻をJSTで取得（API呼び出し時刻）
             now_jst = datetime.now(jst)
-            
+
             app.logger.debug("レスポンスデータのフォーマット開始")
-            
+
             # データフォーマット共通関数
             def format_data_with_error_handling(items_to_format):
                 formatted_data = []
@@ -533,15 +533,15 @@ def api_data():
                         app.logger.error(f"アイテムフォーマットエラー: {str(fmt_err)}, item_id={getattr(item, 'id', 'unknown')}")
                         # エラーとなったアイテムはスキップして続行
                 return formatted_data
-            
+
             if use_pagination:
                 # ページネーション適用
                 try:
                     paginated_result = paginate_query_results(query, page, per_page)
                     items = paginated_result['items']
-                    
+
                     data = format_data_with_error_handling(items)
-                    
+
                     # ページネーション情報を含むレスポンス
                     response = {
                         "data": data,
@@ -563,7 +563,7 @@ def api_data():
                 except Exception as page_err:
                     app.logger.error(f"ページネーション処理エラー: {str(page_err)}")
                     app.logger.error(traceback.format_exc())
-                    
+
                     # ページネーションエラー時は全データで代替
                     data = format_data_with_error_handling(all_results)
                     response = {
@@ -582,7 +582,7 @@ def api_data():
             else:
                 # ページネーションなし - 全データ返却
                 data = format_data_with_error_handling(all_results)
-                
+
                 response = {
                     "data": data,
                     "meta": {
@@ -595,15 +595,15 @@ def api_data():
                         "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
                     }
                 }
-            
+
             app.logger.info("API /api/data レスポンス準備完了")
             return jsonify(response)
-        
+
         except Exception as e:
             app.logger.error(f"クエリ実行中の例外: {str(e)}")
             app.logger.error(traceback.format_exc())
             return jsonify({"error": "データベースクエリの実行中にエラーが発生しました", "details": str(e)}), 500
-    
+
     except Exception as e:
         app.logger.error(f"API /api/data 全体での例外: {str(e)}")
         app.logger.error(traceback.format_exc())
@@ -730,7 +730,7 @@ def api_history():
                 "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
             }
         }
-        return jsonify(data)
+        return jsonify(response)
     else:
         # 従来通りすべての結果を返す場合
         results = query.all()
@@ -924,12 +924,12 @@ def api_average_ranking():
                 func.max(StoreStatus.genre).label('genre'),
                 func.max(StoreStatus.area).label('area')
             ).filter(StoreStatus.working_staff > 0)
-            
+
             if biz_type:
                 subq = subq.filter(StoreStatus.biz_type == biz_type)
-                
+
             subq = subq.group_by(StoreStatus.store_name).having(func.count() >= 1).subquery()
-            
+
             query = db.session.query(
                 subq.c.store_name,
                 subq.c.avg_rate,
@@ -938,7 +938,7 @@ def api_average_ranking():
                 subq.c.genre,
                 subq.c.area
             ).order_by(subq.c.avg_rate.desc()).limit(limit)
-            
+
             results = query.all()
             app.logger.info(f"条件緩和後の取得件数: {len(results)}件")
 
@@ -1114,14 +1114,15 @@ def api_daily_averages():
         'store_name': r.store_name,
         'avg_rate': float(r.avg_rate),
         'sample_count': r.sample_count,
-        'start_date': r.start_date.astimezone(jst).isoformat(),
-        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'start_date': r.start_date.astimezone(jst).isoformat() if r.start_date else None,
+        'end_date': r.end_date.astimezone(jst).isoformat() if r.end_date else None,
         'biz_type': r.biz_type,
         'genre': r.genre,
         'area': r.area
     } for r in results]
 
-    return jsonify(data)
+    # フロントエンド側の前提に合わせてデータを包む
+    return jsonify({"data": data})
 
 @app.route('/api/averages/weekly')
 @cache.memoize(timeout=1800)  # キャッシュ：30分間有効
@@ -1138,14 +1139,15 @@ def api_weekly_averages():
         'store_name': r.store_name,
         'avg_rate': float(r.avg_rate),
         'sample_count': r.sample_count,
-        'start_date': r.start_date.astimezone(jst).isoformat(),
-        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'start_date': r.start_date.astimezone(jst).isoformat() if r.start_date else None,
+        'end_date': r.end_date.astimezone(jst).isoformat() if r.end_date else None,
         'biz_type': r.biz_type,
         'genre': r.genre,
         'area': r.area
     } for r in results]
 
-    return jsonify(data)
+    # フロントエンド側の前提に合わせてデータを包む
+    return jsonify({"data": data})
 
 @app.route('/api/averages/monthly')
 @cache.memoize(timeout=1800)  # キャッシュ：30分間有効
@@ -1162,14 +1164,15 @@ def api_monthly_averages():
         'store_name': r.store_name,
         'avg_rate': float(r.avg_rate),
         'sample_count': r.sample_count,
-        'start_date': r.start_date.astimezone(jst).isoformat(),
-        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'start_date': r.start_date.astimezone(jst).isoformat() if r.start_date else None,
+        'end_date': r.end_date.astimezone(jst).isoformat() if r.end_date else None,
         'biz_type': r.biz_type,
         'genre': r.genre,
         'area': r.area
     } for r in results]
 
-    return jsonify(data)
+    # フロントエンド側の前提に合わせてデータを包む
+    return jsonify({"data": data})
 
 @app.route('/api/averages/stores')
 @cache.memoize(timeout=3600)  # キャッシュ：1時間有効
@@ -1186,14 +1189,15 @@ def api_store_averages():
         'store_name': r.store_name,
         'avg_rate': float(r.avg_rate),
         'sample_count': r.sample_count,
-        'start_date': r.start_date.astimezone(jst).isoformat(),
-        'end_date': r.end_date.astimezone(jst).isoformat(),
+        'start_date': r.start_date.astimezone(jst).isoformat() if r.start_date else None,
+        'end_date': r.end_date.astimezone(jst).isoformat() if r.end_date else None,
         'biz_type': r.biz_type,
         'genre': r.genre,
         'area': r.area
     } for r in results]
 
-    return jsonify(data)
+    # フロントエンド側の前提に合わせてデータを包む
+    return jsonify({"data": data})
 
 @app.route('/api/history/optimized')
 @cache.memoize(timeout=300)  # キャッシュ：5分間有効
