@@ -111,7 +111,7 @@ def format_store_status(item, timezone=None):
         }
 
     try:
-        # タイムスタンプがdatetime型でない場合の変換処理
+        # タイムスタンプ処理 - データベースからのISO 8601形式に対応
         timestamp = item.get('timestamp')
 
         if timestamp is not None:
@@ -120,45 +120,63 @@ def format_store_status(item, timezone=None):
                 pass
             elif isinstance(timestamp, str):
                 try:
-                    # ISO 8601形式を試す
+                    # ISO 8601形式のパース（マイクロ秒対応）
                     if 'T' in timestamp:
+                        # Z形式をタイムゾーン付きに変換
+                        iso_str = timestamp.replace('Z', '+00:00')
+                        
+                        # タイムゾーン情報がない場合
+                        if '+' not in iso_str and '-' not in iso_str[10:]:
+                            iso_str = iso_str + '+00:00'
+                        
                         try:
-                            # Python 3.7以降の場合はfromisoformat()を使用
+                            # Python 3.7以降はfromisoformatを使用
                             if hasattr(datetime.datetime, 'fromisoformat'):
-                                # Z形式をタイムゾーン付きに変換
-                                iso_str = timestamp.replace('Z', '+00:00')
                                 timestamp = datetime.datetime.fromisoformat(iso_str)
                             else:
-                                # マイクロ秒を持つISO形式
-                                if '.' in timestamp:
-                                    # マイクロ秒を除去
-                                    main_part = timestamp.split('+')[0] if '+' in timestamp else timestamp
-                                    main_part = main_part.split('Z')[0] if 'Z' in main_part else main_part
-                                    date_part, time_part = main_part.split('T')
-                                    time_base = time_part.split('.')[0]
-                                    timestamp = datetime.datetime.strptime(f"{date_part}T{time_base}", '%Y-%m-%dT%H:%M:%S')
+                                # マイクロ秒ありのフォーマット対応
+                                if '.' in iso_str:
+                                    main_part = iso_str.split('+')[0]
+                                    timestamp = datetime.datetime.strptime(main_part, '%Y-%m-%dT%H:%M:%S.%f')
                                 else:
-                                    # マイクロ秒なしISO形式
-                                    clean_ts = timestamp.split('+')[0].split('Z')[0]
-                                    timestamp = datetime.datetime.strptime(clean_ts, '%Y-%m-%dT%H:%M:%S')
+                                    # マイクロ秒なし
+                                    main_part = iso_str.split('+')[0]
+                                    timestamp = datetime.datetime.strptime(main_part, '%Y-%m-%dT%H:%M:%S')
                         except ValueError as e:
-                            logger.warning(f"ISO形式の日付変換エラー: {e}, 値: {timestamp}")
-                            # フォールバック: 日付部分だけを使用
+                            logger.warning(f"ISO形式のパースに失敗、フォールバック: {e}")
+                            # マイクロ秒形式を直接試す（database.pyのエラーに対応）
                             try:
-                                date_part = timestamp.split('T')[0]
-                                timestamp = datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                                if '.' in timestamp:
+                                    parts = timestamp.split('.')
+                                    base = parts[0]
+                                    # 最大6桁のマイクロ秒まで処理
+                                    micro = parts[1][:6]
+                                    if len(micro) < 6:
+                                        micro = micro.ljust(6, '0')
+                                    timestamp = datetime.datetime.strptime(f"{base}.{micro}", '%Y-%m-%dT%H:%M:%S.%f')
+                                else:
+                                    timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S')
                             except ValueError:
-                                timestamp = datetime.datetime.now()
+                                # 日付部分だけを使用
+                                try:
+                                    date_part = timestamp.split('T')[0]
+                                    timestamp = datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                                except ValueError:
+                                    logger.warning(f"日付変換に最終的に失敗: {timestamp}")
+                                    timestamp = datetime.datetime.now()
                     else:
                         # 通常の日時形式を試す
                         try:
-                            timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+                            if '.' in timestamp:
+                                timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+                            else:
+                                timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
                         except ValueError:
-                            # 別形式を試す
+                            # 日付のみのフォーマット
                             try:
                                 timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d')
                             except ValueError:
-                                logger.warning(f"日付変換に失敗: {timestamp}")
+                                logger.warning(f"日付変換に失敗、現在時刻を使用: {timestamp}")
                                 timestamp = datetime.datetime.now()
                 except Exception as dt_err:
                     logger.error(f"日付変換中の予期しないエラー: {dt_err}, 値: {timestamp}")

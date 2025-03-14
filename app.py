@@ -411,7 +411,7 @@ def api_data():
     # JSTタイムゾーン設定（エラー時も必要なので最初に定義）
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         app.logger.info("API /api/data へのリクエスト開始")
 
@@ -440,13 +440,13 @@ def api_data():
         try:
             # 各店舗の最新レコードを取得するためのサブクエリ
             from sqlalchemy import func, desc
-            
+
             # 最新データのクエリを作成
             latest_records_subquery = db.session.query(
                 StoreStatus.store_name,
                 func.max(StoreStatus.timestamp).label('max_timestamp')
             ).group_by(StoreStatus.store_name).subquery()
-            
+
             # 最新レコードをサブクエリで結合して取得
             query = db.session.query(StoreStatus).join(
                 latest_records_subquery,
@@ -455,7 +455,7 @@ def api_data():
                     StoreStatus.timestamp == latest_records_subquery.c.max_timestamp
                 )
             )
-            
+
             # データを取得
             try:
                 all_results = query.all()
@@ -463,17 +463,17 @@ def api_data():
             except Exception as query_err:
                 app.logger.error(f"クエリ実行エラー: {str(query_err)}")
                 app.logger.error(traceback.format_exc())
-                
+
                 # SQLAlchemyでの取得に失敗した場合、直接SQLiteを使用
                 try:
                     app.logger.info("SQLiteを直接使用して再試行します")
                     conn = get_db_connection()
-                    
+
                     # 接続が取得できなかった場合
                     if conn is None:
                         app.logger.error("データベース接続が取得できませんでした")
                         return jsonify(fallback_response), 200
-                    
+
                     # 単純なクエリを実行
                     query = """
                     WITH LatestTimestamps AS (
@@ -491,7 +491,7 @@ def api_data():
                 except Exception as sqlite_err:
                     app.logger.error(f"SQLite直接取得エラー: {str(sqlite_err)}")
                     app.logger.error(traceback.format_exc())
-                    
+
                     # 最後の手段：単純に最新の100件を取得
                     try:
                         conn = get_db_connection()
@@ -506,7 +506,7 @@ def api_data():
                     except Exception as final_err:
                         app.logger.error(f"最終フォールバック取得エラー: {str(final_err)}")
                         return jsonify(fallback_response), 200
-            
+
             # データが0件の場合
             if len(all_results) == 0:
                 app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
@@ -518,14 +518,14 @@ def api_data():
                         "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                     }
                 }), 200
-            
+
             # 集計値の計算
             total_store_count = len(all_results)
             total_working_staff = 0
             total_active_staff = 0
             valid_stores = 0
             max_rate = 0
-            
+
             app.logger.debug("集計値の計算開始")
             for item in all_results:
                 # NULL値チェック
@@ -539,34 +539,34 @@ def api_data():
                         # SQLiteのRowオブジェクトの場合
                         working_staff = item['working_staff'] if item['working_staff'] is not None else 0
                         active_staff = item['active_staff'] if item['active_staff'] is not None else 0
-                    
+
                     # 数値型チェック
                     working_staff = int(working_staff)
                     active_staff = int(active_staff)
-                        
+
                     # 集計用データの収集
                     if working_staff > 0:
                         valid_stores += 1
                         total_working_staff += working_staff
                         total_active_staff += active_staff
-                        
+
                         # 稼働率計算
                         rate = ((working_staff - active_staff) / working_staff) * 100
                         max_rate = max(max_rate, rate)
                 except (ValueError, TypeError, ZeroDivisionError, KeyError, AttributeError) as e:
                     app.logger.debug(f"集計スキップ: {str(e)}")
                     continue
-            
+
             # 全体平均稼働率の計算
             avg_rate = 0
             if valid_stores > 0 and total_working_staff > 0:
                 avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
-            
+
             # データをフォーマット
             app.logger.debug("データフォーマット開始")
             formatted_data = []
             format_errors = 0
-            
+
             for item in all_results:
                 try:
                     formatted_item = format_store_status(item, jst)
@@ -577,26 +577,26 @@ def api_data():
                     app.logger.warning(traceback.format_exc())
                     format_errors += 1
                     # エラーでもformat_store_statusが辞書を返すようになったのでエラーは発生しない
-            
+
             # ページネーション処理
             if use_pagination:
                 try:
                     # 手動ページネーション（クエリではなく結果に対して）
                     start_idx = (page - 1) * per_page
                     end_idx = start_idx + per_page
-                    
+
                     # インデックス範囲チェック
                     if start_idx >= len(formatted_data):
                         start_idx = 0
                         page = 1
-                    
+
                     paged_data = formatted_data[start_idx:end_idx]
-                    
+
                     # ページネーション情報
                     total_pages = (len(formatted_data) + per_page - 1) // per_page if per_page > 0 else 1
                     has_next = page < total_pages
                     has_prev = page > 1
-                    
+
                     response = {
                         "data": paged_data,
                         "meta": {
@@ -648,14 +648,14 @@ def api_data():
                         "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                     }
                 }
-                
+
             app.logger.info(f"API /api/data レスポンス準備完了: {len(response['data'])}件のデータ")
             return jsonify(response), 200
-            
+
         except Exception as e:
             app.logger.error(f"クエリ/データ処理中の例外: {str(e)}")
             app.logger.error(traceback.format_exc())
-            
+
             # 統一されたエラーレスポンス形式
             return jsonify({
                 "data": [],
@@ -665,11 +665,11 @@ def api_data():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
-            
+
     except Exception as e:
         app.logger.error(f"API /api/data 全体での例外: {str(e)}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -727,7 +727,7 @@ def bulk_add_store_urls():
     try:
         db.session.commit()
         if invalid_urls:
-            flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。無効なURL: {", ".join(invalid_urls[:5])}{"..." if len(invalid_urls) > 5 else ""}', 'warning')
+            flash(f'{success_count}件のURLを追加しました。{error_count}件は失敗しました。無効なURL: {`, '.join(invalid_urls[:5])}{"..." if len(invalid_urls) > 5 else ""}', 'warning')
         else:
             flash(f'{success_count}件のURLを追加しました。', 'success')
     except Exception as e:
@@ -756,7 +756,7 @@ def api_history():
     # JSTタイムゾーン
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         # クエリパラメータの取得
         store = request.args.get('store')
@@ -770,7 +770,7 @@ def api_history():
         try:
             # クエリ条件を構築
             query = StoreStatus.query
-            
+
             # フィルタリング条件の適用
             if store:
                 query = query.filter(StoreStatus.store_name == store)
@@ -797,61 +797,61 @@ def api_history():
 
             # ソート順
             query = query.order_by(StoreStatus.timestamp.asc())
-            
+
             # 総件数を取得
             total_count = query.count()
-            
+
             # ページネーションまたは制限を適用
             if 'page' in request.args or 'per_page' in request.args:
                 offset = (page - 1) * per_page
                 query = query.limit(per_page).offset(offset)
             elif limit:
                 query = query.limit(limit)
-            
+
             try:
                 # データ取得
                 results = query.all()
             except Exception as query_error:
                 app.logger.error(f"SQLAlchemyクエリエラー: {query_error}")
                 app.logger.error(traceback.format_exc())
-                
+
                 # SQLiteに直接接続して取得を試みる
                 try:
                     app.logger.info("SQLiteを直接使用して再試行します")
                     conn = get_db_connection()
-                    
+
                     # SQLクエリの基本部分
                     sql_query = "SELECT * FROM store_status WHERE 1=1"
                     params = []
-                    
+
                     # フィルタリング条件の適用
                     if store:
                         sql_query += " AND store_name = ?"
                         params.append(store)
-                    
+
                     # 日付フィルタは単純化（SQLite文字列比較を使用）
                     if start_date:
                         sql_query += " AND date(timestamp) >= date(?)"
                         params.append(start_date)
-                    
+
                     if end_date:
                         sql_query += " AND date(timestamp) <= date(?)"
                         params.append(end_date)
-                    
+
                     # ソート順
                     sql_query += " ORDER BY timestamp ASC"
-                    
+
                     # 制限
                     if 'page' in request.args or 'per_page' in request.args:
                         offset = (page - 1) * per_page
                         sql_query += f" LIMIT {per_page} OFFSET {offset}"
                     elif limit:
                         sql_query += f" LIMIT {limit}"
-                    
+
                     # 総件数の取得（単純化した近似値）
                     count_sql = "SELECT COUNT(*) FROM store_status"
                     total_count = conn.execute(count_sql).fetchone()[0]
-                    
+
                     # データ取得
                     results = list(conn.execute(sql_query, params).fetchall())
                     conn.close()
@@ -865,8 +865,8 @@ def api_history():
                             "message": "データベース処理中にエラーが発生しました",
                             "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                         }
-                    }), 200
-            
+                    }), 200  # 200を返す（統一化）
+
             # データのフォーマット
             data = []
             for item in results:
@@ -877,13 +877,13 @@ def api_history():
                 except Exception as fmt_err:
                     app.logger.warning(f"フォーマットエラー: {fmt_err}")
                     # format_store_statusが改善されているのでエラーは発生しにくい
-            
+
             # ページネーション情報
             if 'page' in request.args or 'per_page' in request.args:
                 total_pages = (total_count + per_page - 1) // per_page if per_page > 0 else 0
                 has_next = page < total_pages
                 has_prev = page > 1
-                
+
                 meta = {
                     "page": page,
                     "per_page": per_page,
@@ -909,17 +909,17 @@ def api_history():
                         "end_date": end_date if end_date else None
                     }
                 }
-            
+
             # レスポンス返却
             return jsonify({
                 "data": data,
                 "meta": meta
             })
-            
+
         except Exception as db_error:
             app.logger.error(f"データベース処理エラー: {db_error}")
             app.logger.error(traceback.format_exc())
-            
+
             # 統一されたエラーレスポンス形式
             return jsonify({
                 "data": [],
@@ -929,11 +929,11 @@ def api_history():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200  # 200を返す（統一化）
-            
+
     except Exception as e:
         app.logger.error(f"API /api/history 全体での例外: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1088,19 +1088,19 @@ def api_average_ranking():
 
         # SQLiteを直接使用する方法に変更
         conn = get_db_connection()
-        
+
         try:
             # フィルタリング条件を構築
             conditions = ["working_staff > 0"]
             params = []
-            
+
             if biz_type:
                 conditions.append("biz_type = ?")
                 params.append(biz_type)
-            
+
             # 条件文字列
             where_clause = " AND ".join(conditions)
-            
+
             # 平均稼働率の計算とランキングクエリ
             query = f"""
             SELECT 
@@ -1117,33 +1117,33 @@ def api_average_ranking():
             ORDER BY avg_rate DESC
             LIMIT ?
             """
-            
+
             # パラメータの追加
             params.append(min_samples)
             params.append(limit)
-            
+
             # クエリ実行
             app.logger.debug(f"実行SQL: {query}")
             app.logger.debug(f"パラメータ: {params}")
-            
+
             cursor = conn.execute(query, params)
             results = cursor.fetchall()
-            
+
             # 結果件数ログ出力
             app.logger.info(f"平均稼働ランキング取得: {len(results)}件のデータを取得")
-            
+
             # 結果が0件の場合、サンプル数を緩和して再取得
             if len(results) == 0 and min_samples > 1:
                 app.logger.warning(f"サンプル数{min_samples}以上の店舗が見つからなかったため、条件を緩和します")
-                
+
                 # パラメータを更新（サンプル数条件を1に）
                 params[-2] = 1
-                
+
                 # 再度クエリ実行
                 cursor = conn.execute(query, params)
                 results = cursor.fetchall()
                 app.logger.info(f"条件緩和後の取得件数: {len(results)}件")
-            
+
             # 結果を整形
             data = []
             for r in results:
@@ -1154,7 +1154,7 @@ def api_average_ranking():
                         avg_rate_float = float(avg_rate)
                     except (ValueError, TypeError):
                         avg_rate_float = 0.0
-                
+
                 data.append({
                     'store_name': r['store_name'],
                     'avg_rate': round(avg_rate_float, 1),
@@ -1163,10 +1163,10 @@ def api_average_ranking():
                     'genre': r['genre'] if r['genre'] else '不明',
                     'area': r['area'] if r['area'] else '不明'
                 })
-            
+
             # 接続クローズ
             conn.close()
-            
+
             # 統一されたレスポンス形式で返す
             return jsonify({
                 "data": data,
@@ -1177,14 +1177,14 @@ def api_average_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             })
-            
+
         except Exception as query_error:
             if conn:
                 conn.close()
-            
+
             app.logger.error(f"ランキングクエリエラー: {query_error}")
             app.logger.error(traceback.format_exc())
-            
+
             # 統一されたエラーレスポンス形式
             return jsonify({
                 "data": [],
@@ -1194,11 +1194,11 @@ def api_average_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200  # 200を返す（統一化）
-            
+
     except Exception as e:
         app.logger.error(f"平均稼働ランキング取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # JSTタイムゾーン (エラー処理のためにここでも定義)
         try:
             jst = pytz.timezone('Asia/Tokyo')
@@ -1206,7 +1206,7 @@ def api_average_ranking():
             current_time = now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
         except Exception:
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1228,11 +1228,11 @@ def api_genre_ranking():
         biz_type: 業種でフィルタリング（必須）
     """
     biz_type = request.args.get('biz_type')
-    
+
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     if not biz_type:
         return jsonify({
             "data": [],
@@ -1245,7 +1245,7 @@ def api_genre_ranking():
     try:
         # SQLiteを直接使用する方法に変更
         conn = get_db_connection()
-        
+
         try:
             # ジャンル別の平均稼働率を計算するクエリ
             query = """
@@ -1258,17 +1258,17 @@ def api_genre_ranking():
             GROUP BY genre
             ORDER BY avg_rate DESC
             """
-            
+
             # クエリ実行
             app.logger.debug(f"実行SQL: {query}")
             app.logger.debug(f"パラメータ: {biz_type}")
-            
+
             cursor = conn.execute(query, [biz_type])
             results = cursor.fetchall()
-            
+
             # 接続クローズ
             conn.close()
-            
+
             # 結果が空の場合は空の配列データを返す（統一形式）
             if not results:
                 return jsonify({
@@ -1280,13 +1280,13 @@ def api_genre_ranking():
                         "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                     }
                 }), 200
-            
+
             # 結果を整形
             data = []
             for result in results:
                 genre = result['genre'] if result['genre'] else "不明"
                 store_count = result['store_count']
-                
+
                 # avg_rate の安全な取得と変換
                 avg_rate = 0
                 try:
@@ -1294,13 +1294,13 @@ def api_genre_ranking():
                         avg_rate = float(result['avg_rate'])
                 except (ValueError, TypeError) as e:
                     app.logger.warning(f"平均値の変換エラー: {e}, genre: {genre}")
-                    
+
                 data.append({
                     "genre": genre,
                     "store_count": store_count,
                     "avg_rate": round(avg_rate, 1)
                 })
-            
+
             # 統一されたレスポンス形式で返す
             return jsonify({
                 "data": data,
@@ -1310,14 +1310,14 @@ def api_genre_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
-            
+
         except Exception as query_error:
             if conn:
                 conn.close()
-                
+
             app.logger.error(f"ジャンルランキングクエリエラー: {query_error}")
             app.logger.error(traceback.format_exc())
-            
+
             # 統一されたエラーレスポンス形式
             return jsonify({
                 "data": [],
@@ -1328,11 +1328,11 @@ def api_genre_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200  # 統一したレスポンスコード
-            
+
     except Exception as e:
         app.logger.error(f"ジャンルランキング取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1354,11 +1354,11 @@ def api_aggregated_data():
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         # SQLiteを直接使用する方法に変更
         conn = get_db_connection()
-        
+
         try:
             # 日付ごとの平均稼働率を計算するクエリ
             query = """
@@ -1371,36 +1371,36 @@ def api_aggregated_data():
             GROUP BY date(timestamp)
             ORDER BY date(timestamp)
             """
-            
+
             # クエリ実行
             app.logger.debug(f"実行SQL: {query}")
-            
+
             cursor = conn.execute(query)
             results = cursor.fetchall()
-            
+
             # 接続クローズ
             conn.close()
-            
+
             app.logger.info(f"集計クエリ実行結果: {len(results)}件のデータを取得")
-            
+
             # 結果を整形
             data = []
             skipped_records = 0
-            
+
             for r in results:
                 # 詳細なデバッグログを追加
                 app.logger.debug(f"処理中のレコード: date={r['date']}, avg_rate={r['avg_rate']}, sample_count={r['sample_count']}")
-                
+
                 # date属性がNoneの場合はスキップ
                 if r['date'] is None:
                     app.logger.warning(f"日付が未設定のレコードをスキップします: {r}")
                     skipped_records += 1
                     continue
-                
+
                 try:
                     # 日付文字列の取得
                     date_str = r['date']
-                    
+
                     # 平均稼働率と件数のチェック
                     avg_rate = 0.0
                     if r['avg_rate'] is not None:
@@ -1408,9 +1408,9 @@ def api_aggregated_data():
                             avg_rate = float(r['avg_rate'])
                         except (ValueError, TypeError) as e:
                             app.logger.warning(f"平均稼働率の変換に失敗しました: {r['avg_rate']}, エラー: {e}")
-                    
+
                     sample_count = r['sample_count'] or 0
-                    
+
                     data.append({
                         'date': date_str,
                         'avg_rate': round(avg_rate, 1),  # 丸める処理を追加
@@ -1422,10 +1422,10 @@ def api_aggregated_data():
                     app.logger.error(traceback.format_exc())
                     skipped_records += 1
                     continue
-            
+
             # 集計情報のログ出力
             app.logger.info(f"集計データ処理完了: 有効={len(data)}件, スキップ={skipped_records}件")
-            
+
             # 統一されたレスポンス形式で返す
             return jsonify({
                 "data": data,
@@ -1435,14 +1435,14 @@ def api_aggregated_data():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
-            
+
         except Exception as query_error:
             if conn:
                 conn.close()
-                
+
             app.logger.error(f"集計データクエリエラー: {query_error}")
             app.logger.error(traceback.format_exc())
-            
+
             # 統一されたエラーレスポンス形式
             return jsonify({
                 "data": [],
@@ -1452,11 +1452,11 @@ def api_aggregated_data():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200  # 統一したレスポンスコード
-            
+
     except Exception as e:
         app.logger.error(f"API集計データ取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1580,7 +1580,7 @@ def api_history_optimized():
     # JSTタイムゾーン
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         # 店舗名フィルター（指定された場合は完全なデータを返す）
         store = request.args.get('store')
@@ -1648,7 +1648,7 @@ def api_history_optimized():
 
                 # ダウンサンプリングされたデータ
                 sampled_data = []
-                
+
                 # サンプリング処理でエラーが発生した店舗数
                 error_stores = 0
 
@@ -1664,7 +1664,7 @@ def api_history_optimized():
                         # サンプリング
                         sampled_store_data = store_data[::sample_rate]
                         sampled_data.extend(sampled_store_data)
-                        
+
                         app.logger.debug(f"店舗 '{store_name}' から {len(sampled_store_data)}/{data_len} のデータをサンプリング")
                     except Exception as store_err:
                         app.logger.error(f"店舗 '{store_name}' のサンプリング中にエラー: {store_err}")
@@ -1718,7 +1718,7 @@ def api_history_optimized():
     except Exception as e:
         app.logger.error(f"API /api/history/optimized 全体での例外: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1739,7 +1739,7 @@ def api_area_stats():
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         # 最新の各店舗データを取得するサブクエリ
         subq = db.session.query(
@@ -1773,7 +1773,7 @@ def api_area_stats():
             # 結果のアンパック - NULL安全対応
             area = getattr(result, 'area', None) or '不明'
             store_count = getattr(result, 'store_count', 0)
-            
+
             # avg_rate の安全な取得と変換
             avg_rate = 0
             try:
@@ -1782,7 +1782,7 @@ def api_area_stats():
                     avg_rate = float(raw_avg_rate)
             except (ValueError, TypeError) as e:
                 app.logger.warning(f"平均値の変換エラー: {e}, raw_value: {getattr(result, 'avg_rate', None)}")
-            
+
             formatted_results.append({
                 'area': area,
                 'store_count': store_count,
@@ -1800,7 +1800,7 @@ def api_area_stats():
     except Exception as e:
         app.logger.error(f"エリア統計取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1821,7 +1821,7 @@ def api_store_names():
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         # 重複を除去した店舗名のリストを取得
         store_names = db.session.query(StoreStatus.store_name).distinct().all()
@@ -1841,7 +1841,7 @@ def api_store_names():
     except Exception as e:
         app.logger.error(f"店舗名リスト取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": [],
@@ -1865,7 +1865,7 @@ def api_top_ranking():
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
-    
+
     try:
         limit = request.args.get('limit', 3, type=int)
 
@@ -1924,7 +1924,7 @@ def api_top_ranking():
     except Exception as e:
         app.logger.error(f"トップランキング取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 統一されたエラーレスポンス形式
         return jsonify({
             "data": {},
@@ -1949,5 +1949,5 @@ if __name__ == '__main__':
     print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
 
     # サーバー起動 - シンプルな設定
-    print(f"サーバーを起動しています: http://0.0.0.0:{port}")
+    print(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
     socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
