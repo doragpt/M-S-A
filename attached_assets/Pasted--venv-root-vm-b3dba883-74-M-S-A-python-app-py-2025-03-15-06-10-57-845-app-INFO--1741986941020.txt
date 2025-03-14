@@ -1,0 +1,164 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python app.py
+2025-03-15 06:10:57,845 - app - INFO - データベーステーブルを作成しています...
+2025-03-15 06:10:57,846 - app - INFO - モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage
+2025-03-15 06:10:57,846 - app - INFO - 登録テーブル数: 6
+2025-03-15 06:10:57,849 - app - INFO - 作成されたテーブル: daily_averages, monthly_averages, sqlite_sequence, store_averages, store_status, store_urls, weekly_averages
+2025-03-15 06:10:57,849 - app - INFO - データベーステーブルの作成が完了しました
+2025-03-15 06:10:58,011 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 06:10:58,013 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 06:10:58,013 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-15 06:10:58,014 - apscheduler.scheduler - INFO - Added job "maintenance_task" to job store "default"
+2025-03-15 06:10:58,014 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-15 06:10:58 JST+0900
+サーバーを起動しています: http://0.0.0.0:5000
+ * Serving Flask app 'app' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+2025-03-15 06:10:58,029 - werkzeug - WARNING -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2025-03-15 06:10:58,029 - werkzeug - INFO -  * Running on http://160.251.196.100:5000/ (Press CTRL+C to quit)
+2025-03-15 06:10:58,029 - werkzeug - INFO -  * Restarting with stat
+2025-03-15 06:10:58,698 - app - INFO - データベーステーブルを作成しています...
+2025-03-15 06:10:58,699 - app - INFO - モデル: StoreStatus, StoreURL, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage
+2025-03-15 06:10:58,699 - app - INFO - 登録テーブル数: 6
+2025-03-15 06:10:58,703 - app - INFO - 作成されたテーブル: daily_averages, monthly_averages, sqlite_sequence, store_averages, store_status, store_urls, weekly_averages
+2025-03-15 06:10:58,703 - app - INFO - データベーステーブルの作成が完了しました
+2025-03-15 06:10:58,871 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 06:10:58,874 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-15 06:10:58,874 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-15 06:10:58,874 - apscheduler.scheduler - INFO - Added job "maintenance_task" to job store "default"
+2025-03-15 06:10:58,874 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-15 06:10:58 JST+0900
+サーバーを起動しています: http://0.0.0.0:5000
+2025-03-15 06:10:58,889 - werkzeug - WARNING -  * Debugger is active!
+2025-03-15 06:10:58,892 - werkzeug - INFO -  * Debugger PIN: 749-046-851
+2025-03-15 06:11:01,116 - app - INFO - API /api/data へのリクエスト開始
+2025-03-15 06:11:01,132 - app - ERROR - クエリ実行エラー: Couldn't parse datetime string: '2025-02-19T03:03:42.281587'
+2025-03-15 06:11:01,135 - app - ERROR - Traceback (most recent call last):
+  File "/root/M-S-A/app.py", line 441, in api_data
+    all_results = query.all()
+                  ^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2773, in all
+    return self._iter().all()
+           ^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1476, in all
+    return self._allrows()
+           ^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 401, in _allrows
+    rows = self._fetchall_impl()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1389, in _fetchall_impl
+    return self._real_result._fetchall_impl()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1813, in _fetchall_impl
+    return list(self.iterator)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 147, in chunks
+    fetch = cursor._raw_all_rows()
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 393, in _raw_all_rows
+    return [make_row(row) for row in rows]
+            ^^^^^^^^^^^^^
+ValueError: Couldn't parse datetime string: '2025-02-19T03:03:42.281587'
+
+2025-03-15 06:11:01,137 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:01] "GET /api/data HTTP/1.1" 500 -
+2025-03-15 06:11:03,386 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2088, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2073, in wsgi_app
+    response = self.handle_exception(e)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2070, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1515, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 877, in decorated_function
+    rv = self._call_fn(f, *args, **kwargs)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 180, in _call_fn
+    return ensure_sync(fn)(*args, **kwargs)
+  File "/root/M-S-A/app.py", line 754, in api_history
+    results = query.all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2773, in all
+    return self._iter().all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1476, in all
+    return self._allrows()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 401, in _allrows
+    rows = self._fetchall_impl()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1389, in _fetchall_impl
+    return self._real_result._fetchall_impl()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1813, in _fetchall_impl
+    return list(self.iterator)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 147, in chunks
+    fetch = cursor._raw_all_rows()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 393, in _raw_all_rows
+    return [make_row(row) for row in rows]
+ValueError: Couldn't parse datetime string: '2025-02-19T03:03:42.281587'
+2025-03-15 06:11:03,463 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-03-15 06:11:03,486 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-03-15 06:11:03,566 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history?__debugger__=yes&cmd=resource&f=ubuntu.ttf HTTP/1.1" 200 -
+2025-03-15 06:11:03,573 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-03-15 06:11:03,690 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:03] "GET /api/history?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-03-15 06:11:05,335 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2088, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2073, in wsgi_app
+    response = self.handle_exception(e)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2070, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1515, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 877, in decorated_function
+    rv = self._call_fn(f, *args, **kwargs)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 180, in _call_fn
+    return ensure_sync(fn)(*args, **kwargs)
+  File "/root/M-S-A/app.py", line 1332, in api_history_optimized
+    return api_history()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 877, in decorated_function
+    rv = self._call_fn(f, *args, **kwargs)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_caching/__init__.py", line 180, in _call_fn
+    return ensure_sync(fn)(*args, **kwargs)
+  File "/root/M-S-A/app.py", line 754, in api_history
+    results = query.all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2773, in all
+    return self._iter().all()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1476, in all
+    return self._allrows()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 401, in _allrows
+    rows = self._fetchall_impl()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1389, in _fetchall_impl
+    return self._real_result._fetchall_impl()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 1813, in _fetchall_impl
+    return list(self.iterator)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 147, in chunks
+    fetch = cursor._raw_all_rows()
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py", line 393, in _raw_all_rows
+    return [make_row(row) for row in rows]
+ValueError: Couldn't parse datetime string: '2025-02-19T03:03:42.281587'
+2025-03-15 06:11:05,386 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-03-15 06:11:05,411 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-03-15 06:11:05,499 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized?__debugger__=yes&cmd=resource&f=ubuntu.ttf HTTP/1.1" 200 -
+2025-03-15 06:11:05,508 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-03-15 06:11:05,623 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:05] "GET /api/history/optimized?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-03-15 06:11:07,239 - app - INFO - ランキング取得パラメータ: biz_type=None, limit=5000, min_samples=1
+2025-03-15 06:11:07,248 - app - INFO - 平均稼働ランキング取得: 27件のデータを取得
+2025-03-15 06:11:07,249 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:07] "GET /api/ranking/average HTTP/1.1" 200 -
+2025-03-15 06:11:09,674 - werkzeug - INFO - 182.171.40.172 - - [15/Mar/2025 06:11:09] "GET /api/area-stats HTTP/1.1" 200 -
