@@ -406,95 +406,145 @@ def api_data():
         per_page: 1ページあたりの項目数（最大100）
     """
     from page_helper import paginate_query_results, format_store_status
-
-    # 各店舗の最新タイムスタンプをサブクエリで取得
-    subq = db.session.query(
-        StoreStatus.store_name,
-        func.max(StoreStatus.timestamp).label("max_time")
-    ).group_by(StoreStatus.store_name).subquery()
-
-    query = db.session.query(StoreStatus).join(
-        subq,
-        (StoreStatus.store_name == subq.c.store_name) &
-        (StoreStatus.timestamp == subq.c.max_time)
-    ).order_by(StoreStatus.timestamp.desc())
-
-    # ページネーションの有無を確認
-    use_pagination = 'page' in request.args
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
-
-    # クエリの全結果を取得（集計値の計算用+全データ返却用）
-    all_results = query.all()
-
-    # 集計値の計算
-    total_store_count = len(all_results)
-    total_working_staff = 0
-    total_active_staff = 0
-    valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
-    max_rate = 0
-
-    for r in all_results:
-        # 集計用データの収集
-        if r.working_staff > 0:
-            valid_stores += 1
-            total_working_staff += r.working_staff
-            total_active_staff += r.active_staff
-            rate = ((r.working_staff - r.active_staff) / r.working_staff) * 100
-            max_rate = max(max_rate, rate)
-
-    # 全体平均稼働率の計算
-    avg_rate = 0
-    if valid_stores > 0 and total_working_staff > 0:
-        avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
-
-    # データのフォーマット - JSTタイムゾーンを明示的に設定
-    jst = pytz.timezone('Asia/Tokyo')
-    # 現在時刻をJSTで取得（API呼び出し時刻）
-    now_jst = datetime.now(jst)
-
-    if use_pagination:
-        # ページネーション適用
-        paginated_result = paginate_query_results(query, page, per_page)
-        items = paginated_result['items']
-        data = [format_store_status(item, jst) for item in items]
-
-        # ページネーション情報を含むレスポンス
-        response = {
-            "data": data,
-            "meta": {
-                "total_count": total_store_count,
-                "valid_stores": valid_stores,
-                "avg_rate": round(avg_rate, 1),
-                "max_rate": round(max_rate, 1),
-                "total_working_staff": total_working_staff,
-                "total_active_staff": total_active_staff,
-                "page": paginated_result['meta']['page'],
-                "per_page": paginated_result['meta']['per_page'],
-                "total_pages": paginated_result['meta']['total_pages'],
-                "has_prev": paginated_result['meta']['has_prev'],
-                "has_next": paginated_result['meta']['has_next'],
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
-            }
-        }
-    else:
-        # ページネーションなし - 全データ返却
-        data = [format_store_status(item, jst) for item in all_results]
-
-        response = {
-            "data": data,
-            "meta": {
-                "total_count": total_store_count,
-                "valid_stores": valid_stores,
-                "avg_rate": round(avg_rate, 1),
-                "max_rate": round(max_rate, 1),
-                "total_working_staff": total_working_staff,
-                "total_active_staff": total_active_staff,
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
-            }
-        }
-
-    return jsonify(response)
+    
+    try:
+        app.logger.info("API /api/data へのリクエスト開始")
+        
+        # 新しいセッションを作成
+        session = db.session
+        
+        # ページネーションの有無を確認
+        use_pagination = 'page' in request.args
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # セッション内でのクエリ実行
+        try:
+            # 各店舗の最新タイムスタンプをサブクエリで取得
+            app.logger.debug("サブクエリの構築開始")
+            subq = session.query(
+                StoreStatus.store_name,
+                func.max(StoreStatus.timestamp).label("max_time")
+            ).group_by(StoreStatus.store_name).subquery()
+            
+            # メインクエリの構築
+            app.logger.debug("メインクエリの構築開始")
+            query = session.query(StoreStatus).join(
+                subq,
+                (StoreStatus.store_name == subq.c.store_name) &
+                (StoreStatus.timestamp == subq.c.max_time)
+            ).order_by(StoreStatus.timestamp.desc())
+            
+            # クエリの全結果を取得（集計値の計算用+全データ返却用）
+            app.logger.debug("クエリ実行開始")
+            all_results = query.all()
+            app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
+            
+            # セッション完了後の処理
+            if len(all_results) == 0:
+                app.logger.warning("データが0件です。データベースが空か、クエリが正しくありません。")
+                return jsonify({"data": [], "meta": {"total_count": 0, "error": "データが見つかりません"}}), 404
+            
+            # 集計値の計算
+            total_store_count = len(all_results)
+            total_working_staff = 0
+            total_active_staff = 0
+            valid_stores = 0  # 勤務中スタッフがいる店舗のカウント
+            max_rate = 0
+            
+            app.logger.debug("集計値の計算開始")
+            for r in all_results:
+                # NULL値チェック
+                working_staff = r.working_staff or 0
+                active_staff = r.active_staff or 0
+                
+                # 集計用データの収集
+                if working_staff > 0:
+                    valid_stores += 1
+                    total_working_staff += working_staff
+                    total_active_staff += active_staff
+                    try:
+                        rate = ((working_staff - active_staff) / working_staff) * 100
+                        max_rate = max(max_rate, rate)
+                    except ZeroDivisionError:
+                        app.logger.warning(f"0除算エラー: working_staff={working_staff}, active_staff={active_staff}")
+                        pass
+            
+            # 全体平均稼働率の計算
+            avg_rate = 0
+            if valid_stores > 0 and total_working_staff > 0:
+                avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
+            
+            # データのフォーマット - JSTタイムゾーンを明示的に設定
+            jst = pytz.timezone('Asia/Tokyo')
+            # 現在時刻をJSTで取得（API呼び出し時刻）
+            now_jst = datetime.now(jst)
+            
+            app.logger.debug("レスポンスデータのフォーマット開始")
+            if use_pagination:
+                # ページネーション適用
+                paginated_result = paginate_query_results(query, page, per_page)
+                items = paginated_result['items']
+                
+                try:
+                    data = [format_store_status(item, jst) for item in items]
+                except Exception as e:
+                    app.logger.error(f"データフォーマット中のエラー: {str(e)}")
+                    app.logger.error(traceback.format_exc())
+                    data = []  # エラー時は空のリストを返す
+                
+                # ページネーション情報を含むレスポンス
+                response = {
+                    "data": data,
+                    "meta": {
+                        "total_count": total_store_count,
+                        "valid_stores": valid_stores,
+                        "avg_rate": round(avg_rate, 1),
+                        "max_rate": round(max_rate, 1),
+                        "total_working_staff": total_working_staff,
+                        "total_active_staff": total_active_staff,
+                        "page": paginated_result['meta']['page'],
+                        "per_page": paginated_result['meta']['per_page'],
+                        "total_pages": paginated_result['meta']['total_pages'],
+                        "has_prev": paginated_result['meta']['has_prev'],
+                        "has_next": paginated_result['meta']['has_next'],
+                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                    }
+                }
+            else:
+                # ページネーションなし - 全データ返却
+                try:
+                    data = [format_store_status(item, jst) for item in all_results]
+                except Exception as e:
+                    app.logger.error(f"データフォーマット中のエラー: {str(e)}")
+                    app.logger.error(traceback.format_exc())
+                    data = []  # エラー時は空のリストを返す
+                
+                response = {
+                    "data": data,
+                    "meta": {
+                        "total_count": total_store_count,
+                        "valid_stores": valid_stores,
+                        "avg_rate": round(avg_rate, 1),
+                        "max_rate": round(max_rate, 1),
+                        "total_working_staff": total_working_staff,
+                        "total_active_staff": total_active_staff,
+                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')  # 現在のJST時間を追加
+                    }
+                }
+            
+            app.logger.info("API /api/data レスポンス準備完了")
+            return jsonify(response)
+        
+        except Exception as e:
+            app.logger.error(f"クエリ実行中の例外: {str(e)}")
+            app.logger.error(traceback.format_exc())
+            return jsonify({"error": "データベースクエリの実行中にエラーが発生しました", "details": str(e)}), 500
+    
+    except Exception as e:
+        app.logger.error(f"API /api/data 全体での例外: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": "APIの処理中にエラーが発生しました", "details": str(e)}), 500
 
 
 @app.route('/bulk_add_store_urls', methods=['POST'])
