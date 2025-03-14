@@ -33,7 +33,8 @@ def paginate_query_results(query, page, per_page, max_per_page=100):
     total_pages = ceil(total_count / per_page) if per_page > 0 else 0
 
     # 次のページと前のページがあるかどうか
-    has_next = page < total_pagespahas_prev = page > 1
+    has_next = page < total_pages
+    has_prev = page > 1
 
     # レスポンス生成
     return {
@@ -86,14 +87,7 @@ def format_store_status(item, timezone=None):
         }
     except Exception as e:
         logging.error(f"形式化エラー: {e}, item: {item}")
-        return None item.genre,
-        'area': item.area,
-        'total_staff': item.total_staff,
-        'working_staff': item.working_staff,
-        'active_staff': item.active_staff,
-        'rate': round(rate, 1),
-        'url': item.url,
-        'shift_time': item.shift_time
+        return None
     }
 
 def prepare_data_for_integrated_dashboard():
