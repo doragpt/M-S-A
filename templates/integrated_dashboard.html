@@ -326,7 +326,8 @@
               </div>
             </div>
           </div>
-          <div class="row">
+          <!-- 集計結果を別の行に分離して表示 -->
+          <div class="row mt-4">
             <div class="col-md-12">
               <div class="card">
                 <div class="card-body">
@@ -783,6 +784,7 @@
           const containerElement = document.getElementById('historyChartContainer');
           const errorElement = document.getElementById('historyChartError');
           const resetZoomBtn = document.getElementById('historyResetZoomBtn');
+          const historyStats = document.getElementById("historyStats");
 
           if (!loadingElement || !containerElement) {
             console.error('History chart elements not found in the DOM');
@@ -794,6 +796,7 @@
           containerElement.style.display = 'none';
           if (errorElement) errorElement.style.display = 'none';
           if (resetZoomBtn) resetZoomBtn.style.display = 'none';
+          if (historyStats) historyStats.textContent = "データを読み込み中...";
 
           try {
             const storeSelect = document.getElementById("storeSelectHistory");
@@ -801,7 +804,7 @@
               storeSelect.value = savedHistoryStore; 
             }
 
-            // 修正: 変数参照のミスを修正
+            // 選択された店舗と日付範囲を取得
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
@@ -985,6 +988,20 @@
                 historyStats.textContent = "選択された期間のデータは見つかりませんでした。別の期間や店舗を選択してください。";
               }
               
+              // エラーメッセージをログに記録
+              console.warn("該当するデータが見つかりませんでした", {
+                selectedStore,
+                startDate,
+                endDate,
+                dataLength: rawData.length
+              });
+              
+              // エラー表示を表示
+              if (errorElement) {
+                errorElement.textContent = "該当するデータが見つかりませんでした。検索条件を変更してお試しください。";
+                errorElement.style.display = 'block';
+              }
+              
               // 空のチャートを表示
               const ctx = document.getElementById("historyChart").getContext("2d");
               if (charts.history) charts.history.destroy();
@@ -1006,12 +1023,23 @@
                   plugins: {
                     title: {
                       display: true,
-                      text: "データがありません",
-                      font: { size: 20 }
+                      text: selectedStore ? 
+                        `店舗「${selectedStore}」のデータが見つかりません` : 
+                        "指定期間のデータが見つかりません",
+                      font: { size: 18, weight: 'bold' }
+                    },
+                    subtitle: {
+                      display: true,
+                      text: "検索条件を変更してください",
+                      font: { size: 14 }
                     }
                   }
                 }
               });
+              
+              // ローディング表示を非表示に
+              loadingElement.style.display = 'none';
+              containerElement.style.display = 'block';
               
               return; // 処理を中断
             }
