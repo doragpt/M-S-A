@@ -84,6 +84,7 @@ def format_store_status(item, timezone=None):
         biz_type = '不明'
         genre = '不明'
         area = '不明'
+        total_staff = 0
         working_staff = 0
         active_staff = 0
         url = ''
@@ -145,6 +146,12 @@ def format_store_status(item, timezone=None):
             
         # 数値フィールド
         try:
+            total_staff = getattr(item, 'total_staff', 0)
+            total_staff = 0 if total_staff is None else int(total_staff)
+        except Exception:
+            total_staff = 0
+            
+        try:
             working_staff = getattr(item, 'working_staff', 0)
             working_staff = 0 if working_staff is None else int(working_staff)
         except Exception:
@@ -173,7 +180,7 @@ def format_store_status(item, timezone=None):
             'biz_type': biz_type,
             'genre': genre,
             'area': area,
-            'total_staff': working_staff + active_staff,
+            'total_staff': total_staff if total_staff > 0 else working_staff + active_staff,
             'working_staff': working_staff,
             'active_staff': active_staff,
             'rate': rate,
