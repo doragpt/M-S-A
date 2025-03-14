@@ -8,7 +8,7 @@ import gc  # ガベージコレクション
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
-from sqlalchemy import func, exc
+from sqlalchemy import func, exc, and_
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
@@ -1276,7 +1276,13 @@ def api_area_stats():
     エリア別の統計情報を返すエンドポイント
     """
     try:
-        # エリア別の店舗数と平均稼働率を計算
+        # 最新の各店舗データを取得するサブクエリ
+        subq = db.session.query(
+            StoreStatus.store_name,
+            func.max(StoreStatus.timestamp).label('max_timestamp')
+        ).group_by(StoreStatus.store_name).subquery()
+
+        # 各エリアの店舗数と平均稼働率を計算
         query = db.session.query(
             StoreStatus.area,
             func.count(func.distinct(StoreStatus.store_name)).label('store_count'),
@@ -1284,26 +1290,26 @@ def api_area_stats():
                 (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
                 func.nullif(StoreStatus.working_staff, 0)
             ).label('avg_rate')
-        ).filter(
-            StoreStatus.working_staff > 0
-        ).group_by(
-            StoreStatus.area
-        ).order_by(
-            func.avg(
-                (StoreStatus.working_staff - StoreStatus.active_staff) * 100.0 / 
-                func.nullif(StoreStatus.working_staff, 0)
-            ).desc()
-        )
+        ).join(
+            subq,
+            and_(
+                StoreStatus.store_name == subq.c.store_name,
+                StoreStatus.timestamp == subq.c.max_timestamp
+            )
+        ).group_by(StoreStatus.area)
 
         results = query.all()
 
-        data = [{
-            "area": r.area if r.area else "不明",
-            "store_count": r.store_count,
-            "avg_rate": round(float(r.avg_rate), 1)
-        } for r in results]
+        # 結果をフォーマット
+        formatted_results = []
+        for area, store_count, avg_rate in results:
+            formatted_results.append({
+                'area': area or '不明',
+                'store_count': store_count,
+                'avg_rate': round(float(avg_rate), 2) if avg_rate is not None else 0
+            })
 
-        return jsonify(data)
+        return jsonify(formatted_results)
     except Exception as e:
         app.logger.error(f"エリア統計取得エラー: {e}")
         app.logger.error(traceback.format_exc())
