@@ -738,18 +738,21 @@ def api_average_ranking():
 
     クエリパラメータ:
         biz_type: 業種でフィルタリング
-        limit: 上位何件を返すか（デフォルト1000件）
+        limit: 上位何件を返すか（デフォルト5000件）
         min_samples: 最小サンプル数（デフォルト1件）
     """
     try:
         # フィルタリング条件
         biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 1000, type=int)  # デフォルト値は1000
+        # デフォルト値を5000に増加（通常は全店舗データを取得できるよう）
+        limit = request.args.get('limit', 5000, type=int)
         min_samples = request.args.get('min_samples', 1, type=int)  # サンプル数の最小値（デフォルト1）
 
-        # 最大値を制限
-        if limit > 5000:  # 最大値を5000に引き上げ
-            limit = 5000
+        # 最大値を制限（これも10000に引き上げ）
+        if limit > 10000:
+            limit = 10000
+
+        app.logger.info(f"ランキング取得パラメータ: biz_type={biz_type}, limit={limit}, min_samples={min_samples}")
 
         # サブクエリ: 店舗ごとのグループ化
         subq = db.session.query(
