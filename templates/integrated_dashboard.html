@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -257,7 +258,24 @@
               <button id="updateHistoryBtn" class="btn btn-primary w-100">更新</button>
             </div>
           </div>
-          <div class="card mb-3">
+          
+          <!-- 集計結果を先に表示 -->
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">集計結果</h5>
+                  <p id="historyStats" class="mb-0">--</p>
+                  <div class="d-flex justify-content-end mt-3">
+                    <button id="historyResetZoomBtn" class="btn btn-sm btn-outline-secondary" style="display: none;">ズームリセット</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- グラフ表示 -->
+          <div class="card">
             <div class="card-body">
               <div id="historyChartLoading" class="text-center py-5" style="display: none;">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -270,15 +288,6 @@
               </div>
               <div id="historyChartError" class="alert alert-danger mt-3" style="display: none;">
                 データの読み込み中にエラーが発生しました。もう一度お試しください。
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">集計結果</h5>
-              <p id="historyStats" class="mb-0">--</p>
-              <div class="d-flex justify-content-end mt-3">
-                <button id="historyResetZoomBtn" class="btn btn-sm btn-outline-secondary" style="display: none;">ズームリセット</button>
               </div>
             </div>
           </div>
@@ -327,18 +336,20 @@
           <!-- グラフを後に表示 -->
           <div class="row">
             <div class="col-md-12">
-              <div class="chart-container" style="height: 400px; margin-bottom: 20px;">
-                <div id="hourlyAnalysisLoading" class="text-center py-5" style="display: none;">
-                  <div class="spinner-border text-success mb-3" role="status">
-                    <span class="visually-hidden">読み込み中...</span>
+              <div class="card">
+                <div class="card-body">
+                  <div id="hourlyAnalysisLoading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-success mb-3" role="status">
+                      <span class="visually-hidden">読み込み中...</span>
+                    </div>
+                    <p>時間帯別データを分析中...</p>
                   </div>
-                  <p>時間帯別データを分析中...</p>
-                </div>
-                <div id="hourlyAnalysisContainer">
-                  <canvas id="hourlyChart"></canvas>
-                </div>
-                <div id="hourlyAnalysisError" class="alert alert-danger mt-3" style="display: none;">
-                  データの分析中にエラーが発生しました。もう一度お試しください。
+                  <div id="hourlyAnalysisContainer" class="chart-container" style="height: 400px;">
+                    <canvas id="hourlyChart"></canvas>
+                  </div>
+                  <div id="hourlyAnalysisError" class="alert alert-danger mt-3" style="display: none;">
+                    データの分析中にエラーが発生しました。もう一度お試しください。
+                  </div>
                 </div>
               </div>
             </div>
@@ -803,11 +814,6 @@
 
           try {
             const storeSelect = document.getElementById("storeSelectHistory");
-            if (storeSelect) {
-              storeSelect.value = savedHistoryStore;
-            }
-
-            // 選択された店舗と日付範囲を取得
             const selectedStore = storeSelect ? storeSelect.value : "";
             const startDate = document.getElementById("startDate")?.value || "";
             const endDate = document.getElementById("endDate")?.value || "";
@@ -824,87 +830,81 @@
               return;
             }
 
-            let url = "/api/history?";
+            // パラメータを設定
+            let url = "/api/history/optimized?";
             const params = new URLSearchParams();
             
-            // パラメータを設定
             if (selectedStore) params.append("store", selectedStore);
             if (startDate) params.append("start_date", startDate);
             if (endDate) params.append("end_date", endDate);
-            params.append("limit", "2000"); // サンプル数制限
+            
+            // データ取得
+            const data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
+            
+            // データが空の場合
+            if (!data || !Array.isArray(data) || data.length === 0) {
+              throw new Error("該当するデータが見つかりませんでした");
+            }
 
-            try {
-              // データ取得
-              const data = await fetchWithRetry(url + params.toString(), {}, 3, 2000);
-              
-              // データが空の場合
-              if (!data || !Array.isArray(data) || data.length === 0) {
-                throw new Error("該当するデータが見つかりませんでした");
-              }
-
-              // データをグループ化して処理
-              const processedData = processHistoryData(data, selectedStore);
-              
-              // キャッシュに保存
-              historyChartCache[cacheKey] = processedData;
-              
-              // チャート表示
-              updateHistoryChartDisplay(processedData);
-              
-            } catch (error) {
-              console.error("履歴データ取得エラー:", error);
-              
-              // エラー表示
-              if (errorElement) {
-                errorElement.textContent = error.message || "データの取得中にエラーが発生しました";
-                errorElement.style.display = 'block';
-              }
-              
-              // 統計情報エリアにもエラーを表示
-              if (historyStats) {
-                historyStats.textContent = "選択された条件に一致するデータがありません。別の期間や店舗を選択してください。";
-              }
-              
-              // 空のチャートを表示
-              if (document.getElementById("historyChart")) {
-                if (charts.history) charts.history.destroy();
-                const ctx = document.getElementById("historyChart").getContext("2d");
-                charts.history = new Chart(ctx, {
-                  type: "line",
-                  data: {
-                    labels: ["データなし"],
-                    datasets: [{
-                      label: "実働率 (%)",
-                      data: [0],
-                      borderColor: "rgba(200, 200, 200, 0.5)",
-                      backgroundColor: "rgba(200, 200, 200, 0.1)",
-                      fill: false
-                    }]
-                  },
-                  options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      title: {
-                        display: true,
-                        text: selectedStore ? 
-                          `店舗「${selectedStore}」のデータが見つかりません` : 
-                          "指定期間のデータが見つかりません",
-                        font: { size: 18, weight: 'bold' }
-                      },
-                      subtitle: {
-                        display: true,
-                        text: "検索条件を変更してください",
-                        font: { size: 14 }
-                      }
+            // データをグループ化して処理
+            const processedData = processHistoryData(data, selectedStore);
+            
+            // キャッシュに保存
+            historyChartCache[cacheKey] = processedData;
+            
+            // チャート表示
+            updateHistoryChartDisplay(processedData);
+            
+          } catch (error) {
+            console.error("履歴データ取得エラー:", error);
+            
+            // エラー表示
+            if (errorElement) {
+              errorElement.textContent = error.message || "データの取得中にエラーが発生しました";
+              errorElement.style.display = 'block';
+            }
+            
+            // 統計情報エリアにもエラーを表示
+            if (historyStats) {
+              historyStats.textContent = "選択された条件に一致するデータがありません。別の期間や店舗を選択してください。";
+            }
+            
+            // 空のチャートを表示
+            if (charts.history) charts.history.destroy();
+            if (document.getElementById("historyChart")) {
+              const ctx = document.getElementById("historyChart").getContext("2d");
+              charts.history = new Chart(ctx, {
+                type: "line",
+                data: {
+                  labels: ["データなし"],
+                  datasets: [{
+                    label: "実働率 (%)",
+                    data: [0],
+                    borderColor: "rgba(200, 200, 200, 0.5)",
+                    backgroundColor: "rgba(200, 200, 200, 0.1)",
+                    fill: false
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: selectedStore ? 
+                        `店舗「${selectedStore}」のデータが見つかりません` : 
+                        "指定期間のデータが見つかりません",
+                      font: { size: 18, weight: 'bold' }
+                    },
+                    subtitle: {
+                      display: true,
+                      text: "検索条件を変更してください",
+                      font: { size: 14 }
                     }
                   }
-                });
-              }
+                }
+              });
             }
-          } catch (error) {
-            console.error("履歴グラフエラー:", error);
-            handleError(error, "updateHistoryChart");
           } finally {
             // ローディング表示を非表示に
             if (loadingElement) loadingElement.style.display = 'none';
@@ -1246,6 +1246,31 @@
               localStorage.setItem("historyStoreFilter", storeSelect.value); 
             });
 
+            // 初期表示用の日付設定
+            const today = new Date();
+            const oneWeekAgo = new Date(today);
+            oneWeekAgo.setDate(today.getDate() - 7);
+            
+            // 日付フォーマット変換（YYYY-MM-DD）
+            const formatDate = date => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            
+            // 開始日と終了日を設定
+            const startDateInput = document.getElementById("startDate");
+            const endDateInput = document.getElementById("endDate");
+            
+            if (startDateInput && !startDateInput.value) {
+              startDateInput.value = formatDate(oneWeekAgo);
+            }
+            
+            if (endDateInput && !endDateInput.value) {
+              endDateInput.value = formatDate(today);
+            }
+
             hideSpinner();
           } catch (err) {
             console.error("履歴グラフ店舗リスト取得エラー:", err);
@@ -1285,13 +1310,31 @@
             const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
             const showPeakHours = document.getElementById('showPeakHours')?.checked || false;
 
+            // データ取得パラメーター設定
+            let apiUrl = "/api/history/optimized?limit=5000";
+            if (selectedStore) {
+              apiUrl += `&store=${encodeURIComponent(selectedStore)}`;
+            }
+
             // データ取得
-            const data = await fetchWithRetry("/api/history?limit=5000", {}, 3, 2000);
+            const data = await fetchWithRetry(apiUrl, {}, 3, 2000);
+            
+            // データが空か確認
+            if (!data || !Array.isArray(data) || 
+                (data.items && data.items.length === 0) || 
+                (Array.isArray(data) && data.length === 0)) {
+              throw new Error(selectedStore ? 
+                `選択された店舗「${selectedStore}」のデータがありません` : 
+                "時間帯別分析のデータがありません");
+            }
+
+            // レスポンス形式対応
+            const records = data.items ? data.items : data;
             
             // データフィルタリング
-            let filtered = data;
+            let filtered = records;
             if (selectedStore) {
-              filtered = data.filter(record => record.store_name === selectedStore);
+              filtered = records.filter(record => record.store_name === selectedStore);
               
               // 店舗データが存在するか確認
               if (filtered.length === 0) {
@@ -1419,7 +1462,7 @@
           const numericRates = avgRates.map(r => parseFloat(r));
           const maxRate = Math.max(...numericRates);
           const maxRateHour = numericRates.indexOf(maxRate);
-          const minRate = Math.min(...numericRates);
+          const minRate = Math.min(...numericRates.filter(r => r > 0), maxRate);
           const minRateHour = numericRates.indexOf(minRate);
           const overallAvg = numericRates.reduce((sum, rate) => sum + rate, 0) / numericRates.length;
           const totalSamples = Object.values(hourly).reduce((sum, h) => sum + (h.count || 0), 0);
