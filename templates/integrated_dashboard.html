@@ -1743,30 +1743,35 @@
         document.getElementById('historyNoData').style.display = 'none';
         document.getElementById('historySummaryCard').style.display = 'none';
 
-        // APIからデータ取得
-        const url = `${apiBaseUrl}/history?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}&limit=1000`;
-        const response = await fetch(url);
+        try {
+          // APIからデータ取得
+          const url = `${apiBaseUrl}/history?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}&limit=1000`;
+          const response = await fetch(url);
 
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (!data || data.length === 0) {
+            document.getElementById('historyNoData').style.display = 'block';
+            document.getElementById('historyLoadingIndicator').style.display = 'none';
+            return;
+          }
+
+          // データの整形
+          const records = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+          updateHistoryChart(records);
+          updateHistorySummary(records);
+        } catch (error) {
+          console.error('API呼び出しエラー:', error);
+          showHistoryError(`データ取得エラー: ${error.message}`);
         }
-
-        const data = await response.json();
-
-        if (!data || data.length === 0) {
-          document.getElementById('historyNoData').style.display = 'block';
-          document.getElementById('historyLoadingIndicator').style.display = 'none';
-          return;
-        }
-
-        // データの整形
-        const records = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-        updateHistoryChart(records);
-        updateHistorySummary(records);
-
       } catch (error) {
-        showHistoryError(`データ取得エラー: ${error.message}`);
+        console.error('全体的なエラー:', error);
+        showHistoryError(`処理エラー: ${error.message}`);
       } finally {
         document.getElementById('historyLoadingIndicator').style.display = 'none';
       }
