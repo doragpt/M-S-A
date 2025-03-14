@@ -1,0 +1,43 @@
+Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1012 データ読み込みエラー: Error: API error: 404
+    at loadDashboardData ((index):986:35)
+loadDashboardData @ (index):1012Understand this errorAI
+:5000/:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):1682 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):1682Understand this errorAI
+:5000/:5000/api/hourly:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2166 時間帯別分析エラー: Error: API error: 404
+    at loadHourlyAnalysis ((index):2150:17)
+loadHourlyAnalysis @ (index):2166Understand this errorAI
+:5000/:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2089 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2089Understand this errorAI
+:5000/:5000/api/area_stats:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2439 エリア統計データ読み込みエラー: Error: API error: 404
+    at loadAreaStatistics ((index):2425:17)
+loadAreaStatistics @ (index):2439Understand this errorAI
+:5000/:5000/api/latest:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2601 店舗データの取得に失敗: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+(anonymous) @ (index):2601Understand this errorAI
+:5000/:5000/api/ranking/genre:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (NOT FOUND)Understand this errorAI
+(index):2663 ジャンルランキングデータ読み込みエラー: Error: API error: 404
+    at HTMLButtonElement.loadGenreRanking ((index):2645:17)
+loadGenreRanking @ (index):2663Understand this errorAI
