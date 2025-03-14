@@ -422,7 +422,7 @@ def api_data():
         try:
             # 各店舗の最新タイムスタンプをサブクエリで取得
             app.logger.debug("サブクエリの構築開始")
-            
+
             # サブクエリを明示的に構築
             subq = db.session.query(
                 StoreStatus.store_name,
@@ -443,7 +443,7 @@ def api_data():
             try:
                 # データベース接続を直接使用
                 conn = get_db_connection()
-                
+
                 # SQLiteのカスタム関数を使ってクエリを実行（エラー時のフォールバック用）
                 all_results = query.all()
                 app.logger.info(f"クエリ結果: {len(all_results)}件のレコードを取得")
@@ -501,7 +501,7 @@ def api_data():
             def format_data_with_error_handling(items_to_format):
                 formatted_data = []
                 error_count = 0
-                
+
                 for item in items_to_format:
                     try:
                         # format_store_statusがNoneを返す場合に対処
@@ -511,7 +511,7 @@ def api_data():
                     except Exception as fmt_err:
                         error_count += 1
                         app.logger.error(f"アイテムフォーマットエラー: {str(fmt_err)}, item_id={getattr(item, 'id', 'unknown')}")
-                
+
                 app.logger.info(f"データフォーマット完了: {len(formatted_data)}件成功, {error_count}件エラー")
                 return formatted_data
 

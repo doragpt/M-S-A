@@ -60,13 +60,12 @@ def format_store_status(item, timezone=None):
 
     formatted_timestamp = timestamp.isoformat() if timestamp else None
 
-    # 稼働率の計算 - Noneチェックを強化
+    # 稼働率の計算 - ゼロ除算エラー対策を追加
     rate = 0
     working_staff = item.working_staff if hasattr(item, 'working_staff') and item.working_staff is not None else 0
     active_staff = item.active_staff if hasattr(item, 'active_staff') and item.active_staff is not None else 0
 
     if working_staff > 0:
-        # (勤務中 - 待機中) / 勤務中 × 100
         rate = ((working_staff - active_staff) / working_staff) * 100
 
     # 結果を辞書にまとめる
