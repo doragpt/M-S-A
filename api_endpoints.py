@@ -10,7 +10,7 @@ import pytz
 from flask import Blueprint, request, jsonify, current_app
 from flask_caching import Cache
 
-from models import db, StoreStatus, AggregatedStat
+from models import db, StoreStatus
 from database import get_db_connection
 
 # キャッシュ設定
