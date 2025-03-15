@@ -1574,23 +1574,6 @@ def api_popular_ranking():
             }
         }), 200  # 統一したレスポンスコード
 
-    except Exception as e:
-        app.logger.error(f"ジャンルランキング取得エラー: {e}")
-        app.logger.error(traceback.format_exc())
-
-        # ダミーデータを返す（エラー情報付き）
-        return jsonify({
-            "data": [
-                {"genre": "サーバーエラー", "store_count": 0, "avg_rate": 0.0}
-            ],
-            "meta": {
-                "error": str(e),
-                "message": "ジャンルランキングの取得中にエラーが発生しました",
-                "biz_type": biz_type,
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-            }
-        }), 200
-
 
 # 集計済みデータを提供するエンドポイント
 @app.route('/api/aggregated')
