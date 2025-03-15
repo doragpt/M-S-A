@@ -1007,50 +1007,50 @@ def get_filter_options():
 def register_api_routes(api_bp):
     """APIエンドポイント関数をBlueprintに登録する"""
     # 最新店舗データ
-    api_bp.route('/stores/current')(cached(300)(rate_limit(limit=30)(get_current_stores)))
+    api_bp.route('/stores/current', endpoint='stores_current')(cached(300)(rate_limit(limit=30)(get_current_stores)))
     
     # 店舗履歴データ
-    api_bp.route('/stores/history/optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
+    api_bp.route('/stores/history/optimized', endpoint='stores_history_optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
     
     # 店舗名リスト
-    api_bp.route('/stores/names')(cached(600)(get_store_names))
+    api_bp.route('/stores/names', endpoint='stores_names')(cached(600)(get_store_names))
     
     # 時間帯別分析
-    api_bp.route('/analysis/hourly')(cached(1800)(get_hourly_analysis))
+    api_bp.route('/analysis/hourly', endpoint='analysis_hourly')(cached(1800)(get_hourly_analysis))
     
     # エリア統計
-    api_bp.route('/stats/area')(cached(1800)(get_area_stats))
+    api_bp.route('/stats/area', endpoint='stats_area')(cached(1800)(get_area_stats))
     
     # ランキング
-    api_bp.route('/ranking/genre')(cached(1800)(get_genre_ranking))
-    api_bp.route('/ranking/average')(cached(1800)(get_average_ranking))
-    api_bp.route('/ranking/popular')(cached(1800)(get_popular_ranking))
+    api_bp.route('/ranking/genre', endpoint='ranking_genre')(cached(1800)(get_genre_ranking))
+    api_bp.route('/ranking/average', endpoint='ranking_average')(cached(1800)(get_average_ranking))
+    api_bp.route('/ranking/popular', endpoint='ranking_popular')(cached(1800)(get_popular_ranking))
     
     # 期間別平均
-    api_bp.route('/averages/daily')(cached(3600)(lambda: get_period_averages('daily')))
-    api_bp.route('/averages/weekly')(cached(3600)(lambda: get_period_averages('weekly')))
-    api_bp.route('/averages/monthly')(cached(3600)(lambda: get_period_averages('monthly')))
+    api_bp.route('/averages/daily', endpoint='averages_daily')(cached(3600)(lambda: get_period_averages('daily')))
+    api_bp.route('/averages/weekly', endpoint='averages_weekly')(cached(3600)(lambda: get_period_averages('weekly')))
+    api_bp.route('/averages/monthly', endpoint='averages_monthly')(cached(3600)(lambda: get_period_averages('monthly')))
     
     # 店舗別平均
-    api_bp.route('/averages/stores')(cached(1800)(get_store_averages))
+    api_bp.route('/averages/stores', endpoint='averages_stores')(cached(1800)(get_store_averages))
     
     # フィルターオプション
-    api_bp.route('/filter-options')(cached(3600)(get_filter_options))
+    api_bp.route('/filter-options', endpoint='filter_options')(cached(3600)(get_filter_options))
 
 # 既存のAPIエンドポイントと互換性を保つための関数を登録するためのヘルパー関数
 def register_legacy_routes(app):
     """既存のAPIエンドポイントと互換性を保つための関数を登録する"""
     # 互換性のためのルート
-    app.route('/api/data')(cached(300)(rate_limit(limit=30)(get_current_stores)))
-    app.route('/api/history/optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
-    app.route('/api/store-names')(cached(600)(get_store_names))
-    app.route('/api/hourly-analysis')(cached(1800)(get_hourly_analysis))
-    app.route('/api/area-stats')(cached(1800)(get_area_stats))
-    app.route('/api/ranking/genre')(cached(1800)(get_genre_ranking))
-    app.route('/api/ranking/average')(cached(1800)(get_average_ranking))
-    app.route('/api/ranking/popular')(cached(1800)(get_popular_ranking))
-    app.route('/api/averages/daily')(cached(3600)(lambda: get_period_averages('daily')))
-    app.route('/api/averages/weekly')(cached(3600)(lambda: get_period_averages('weekly')))
-    app.route('/api/averages/monthly')(cached(3600)(lambda: get_period_averages('monthly')))
-    app.route('/api/averages/stores')(cached(1800)(get_store_averages))
-    app.route('/api/filter-options')(cached(3600)(get_filter_options))
+    app.route('/api/data', endpoint='legacy_data')(cached(300)(rate_limit(limit=30)(get_current_stores)))
+    app.route('/api/history/optimized', endpoint='legacy_history_optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
+    app.route('/api/store-names', endpoint='legacy_store_names')(cached(600)(get_store_names))
+    app.route('/api/hourly-analysis', endpoint='legacy_hourly_analysis')(cached(1800)(get_hourly_analysis))
+    app.route('/api/area-stats', endpoint='legacy_area_stats')(cached(1800)(get_area_stats))
+    app.route('/api/ranking/genre', endpoint='legacy_ranking_genre')(cached(1800)(get_genre_ranking))
+    app.route('/api/ranking/average', endpoint='legacy_ranking_average')(cached(1800)(get_average_ranking))
+    app.route('/api/ranking/popular', endpoint='legacy_ranking_popular')(cached(1800)(get_popular_ranking))
+    app.route('/api/averages/daily', endpoint='legacy_averages_daily')(cached(3600)(lambda: get_period_averages('daily')))
+    app.route('/api/averages/weekly', endpoint='legacy_averages_weekly')(cached(3600)(lambda: get_period_averages('weekly')))
+    app.route('/api/averages/monthly', endpoint='legacy_averages_monthly')(cached(3600)(lambda: get_period_averages('monthly')))
+    app.route('/api/averages/stores', endpoint='legacy_averages_stores')(cached(1800)(get_store_averages))
+    app.route('/api/filter-options', endpoint='legacy_filter_options')(cached(3600)(get_filter_options))
