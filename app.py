@@ -1370,7 +1370,7 @@ def api_genre_ranking():
                     "message": "ジャンルランキングクエリの実行中にエラーが発生しました",
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
-            }), 200
+            }
 
 # 時間帯別稼働率分析のAPIエンドポイント
 @app.route('/api/hourly-analysis')
