@@ -726,7 +726,7 @@ def api_history():
         per_page: 1ページあたりの項目数（最大100）
     """
     from page_helper import paginate_query_results, format_store_status
-    from databaseimport get_db_connection
+    from database import get_db_connection
 
     # JSTタイムゾーン
     jst = pytz.timezone('Asia/Tokyo')
@@ -737,7 +737,7 @@ def api_history():
         store = request.args.get('store')
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
-        limit = request.args.get('limit', typeint)
+        limit = request.args.get('limit', type=int)
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 100, type=int), 100)  # 最大100件に制限
 
@@ -1578,7 +1578,7 @@ def api_popular_ranking():
                 }
             }), 200
 
-    exceptException as e:
+    except Exception as e:
         app.logger.error(f"ジャンルランキング取得エラー: {e}")
         app.logger.error(traceback.format_exc())
 
