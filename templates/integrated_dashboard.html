@@ -1783,30 +1783,80 @@
         const storeSelect = document.getElementById('historyStore');
         storeSelect.innerHTML = '<option value="">-- 店舗を選択 --</option>';
 
-        // APIのベースURL
-        const apiBaseUrl = '/api';
-
-        // 店舗データがなければAPIから取得
-        if (storeData.length === 0) {
-          fetch(`${apiBaseUrl}/data`)
-            .then(response => response.json())
-            .then(data => {
-              // APIレスポンス構造に対応
-              if (data.data) {
-                storeData = data.data;
-              } else {
-                storeData = data;
-              }
-              populateStoreSelect();
-            })
-            .catch(error => {
-              console.error('店舗データの取得に失敗:', error);
-              // エラー時に代表的なサンプル店舗を追加
-              addSampleStores();
+        // 専用の店舗名リストAPIを使用
+        fetch('/api/store-names')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(result => {
+            // APIレスポンス構造を検証
+            if (!result || !result.data || !Array.isArray(result.data)) {
+              console.error('予期しないAPIレスポンス形式:', result);
+              throw new Error('店舗名APIからのデータ形式が無効です');
+            }
+            
+            const storeNames = result.data;
+            
+            if (storeNames.length === 0) {
+              throw new Error('店舗データが見つかりませんでした');
+            }
+            
+            console.log(`店舗名API: ${storeNames.length}件の店舗を取得`);
+            
+            // 店舗選択肢を設定
+            storeNames.forEach(storeName => {
+              const option = document.createElement('option');
+              option.value = storeName;
+              option.textContent = storeName;
+              storeSelect.appendChild(option);
             });
-        } else {
-          populateStoreSelect();
-        }
+            
+            // お気に入り店舗がある場合は先頭に追加
+            if (favorites.length > 0) {
+              // 最初に区切り線を追加
+              const separator = document.createElement('option');
+              separator.disabled = true;
+              separator.textContent = '──────────────';
+              storeSelect.insertBefore(separator, storeSelect.firstChild.nextSibling);
+              
+              // お気に入り店舗を逆順で追加（最新のお気に入りが一番上に）
+              [...favorites].reverse().forEach(favName => {
+                const favOption = document.createElement('option');
+                favOption.value = favName;
+                favOption.textContent = `★ ${favName}`;
+                storeSelect.insertBefore(favOption, storeSelect.firstChild.nextSibling);
+              });
+            }
+          })
+          .catch(error => {
+            console.error('店舗名リスト取得エラー:', error);
+            
+            // エラー時に storeData から取得を試みる
+            if (storeData.length > 0) {
+              populateStoreSelectFromStoreData();
+            } else {
+              // storeData がなければ API から全店舗データを取得
+              fetch('/api/data')
+                .then(response => response.json())
+                .then(data => {
+                  // APIレスポンス構造に対応
+                  if (data.data) {
+                    storeData = data.data;
+                  } else {
+                    storeData = data;
+                  }
+                  populateStoreSelectFromStoreData();
+                })
+                .catch(dataError => {
+                  console.error('店舗データの取得に失敗:', dataError);
+                  // 最終手段としてサンプル店舗を追加
+                  addSampleStores();
+                });
+            }
+          });
 
         // サンプル店舗を追加（データがない場合用）
         function addSampleStores() {
@@ -1826,8 +1876,8 @@
           console.log("データ取得に失敗したため、サンプル店舗を設定しました");
         }
 
-        // 店舗選択メニューを設定
-        function populateStoreSelect() {
+        // storeData から店舗選択肢を設定
+        function populateStoreSelectFromStoreData() {
           // 店舗名のセットを取得（重複排除）
           const stores = [...new Set(storeData
             .filter(store => store.store_name)
@@ -1902,8 +1952,8 @@
         document.getElementById('historySummaryCard').style.display = 'none';
 
         try {
-          // API URLを正しく設定
-          let url = `${apiBaseUrl}/history?store=${encodeURIComponent(storeName)}`;
+          // 最適化されたAPIエンドポイントを使用
+          let url = `${apiBaseUrl}/history/optimized?store=${encodeURIComponent(storeName)}`;
 
           // 日付パラメータを追加
           if (startDate) {
@@ -1925,16 +1975,22 @@
           // デバッグ情報
           console.log("API応答データ:", data);
           console.log("データ型:", typeof data);
-          if (Array.isArray(data)) {
-            console.log(`取得したデータ配列: ${data.length}件`);
-          } else if (data.items) {
-            console.log(`取得したデータ(items): ${data.items.length}件`);
+          
+          // 応答形式に対応（APIレスポンス構造を処理）
+          let records = [];
+          if (data.data && Array.isArray(data.data)) {
+            records = data.data;
+            console.log(`取得したデータ: ${records.length}件`);
+          } else if (Array.isArray(data)) {
+            records = data;
+            console.log(`取得したデータ配列: ${records.length}件`);
+          } else if (data.items && Array.isArray(data.items)) {
+            records = data.items;
+            console.log(`取得したデータ(items): ${records.length}件`);
           } else {
             console.log("データ形式が不明です");
+            throw new Error("APIからの応答形式が無効です");
           }
-
-          // 応答形式に対応（配列またはオブジェクト）
-          let records = Array.isArray(data) ? data : (data.items || []);
 
           // 選択した店舗に関連するデータのみをフィルタリング
           records = records.filter(record => record && record.store_name === storeName);
@@ -2919,28 +2975,42 @@
         // ローディング表示
         document.getElementById('areaLoadingIndicator').style.display = 'flex';
 
-        // APIのベースURL（ポート番号を含む）
-        const apiBaseUrl = '/api';
-
-        // APIからデータ取得 - ハイフン付きの正しいエンドポイントを使用
-        const response = await fetch(`${apiBaseUrl}/area-stats`);
+        // APIからデータ取得 - 正しいエンドポイントを使用
+        const response = await fetch('/api/area-stats');
 
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
 
-        const data = await response.json();
+        const result = await response.json();
 
-        if(!data || !Array.isArray(data)) {
+        // データ構造を検証
+        if (!result || !result.data || !Array.isArray(result.data)) {
+          console.error('予期しないAPIレスポンス形式:', result);
+          throw new Error('APIからのデータ形式が無効です');
+        }
+
+        const data = result.data;
+        
+        if (data.length === 0) {
           document.getElementById('areaLoadingIndicator').style.display = 'none';
           return;
         }
 
+        console.log(`エリアデータ取得成功: ${data.length}件`);
+        
+        // エリアデータを更新
         updateAreaChart(data);
         updateAreaTable(data);
 
       } catch (error) {
         console.error('エリア統計データ読み込みエラー:', error);
+        // エラーメッセージ表示エリアがあれば表示
+        const errorArea = document.querySelector('.area-error-message');
+        if (errorArea) {
+          errorArea.textContent = `エリアデータ取得エラー: ${error.message}`;
+          errorArea.style.display = 'block';
+        }
       } finally {
         document.getElementById('areaLoadingIndicator').style.display = 'none';
       }
@@ -3232,36 +3302,90 @@
         document.getElementById('genreErrorMessage').style.display = 'none';
         document.getElementById('storeRankLoadingIndicator').style.display = 'flex';
 
-        // storeDataが空の場合はAPIから取得
-        if (storeData.length === 0) {
+        // 業種が指定されている場合は専用APIを使用
+        if (bizType && bizType !== '') {
           try {
-            const response = await fetch('/api/data');
-            if (response.ok) {
-              const data = await response.json();
-              // APIレスポンス構造に対応
-              if (data.data) {
-                storeData = data.data;
-              } else {
-                storeData = data;
-              }
-              console.log(`APIからデータを取得しました: ${storeData.length}件`);
-            } else {
-              throw new Error(`APIエラー: ${response.status}`);
+            // ジャンルランキングAPIを使用
+            const response = await fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(bizType)}`);
+            
+            if (!response.ok) {
+              throw new Error(`API error: ${response.status}`);
             }
-          } catch (fetchError) {
-            console.error('データ取得エラー:', fetchError);
-            document.getElementById('genreErrorMessage').textContent = `データ取得エラー: ${fetchError.message}`;
-            document.getElementById('genreErrorMessage').style.display = 'block';
-            document.getElementById('genreLoadingIndicator').style.display = 'none';
-            document.getElementById('storeRankLoadingIndicator').style.display = 'none';
-            return;
+            
+            const result = await response.json();
+            
+            // APIレスポンスの構造を検証
+            if (!result || !result.data || !Array.isArray(result.data)) {
+              console.error('予期しないAPIレスポンス形式:', result);
+              throw new Error('ジャンルランキングAPIからのデータ形式が無効です');
+            }
+            
+            const genreData = result.data;
+            
+            if (genreData.length === 0) {
+              throw new Error('ジャンルデータが見つかりませんでした');
+            }
+            
+            console.log(`ジャンルランキングAPI: ${genreData.length}件のデータを取得`);
+            
+            // ジャンルランキングチャートを更新
+            updateGenreRankingChart(genreData);
+            
+            // 業種別の店舗ランキングも取得
+            const storeRankingResponse = await fetch(`/api/ranking/average?biz_type=${encodeURIComponent(bizType)}&limit=15`);
+            
+            if (!storeRankingResponse.ok) {
+              throw new Error(`店舗ランキングAPI error: ${storeRankingResponse.status}`);
+            }
+            
+            const storeRankingResult = await storeRankingResponse.json();
+            
+            if (!storeRankingResult || !storeRankingResult.data || !Array.isArray(storeRankingResult.data)) {
+              console.error('予期しない店舗ランキングAPIレスポンス形式:', storeRankingResult);
+              throw new Error('店舗ランキングAPIからのデータ形式が無効です');
+            }
+            
+            const storeRankingData = storeRankingResult.data;
+            
+            if (storeRankingData.length > 0) {
+              updateStoreRankingChart(storeRankingData);
+            } else {
+              // データがない場合はデモを表示
+              generateDemoStoreRanking(bizType);
+            }
+            
+          } catch (apiError) {
+            console.error('APIエラー:', apiError);
+            
+            // APIエラー時はstoreDataからのフィルタリングを試みる
+            if (storeData.length > 0) {
+              processLocalData(bizType);
+            } else {
+              // ローカルデータもなければAPIからデータを取得
+              await fetchAndProcessData(bizType);
+            }
+          }
+        } else {
+          // 業種の指定がない場合はstoreDataからフィルタリング
+          if (storeData.length > 0) {
+            processLocalData(bizType);
+          } else {
+            // ローカルデータがなければAPIからデータを取得
+            await fetchAndProcessData(bizType);
           }
         }
-
-        if (storeData.length === 0) {
-          throw new Error('店舗データが読み込まれていません');
-        }
-
+      } catch (error) {
+        console.error('ジャンルランキングデータ読み込みエラー:', error);
+        document.getElementById('genreErrorMessage').textContent = `エラー: ${error.message}`;
+        document.getElementById('genreErrorMessage').style.display = 'block';
+      } finally {
+        document.getElementById('genreLoadingIndicator').style.display = 'none';
+      }
+    }
+    
+    // storeDataからジャンルデータを処理する関数
+    function processLocalData(bizType) {
+      try {
         // 選択された業種でフィルタリング
         let filteredStores = [];
         if (bizType && bizType !== '') {
@@ -3340,13 +3464,39 @@
 
         // 店舗ランキングデータも生成
         generateStoreRanking(filteredStores);
-
       } catch (error) {
-        console.error('ジャンルランキングデータ読み込みエラー:', error);
-        document.getElementById('genreErrorMessage').textContent = `エラー: ${error.message}`;
+        console.error('ローカルデータ処理エラー:', error);
+        throw error;
+      }
+    }
+    
+    // APIからデータを取得して処理する関数
+    async function fetchAndProcessData(bizType) {
+      try {
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+          throw new Error(`APIエラー: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        // APIレスポンス構造に対応
+        if (data.data) {
+          storeData = data.data;
+        } else {
+          storeData = data;
+        }
+        
+        console.log(`APIからデータを取得しました: ${storeData.length}件`);
+        
+        // 取得したデータを処理
+        processLocalData(bizType);
+      } catch (fetchError) {
+        console.error('データ取得エラー:', fetchError);
+        document.getElementById('genreErrorMessage').textContent = `データ取得エラー: ${fetchError.message}`;
         document.getElementById('genreErrorMessage').style.display = 'block';
-      } finally {
         document.getElementById('genreLoadingIndicator').style.display = 'none';
+        document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+        throw fetchError;
       }
     }
     
@@ -3737,21 +3887,43 @@
         document.getElementById('rankingErrorMessage').style.display = 'none';
         
         // 期間に応じたAPIエンドポイントを選択
-        let apiUrl = '/api/ranking/average';
+        let apiUrl;
         const params = [];
         
-        if (bizType) {
-          params.push(`biz_type=${encodeURIComponent(bizType)}`);
+        // 期間によって適切なエンドポイントを選択
+        switch(period) {
+          case 'day':
+            apiUrl = '/api/averages/daily';
+            break;
+          case 'week':
+            apiUrl = '/api/averages/weekly';
+            break;
+          case 'month':
+            apiUrl = '/api/averages/monthly';
+            break;
+          case 'all':
+            apiUrl = '/api/averages/stores';
+            break;
+          default:
+            // デフォルトは旧エンドポイント
+            apiUrl = '/api/ranking/average';
         }
         
-        if (limit) {
-          // 全店舗表示の場合は1000をセット
-          const actualLimit = limit === '9999' ? '1000' : limit;
-          params.push(`limit=${actualLimit}`);
-        }
-        
-        if (params.length > 0) {
-          apiUrl += '?' + params.join('&');
+        // 旧エンドポイントの場合はパラメータを追加
+        if (apiUrl === '/api/ranking/average') {
+          if (bizType) {
+            params.push(`biz_type=${encodeURIComponent(bizType)}`);
+          }
+          
+          if (limit) {
+            // 全店舗表示の場合は1000をセット
+            const actualLimit = limit === '9999' ? '1000' : limit;
+            params.push(`limit=${actualLimit}`);
+          }
+          
+          if (params.length > 0) {
+            apiUrl += '?' + params.join('&');
+          }
         }
         
         console.log(`ランキングAPI呼び出し: ${apiUrl}`);
@@ -3779,6 +3951,20 @@
         }
         
         console.log(`取得したランキングデータ: ${rankingData.length}件`);
+        
+        // 業種フィルタリング（新しいエンドポイント用）
+        if (bizType && apiUrl !== '/api/ranking/average') {
+          rankingData = rankingData.filter(item => item.biz_type === bizType);
+          console.log(`業種フィルタリング後: ${rankingData.length}件`);
+        }
+        
+        // 件数制限（新しいエンドポイント用）
+        if (limit && limit !== '9999' && apiUrl !== '/api/ranking/average') {
+          rankingData = rankingData.slice(0, parseInt(limit));
+        }
+        
+        // データを稼働率でソート
+        rankingData.sort((a, b) => parseFloat(b.avg_rate) - parseFloat(a.avg_rate));
         
         // ランキングチャートとテーブルを更新
         updatePopularRankingChart(rankingData);
