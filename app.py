@@ -547,9 +547,18 @@ def api_data():
                 try:
                     formatted_item = format_store_status(item, jst)
                     if formatted_item:  # Noneでない場合のみ追加
+                        # タイムスタンプが未来の日付になっていないか確認
+                        if 'timestamp' in formatted_item:
+                            try:
+                                ts_str = formatted_item['timestamp']
+                                if ts_str and ts_str.startswith('202'):  # 2025など未来の年が入っている場合
+                                    # 現在の日時で置き換え
+                                    formatted_item['timestamp'] = now_jst.isoformat()
+                            except Exception as ts_err:
+                                app.logger.warning(f"タイムスタンプ修正エラー: {ts_err}")
                         formatted_data.append(formatted_item)
                 except Exception as fmt_err:
-                    app.logger.warning(f"フォーマットエラー: {str(fmt_err)}")
+                    app.logger.warning(f"フォーマットエラー: {fmt_err}")
                     app.logger.warning(traceback.format_exc())
                     format_errors += 1
                     # エラーでもformat_store_statusが辞書を返すようになったのでエラーは発生しない
@@ -723,8 +732,7 @@ def api_history():
         start_date: 指定日以降のデータ (YYYY-MM-DD形式)
         end_date: 指定日以前のデータ (YYYY-MM-DD形式)
         limit: 返す最大レコード数
-        page: ページ番号（1から始まる）
-        per_page: 1ページあたりの項目数（最大100）
+        page: ページ番号（1から始まる）        per_page: 1ページあたりの項目数（最大100）
     """
     from page_helper import paginate_query_results, format_store_status
     from database import get_db_connection
@@ -849,10 +857,20 @@ def api_history():
                 try:
                     formatted_item = format_store_status(item, jst)
                     if formatted_item:  # Noneでない場合のみ追加
+                        # タイムスタンプが未来の日付になっていないか確認
+                        if 'timestamp' in formatted_item:
+                            try:
+                                ts_str = formatted_item['timestamp']
+                                if ts_str and ts_str.startswith('202'):  # 2025など未来の年が入っている場合
+                                    # 現在の日時で置き換え
+                                    formatted_item['timestamp'] = now_jst.isoformat()
+                            except Exception as ts_err:
+                                app.logger.warning(f"タイムスタンプ修正エラー: {ts_err}")
                         data.append(formatted_item)
                 except Exception as fmt_err:
                     app.logger.warning(f"フォーマットエラー: {fmt_err}")
-                    # format_store_statusが改善されているのでエラーは発生しにくい
+                    app.logger.warning(traceback.format_exc())
+                    # エラーでもformat_store_statusが辞書を返すようになったのでエラーは発生しない
 
             # ページネーション情報
             if 'page' in request.args or 'per_page' in request.args:
@@ -1376,7 +1394,7 @@ def api_genre_ranking():
     except Exception as e:
         app.logger.error(f"ジャンルランキング全体取得エラー: {e}")
         app.logger.error(traceback.format_exc())
-        
+
         # 一般的なエラー時のダミーデータ
         return jsonify({
             "data": [
