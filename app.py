@@ -1368,6 +1368,207 @@ def api_genre_ranking():
                 "meta": {
                     "error": str(query_error),
                     "message": "ジャンルランキングクエリの実行中にエラーが発生しました",
+
+# 時間帯別稼働率分析のAPIエンドポイント
+@app.route('/api/hourly-analysis')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_hourly_analysis():
+    """
+    時間帯別の平均稼働率を返すエンドポイント
+
+    クエリパラメータ:
+        store: 特定の店舗名でフィルタリング（省略時は全店舗の平均）
+    """
+    # JSTタイムゾーン設定
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+
+    try:
+        # クエリパラメータの取得
+        store = request.args.get('store')
+        
+        # クエリの構築
+        query = """
+        SELECT 
+            strftime('%H', timestamp) AS hour,
+            AVG((working_staff - active_staff) * 100.0 / working_staff) AS avg_rate,
+            COUNT(*) AS sample_count
+        FROM store_status
+        WHERE working_staff > 0
+        """
+        
+        params = []
+        if store:
+            query += " AND store_name = ?"
+            params.append(store)
+        
+        query += """
+        GROUP BY strftime('%H', timestamp)
+        ORDER BY hour
+        """
+        
+        # SQLiteに直接接続
+        conn = get_db_connection()
+        results = list(conn.execute(query, params).fetchall())
+        conn.close()
+        
+        # 結果をフォーマット
+        hourly_data = []
+        for hour in range(24):  # 0-23時まで全時間帯のデータを用意
+            hour_str = f"{hour:02d}"
+            
+            # 該当する時間帯のデータを検索
+            found = False
+            for row in results:
+                if row['hour'] == hour_str:
+                    try:
+                        avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
+                    except (ValueError, TypeError):
+                        avg_rate = 0
+                        
+                    hourly_data.append({
+                        'hour': hour,
+                        'hour_str': f"{hour}:00",
+                        'avg_rate': round(avg_rate, 1),
+                        'sample_count': row['sample_count']
+                    })
+                    found = True
+                    break
+            
+            # データがない時間帯は0で埋める
+            if not found:
+                hourly_data.append({
+                    'hour': hour,
+                    'hour_str': f"{hour}:00",
+                    'avg_rate': 0,
+                    'sample_count': 0
+                })
+        
+        # 統一されたレスポンス形式で返す
+        return jsonify({
+            "data": hourly_data,
+            "meta": {
+                "store": store if store else "全店舗",
+                "count": len(hourly_data),
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"時間帯別分析取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        
+        # 統一されたエラーレスポンス形式
+        return jsonify({
+            "data": [],
+            "meta": {
+                "error": str(e),
+                "message": "時間帯別分析の取得中にエラーが発生しました",
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            }
+        }), 200  # 統一したレスポンスコード
+
+# 人気店舗ランキングのAPIエンドポイント
+@app.route('/api/ranking/popular')
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
+def api_popular_ranking():
+    """
+    人気店舗ランキングを返すエンドポイント
+    
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング
+        period: ranking_period - 'daily', 'weekly', 'monthly', 'all'（デフォルトは'monthly'）
+        limit: 上位何件を返すか（デフォルト20件）
+    """
+    try:
+        # クエリパラメータの取得
+        biz_type = request.args.get('biz_type')
+        period = request.args.get('period', 'monthly')
+        limit = request.args.get('limit', 20, type=int)
+        
+        # JSTタイムゾーン設定
+        jst = pytz.timezone('Asia/Tokyo')
+        now_jst = datetime.now(jst)
+        
+        # 期間に基づいてテーブル選択
+        if period == 'daily':
+            table_name = 'daily_averages'
+        elif period == 'weekly':
+            table_name = 'weekly_averages'
+        elif period == 'monthly':
+            table_name = 'monthly_averages'
+        else:  # 'all'
+            table_name = 'store_averages'
+        
+        # クエリの構築
+        query = f"""
+        SELECT 
+            store_name,
+            avg_rate,
+            sample_count,
+            biz_type,
+            genre,
+            area
+        FROM {table_name}
+        WHERE sample_count > 0
+        """
+        
+        params = []
+        if biz_type:
+            query += " AND biz_type = ?"
+            params.append(biz_type)
+        
+        query += " ORDER BY avg_rate DESC LIMIT ?"
+        params.append(limit)
+        
+        # SQLiteに直接接続
+        conn = get_db_connection()
+        results = list(conn.execute(query, params).fetchall())
+        conn.close()
+        
+        # 結果をフォーマット
+        ranking_data = []
+        for idx, row in enumerate(results, 1):
+            try:
+                avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
+            except (ValueError, TypeError):
+                avg_rate = 0
+                
+            ranking_data.append({
+                'rank': idx,
+                'store_name': row['store_name'],
+                'avg_rate': round(avg_rate, 1),
+                'sample_count': row['sample_count'],
+                'biz_type': row['biz_type'] if row['biz_type'] else '不明',
+                'genre': row['genre'] if row['genre'] else '不明',
+                'area': row['area'] if row['area'] else '不明'
+            })
+        
+        # 統一されたレスポンス形式で返す
+        return jsonify({
+            "data": ranking_data,
+            "meta": {
+                "period": period,
+                "biz_type": biz_type if biz_type else "全業種",
+                "count": len(ranking_data),
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"人気店舗ランキング取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        
+        # 統一されたエラーレスポンス形式
+        return jsonify({
+            "data": [],
+            "meta": {
+                "error": str(e),
+                "message": "人気店舗ランキングの取得中にエラーが発生しました",
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            }
+        }), 200  # 統一したレスポンスコード
+
                     "biz_type": biz_type,
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
