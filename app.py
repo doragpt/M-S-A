@@ -211,9 +211,10 @@ def scheduled_scrape():
 
     with app.app_context():
         # スクレイピング実行時刻（全レコード共通のタイムスタンプ）
-        scrape_time = datetime.now()
+        jst = pytz.timezone('Asia/Tokyo')
+        scrape_time = datetime.now(jst)
         # 古いデータ削除：過去2年以上前
-        retention_date = datetime.now() - timedelta(days=730)
+        retention_date = datetime.now(jst) - timedelta(days=730)
 
         store_url_objs = StoreURL.query.all()
         store_urls = [s.store_url for s in store_url_objs]
