@@ -1,0 +1,52 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-16 07:44:17,807 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-16 07:44:17,811 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-16 07:44:17,812 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-16 07:44:17,812 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-16 07:44:17,812 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-16 07:44:17,813 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-16 07:44:17 JST+0900
+2025-03-16 07:44:17,818 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-16 08:44:17.807812+09:00 (in 3599.989414 seconds)
+アプリケーションを起動しています: http://0.0.0.0:5000
+既存データ: 2942件
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Serving Flask app 'main'
+ * Debug mode: on
+2025-03-16 07:44:17,835 - werkzeug - INFO -  * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:5000
+ * Running on http://160.251.196.100:5000 (Press CTRL+C to quit)
+2025-03-16 07:44:17,836 - werkzeug - INFO -  * Restarting with stat
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-16 07:44:18,706 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-16 07:44:18,709 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-16 07:44:18,710 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-16 07:44:18,710 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-16 07:44:18,710 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-16 07:44:18,711 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-03-16 07:44:18,717 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-16 08:44:18.706235+09:00 (in 3599.989219 seconds)
+サーバー起動時刻（JST）: 2025-03-16 07:44:18 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+既存データ: 2942件
+2025-03-16 07:44:18,735 - werkzeug - WARNING -  * Debugger is active!
+2025-03-16 07:44:18,739 - werkzeug - INFO -  * Debugger PIN: 452-729-233
+2025-03-16 07:44:21,531 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:21] "GET / HTTP/1.1" 200 -
+2025-03-16 07:44:21,759 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:21,774 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:21] "GET /api/data HTTP/1.1" 200 -
+2025-03-16 07:44:24,672 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:24,676 - api - DEBUG - API応答: {"status": "success", "data": {"count": 515, "store_names": ["10代20代 専門店 すうぃ～ときっす", "10代、20代専門！ハレンチ倶楽部 姫路店", "4REVE(フォーレーヴ)", "AMAN CROSS", "AQUA", "AQUA REAL -アクアレアル-", "AQUA REAL -アクアレアル金沢店-", "AROMA...
+2025-03-16 07:44:24,677 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:24] "GET /api/store-names HTTP/1.1" 200 -
+2025-03-16 07:44:26,870 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:26] "GET /api/history/optimized?start_date=2025-03-08&end_date=2025-03-15 HTTP/1.1" 400 -
+2025-03-16 07:44:28,282 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:28,287 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:28] "GET /api/area-stats HTTP/1.1" 200 -
+2025-03-16 07:44:29,308 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:29,311 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:29,312 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:29] "GET /api/ranking/genre?biz_type= エステ・アロマ HTTP/1.1" 200 -
+2025-03-16 07:44:29,314 - api - DEBUG - API応答: {"status": "success", "data": {"limit": 15, "store_count": 15, "stores": [{"store_name": "東京メンズボディクリニックTMBC五反田店", "biz_type": "エステ・アロマ", "genre": "出張エステ", "area": "東京", "operation_rate": 0.0}, {"store...
+2025-03-16 07:44:29,315 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:29] "GET /api/ranking/average?biz_type=エステ・アロマ&limit=15 HTTP/1.1" 200 -
+2025-03-16 07:44:30,121 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 2483
+2025-03-16 07:44:30,126 - api - DEBUG - API応答: {"status": "success", "data": {"period_type": "weekly", "data_count": 1, "averages": [{"period": "2025-10", "formatted_date": "2025年第10週", "avg_operation_rate": 0.03574183679064039, "store_count": 515...
+2025-03-16 07:44:30,127 - werkzeug - INFO - 182.171.40.172 - - [16/Mar/2025 07:44:30] "GET /api/averages/weekly HTTP/1.1" 200 -
