@@ -474,6 +474,7 @@ def get_hourly_analysis():
             'hourly_data': hourly_data,
             'peak_hour': peak_hour,
             'min_hour': min_hour
+        }
         })
 
     except Exception as e:
@@ -864,7 +865,7 @@ def get_period_averages(period):
                     # 指定した週の月曜日を計算
                     week_monday = first_monday + datetime.timedelta(weeks=int(week))
                     # 週の終わり（日曜日）
-                    week_sunday = week_monday + datetime.timedelta(days=6)
+                    weeksunday = week_monday + datetime.timedelta(days=6)
                     # 表示用にフォーマット
                     formatted_date = f"{week_monday.strftime('%m/%d')}～{week_sunday.strftime('%m/%d')}"
                 except Exception:
