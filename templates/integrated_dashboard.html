@@ -3305,35 +3305,32 @@
         // 業種が指定されている場合は専用APIを使用
         if (bizType && bizType !== '') {
           try {
-            // ジャンルランキングAPIを使用
-            const response = await fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(bizType)}`);
+            // 並行して両方のAPIリクエストを実行（パフォーマンス向上）
+            const [genreResponse, storeRankingResponse] = await Promise.all([
+              fetch(`/api/ranking/genre?biz_type=${encodeURIComponent(bizType)}`),
+              fetch(`/api/ranking/average?biz_type=${encodeURIComponent(bizType)}&limit=15`)
+            ]);
             
-            if (!response.ok) {
-              throw new Error(`API error: ${response.status}`);
+            // ジャンルランキングAPIのレスポンス処理
+            if (!genreResponse.ok) {
+              throw new Error(`ジャンルランキングAPI error: ${genreResponse.status}`);
             }
             
-            const result = await response.json();
+            const genreResult = await genreResponse.json();
             
             // APIレスポンスの構造を検証
-            if (!result || !result.data || !Array.isArray(result.data)) {
-              console.error('予期しないAPIレスポンス形式:', result);
+            if (!genreResult || !genreResult.data || !Array.isArray(genreResult.data)) {
+              console.error('予期しないAPIレスポンス形式:', genreResult);
               throw new Error('ジャンルランキングAPIからのデータ形式が無効です');
             }
             
-            const genreData = result.data;
-            
-            if (genreData.length === 0) {
-              throw new Error('ジャンルデータが見つかりませんでした');
-            }
-            
+            const genreData = genreResult.data;
             console.log(`ジャンルランキングAPI: ${genreData.length}件のデータを取得`);
             
             // ジャンルランキングチャートを更新
             updateGenreRankingChart(genreData);
             
-            // 業種別の店舗ランキングも取得
-            const storeRankingResponse = await fetch(`/api/ranking/average?biz_type=${encodeURIComponent(bizType)}&limit=15`);
-            
+            // 店舗ランキングAPIのレスポンス処理
             if (!storeRankingResponse.ok) {
               throw new Error(`店舗ランキングAPI error: ${storeRankingResponse.status}`);
             }
@@ -3346,6 +3343,7 @@
             }
             
             const storeRankingData = storeRankingResult.data;
+            console.log(`店舗ランキングAPI: ${storeRankingData.length}件のデータを取得`);
             
             if (storeRankingData.length > 0) {
               updateStoreRankingChart(storeRankingData);
@@ -3503,18 +3501,55 @@
     // デモ用の店舗ランキングデータを生成
     function generateDemoStoreRanking(bizType) {
       try {
-        const demoStores = [
-          { store_name: 'CLUB AQUA', avg_rate: 92.5, genre: 'VIP', area: '銀座' },
-          { store_name: 'LUXURY SALON', avg_rate: 88.3, genre: '高級店', area: '六本木' },
-          { store_name: 'TOKYO GIRLS', avg_rate: 82.7, genre: 'セクキャバ', area: '新宿' },
-          { store_name: 'DIAMOND CLUB', avg_rate: 79.4, genre: 'ラウンジ', area: '渋谷' },
-          { store_name: 'CHERRY BLOSSOM', avg_rate: 75.1, genre: 'ガールズバー', area: '池袋' },
-          { store_name: 'GOLD RUSH', avg_rate: 72.9, genre: '姉キャバ', area: '銀座' },
-          { store_name: 'PLATINUM LOUNGE', avg_rate: 68.5, genre: 'ラウンジ', area: '新宿' },
-          { store_name: 'PINK PARADISE', avg_rate: 65.2, genre: '巨乳', area: '池袋' },
-          { store_name: 'ROYAL GARDEN', avg_rate: 61.8, genre: 'ガールズバー', area: '渋谷' },
-          { store_name: 'BLUE MOON', avg_rate: 58.7, genre: '人妻', area: '新宿' }
-        ];
+        // 業種に応じて異なるデモデータを生成
+        let demoStores = [];
+        
+        if (bizType.includes('キャバ') || bizType.includes('キャバクラ')) {
+          demoStores = [
+            { store_name: 'CLUB AQUA', avg_rate: 92.5, genre: 'VIP', area: '銀座', sample_count: 24 },
+            { store_name: 'LUXURY SALON', avg_rate: 88.3, genre: '高級店', area: '六本木', sample_count: 18 },
+            { store_name: 'DIAMOND CLUB', avg_rate: 79.4, genre: 'ラウンジ', area: '渋谷', sample_count: 22 },
+            { store_name: 'GOLD RUSH', avg_rate: 72.9, genre: '姉キャバ', area: '銀座', sample_count: 15 },
+            { store_name: 'PLATINUM LOUNGE', avg_rate: 68.5, genre: 'ラウンジ', area: '新宿', sample_count: 19 },
+            { store_name: 'ROYAL GARDEN', avg_rate: 61.8, genre: 'ガールズバー', area: '渋谷', sample_count: 21 }
+          ];
+        } else if (bizType.includes('ヘル') || bizType.includes('デリヘル')) {
+          demoStores = [
+            { store_name: 'TOKYO HEAVEN', avg_rate: 87.5, genre: 'VIP', area: '新宿', sample_count: 20 },
+            { store_name: 'DIAMOND GIRLS', avg_rate: 82.3, genre: '高級店', area: '池袋', sample_count: 16 },
+            { store_name: 'TOKYO PARADISE', avg_rate: 76.7, genre: '美少女', area: '渋谷', sample_count: 18 },
+            { store_name: 'BLUE HEAVEN', avg_rate: 70.4, genre: '人妻', area: '銀座', sample_count: 24 },
+            { store_name: 'CHERRY CLUB', avg_rate: 65.5, genre: '巨乳', area: '新宿', sample_count: 15 },
+            { store_name: 'PINK DIAMOND', avg_rate: 58.7, genre: 'お姉さん', area: '五反田', sample_count: 17 }
+          ];
+        } else {
+          // 汎用デモデータ
+          demoStores = [
+            { store_name: `${bizType} CLUB A`, avg_rate: 90.5, genre: 'VIP', area: '銀座', sample_count: 22 },
+            { store_name: `${bizType} SALON B`, avg_rate: 85.3, genre: '高級店', area: '六本木', sample_count: 18 },
+            { store_name: `${bizType} CLUB C`, avg_rate: 80.7, genre: 'スタンダード', area: '新宿', sample_count: 24 },
+            { store_name: `${bizType} LOUNGE D`, avg_rate: 75.4, genre: 'ラウンジ', area: '渋谷', sample_count: 19 },
+            { store_name: `${bizType} BAR E`, avg_rate: 70.1, genre: 'ガールズバー', area: '池袋', sample_count: 16 },
+            { store_name: `${bizType} CLUB F`, avg_rate: 65.9, genre: '姉キャバ', area: '銀座', sample_count: 20 },
+            { store_name: `${bizType} SALON G`, avg_rate: 60.5, genre: 'ラウンジ', area: '新宿', sample_count: 15 },
+            { store_name: `${bizType} CLUB H`, avg_rate: 55.2, genre: '巨乳', area: '池袋', sample_count: 17 }
+          ];
+        }
+        
+        // サンプルデータにランダム性を追加
+        demoStores = demoStores.map(store => {
+          // 稼働率に±5%のランダム変動を与える
+          let rate = store.avg_rate + (Math.random() * 10 - 5);
+          // 範囲を0-100に制限
+          rate = Math.min(Math.max(rate, 0), 99.9);
+          return {
+            ...store,
+            avg_rate: parseFloat(rate.toFixed(1))
+          };
+        });
+        
+        // コンソールに注意メッセージを表示
+        console.info('デモデータを表示しています。実際のAPIデータではありません。');
         
         updateStoreRankingChart(demoStores);
       } catch (error) {
@@ -3695,8 +3730,38 @@
         // 既存のチャートを破棄
         if (charts.storeRanking) charts.storeRanking.destroy();
 
+        // データの検証と変換
+        const cleanData = storeData.map(store => {
+          // 数値型への変換を確実に行う
+          let avgRate = 0;
+          try {
+            if (store.avg_rate !== undefined && store.avg_rate !== null) {
+              avgRate = parseFloat(store.avg_rate);
+              if (isNaN(avgRate)) avgRate = 0;
+            }
+          } catch (e) {
+            console.warn('稼働率の数値変換に失敗:', store.store_name, store.avg_rate);
+          }
+          
+          return {
+            ...store,
+            avg_rate: avgRate
+          };
+        });
+        
+        // 稼働率でソート
+        cleanData.sort((a, b) => b.avg_rate - a.avg_rate);
+        
         // 表示数を制限
-        const limitedData = storeData.slice(0, 15);
+        const limitedData = cleanData.slice(0, 15);
+        
+        // データが0件の場合のサンプルデータ
+        if (limitedData.length === 0) {
+          console.warn('店舗ランキングデータが0件です。サンプルデータを表示します。');
+          document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+          generateDemoStoreRanking(document.getElementById('typeSelector').value || '選択業種');
+          return;
+        }
 
         // テーマに合わせた色設定
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
@@ -3757,6 +3822,10 @@
               tooltip: {
                 callbacks: {
                   label: function(context) {
+                    if (context.dataIndex >= limitedData.length) {
+                      return [`稼働率: ${context.raw}%`];
+                    }
+                    
                     const store = limitedData[context.dataIndex];
                     const tooltipLines = [`稼働率: ${context.raw}%`];
                     
@@ -3788,8 +3857,13 @@
             }
           }
         });
+        
+        // ローディング表示を非表示
+        document.getElementById('storeRankLoadingIndicator').style.display = 'none';
+        
       } catch (error) {
         console.error('店舗ランキングチャート更新エラー:', error);
+        document.getElementById('storeRankLoadingIndicator').style.display = 'none';
       }
     }
 
