@@ -179,3 +179,8 @@ class AggregatedData:
     def get_store_averages():
         """店舗全期間平均データの取得"""
         return StoreAverage.query.order_by(StoreAverage.avg_rate.desc()).all()
+
+# Create a placeholder for the missing AggregatedStat if needed
+class AggregatedStat:
+    """Placeholder class for compatibility"""
+    pass
