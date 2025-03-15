@@ -16,7 +16,7 @@ MAX_CONCURRENT_TASKS = 14  # コア数×2+2の並列処理数（8GB/6コアに�
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 5000  # ページロードのタイムアウト(5秒)に短縮
+PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に延長
 # メモリ管理
 FORCE_GC_AFTER_STORES = 40  # 40店舗処理後に強制GC実行（メモリ節約）
 
@@ -39,7 +39,7 @@ async def fetch_page(page, url, retries=2, timeout=10000):
     """
     for attempt in range(retries):
         try:
-            await page.goto(url, waitUntil='networkidle0', timeout=timeout)
+            await page.goto(url, waitUntil=['networkidle0', 'load', 'domcontentloaded'], timeout=timeout)
             return True
         except Exception as e:
             print(f"ページロード失敗（リトライ {attempt+1}/{retries}）: {url} - {e}")
@@ -86,13 +86,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         )
 
         logger.info("スクレイピング開始: %s", attend_url)
-        # 指定URLにアクセス。タイムアウト7秒、リトライ1回に短縮
-        success = await fetch_page(page, attend_url, retries=1, timeout=7000)
+        # 指定URLにアクセス。タイムアウト15秒、リトライ2回に設定
+        success = await fetch_page(page, attend_url, retries=2, timeout=15000)
         if not success:
             await page.close()
             return {}
-        # ページ読み込み後の待機時間を0.2秒に短縮
-        await asyncio.sleep(0.2)
+        # ページ読み込み後の待機時間を2秒に延長（データが表示されるまで待機）
+        await asyncio.sleep(2)
         # ページコンテンツを取得し、BeautifulSoupでパース
         content = await page.content()
         soup = BeautifulSoup(content, "html.parser")
