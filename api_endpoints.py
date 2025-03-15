@@ -98,12 +98,12 @@ def api_response(data: Any, status: int = 200, message: str = 'success') -> Tupl
         'status': message,
         'data': data
     }
-    
+
     # デバッグログ - レスポンスの構造を出力
     if logger.isEnabledFor(logging.DEBUG):
         import json
         logger.debug(f"API応答: {json.dumps(response_data, ensure_ascii=False, default=str)[:200]}...")
-    
+
     response = jsonify(response_data)
     response.headers['Content-Type'] = 'application/json'
     return response, status
@@ -136,16 +136,11 @@ def get_current_stores():
 
     クエリパラメータ:
     - page: ページ番号（デフォルト: 1）
-    - per_page: 1ページあたりの表示件数（デフォルト: 50）
-    - biz_type: 業種でフィルタリング
-    - genre: ジャンルでフィルタリング
-    - area: エリアでフィルタリング
-    - sort: ソート順（稼働率 - rate, 名前 - name）
-    - order: 昇順/降順（asc/desc）
-    - favorites: お気に入り店舗IDのカンマ区切りリスト（オプション）
+    - per_page: 1ページあたりの表示件数（0は全件表示）
+    - お気に入りやフィルタリング条件を追加
     """
     page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 50, type=int), 500)  # より多くの店舗を取得可能に
+    per_page = request.args.get('per_page', 0, type=int)  # If 0, fetch all
     biz_type = request.args.get('biz_type', '')
     genre = request.args.get('genre', '')
     area = request.args.get('area', '')
@@ -153,14 +148,9 @@ def get_current_stores():
     order = request.args.get('order', 'desc')
     search = request.args.get('search', '')
     favorites_str = request.args.get('favorites', '')
-    
-    # お気に入り店舗のリスト（存在する場合）
-    favorites = []
-    if favorites_str:
-        favorites = [f.strip() for f in favorites_str.split(',') if f.strip()]
+    favorites = [f.strip() for f in favorites_str.split(',') if f.strip()]
 
     try:
-        # SQLクエリ構築
         query = """
         WITH latest_timestamps AS (
             SELECT store_name, MAX(timestamp) as latest_timestamp
@@ -183,14 +173,12 @@ def get_current_stores():
         """
 
         params = []
-        
-        # 検索条件の追加
+
         if search:
             query += " AND (s.store_name LIKE ? OR s.biz_type LIKE ? OR s.genre LIKE ? OR s.area LIKE ?)"
             search_param = f"%{search}%"
-            params.extend([search_param, search_param, search_param, search_param])
+            params.extend([search_param] * 4)
 
-        # フィルター条件の追加
         if biz_type:
             query += " AND s.biz_type = ?"
             params.append(biz_type)
@@ -200,14 +188,11 @@ def get_current_stores():
         if area:
             query += " AND s.area = ?"
             params.append(area)
-            
-        # お気に入りフィルター
         if favorites:
             placeholders = ','.join(['?' for _ in favorites])
             query += f" AND s.store_name IN ({placeholders})"
             params.extend(favorites)
 
-        # ソート順の設定
         if sort == 'name':
             query += f" ORDER BY s.store_name {'ASC' if order == 'asc' else 'DESC'}"
         elif sort == 'rate':
@@ -215,15 +200,13 @@ def get_current_stores():
         else:
             query += f" ORDER BY operation_rate {'ASC' if order == 'asc' else 'DESC'}, s.store_name ASC"
 
-        # ページネーション
-        query += " LIMIT ? OFFSET ?"
-        params.extend([per_page, (page - 1) * per_page])
+        if per_page > 0:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([per_page, (page - 1) * per_page])
 
-        # クエリ実行
         conn = get_db_connection()
         results = conn.execute(query, params).fetchall()
 
-        # 総件数の取得（別クエリ）
         count_query = """
         WITH latest_timestamps AS (
             SELECT store_name, MAX(timestamp) as latest_timestamp
@@ -236,15 +219,13 @@ def get_current_stores():
             ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
         WHERE 1=1
         """
-
         count_params = []
-        
-        # 検索条件の追加（件数カウント用）
+
         if search:
             count_query += " AND (s.store_name LIKE ? OR s.biz_type LIKE ? OR s.genre LIKE ? OR s.area LIKE ?)"
             search_param = f"%{search}%"
-            count_params.extend([search_param, search_param, search_param, search_param])
-            
+            count_params.extend([search_param] * 4)
+
         if biz_type:
             count_query += " AND s.biz_type = ?"
             count_params.append(biz_type)
@@ -254,30 +235,26 @@ def get_current_stores():
         if area:
             count_query += " AND s.area = ?"
             count_params.append(area)
-            
-        # お気に入りフィルター（件数カウント用）
+
         if favorites:
             placeholders = ','.join(['?' for _ in favorites])
             count_query += f" AND s.store_name IN ({placeholders})"
             count_params.extend(favorites)
 
         total = conn.execute(count_query, count_params).fetchone()['total']
-        
-        # 最終更新時刻を取得
+
         latest_time_query = "SELECT MAX(timestamp) as latest_time FROM store_status"
         latest_time_result = conn.execute(latest_time_query).fetchone()
         latest_time = latest_time_result['latest_time'] if latest_time_result else None
 
         conn.close()
 
-        # 結果の整形
         stores = []
         for row in results:
-            # 実際の稼働率計算（勤務中-待機中）/勤務中
             actual_rate = 0
             if row['working_staff'] > 0:
                 actual_rate = (row['working_staff'] - row['active_staff']) / row['working_staff'] * 100
-                
+
             store = {
                 'id': row['id'],
                 'store_name': row['store_name'],
@@ -295,14 +272,13 @@ def get_current_stores():
             }
             stores.append(store)
 
-        # メタデータを含むレスポンス
         result = {
             'stores': stores,
             'meta': {
                 'page': page,
                 'per_page': per_page,
                 'total': total,
-                'pages': (total + per_page - 1) // per_page,
+                'pages': (total + per_page - 1) // per_page if per_page > 0 else 1,
                 'latest_update': latest_time
             }
         }
