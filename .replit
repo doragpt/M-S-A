@@ -5,8 +5,20 @@ run = "uvicorn main:app --host 0.0.0.0 --port 5000"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 5000"]
+run = ["sh", "-c", "python main.py"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 40138017
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
