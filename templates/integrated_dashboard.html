@@ -1187,14 +1187,15 @@
           // APIからデータ取得
           const response = await fetch('/api/data');
           if (!response.ok) throw new Error(`API error: ${response.status}`);
-          const data = await response.json();
+          const res = await response.json();
 
-          if (!data || !Array.isArray(data.data)) {
+          // レスポンス形式: { status: "success", data: { meta: {...}, stores: [...] } }
+          if (!res || !res.data || !res.data.stores || !Array.isArray(res.data.stores)) {
             throw new Error('Invalid data format received from API');
           }
 
           // データの保存とキャッシュ
-          storeData = data.data;
+          storeData = res.data.stores;
           localStorage.setItem(cacheKey, JSON.stringify({
             timestamp: now,
             data: storeData
