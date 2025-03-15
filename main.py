@@ -192,8 +192,12 @@ def scheduled_scrape():
             # 集計データの更新
             AggregatedData.calculate_and_save_aggregated_data()
             
-            # キャッシュをクリア
-            cache.clear()
+            # キャッシュをクリア（キャッシュミスを防ぐためにエラーを捕捉）
+            try:
+                cache.clear()
+                logger.info("キャッシュをクリアしました")
+            except Exception as cache_err:
+                logger.error(f"キャッシュクリア中にエラーが発生しました: {cache_err}")
             
             # Socket.IO で更新通知
             socketio.emit('update', {'data': 'Dashboard updated'})

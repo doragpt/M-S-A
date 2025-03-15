@@ -94,10 +94,17 @@ def rate_limit(limit=60, per=60, by_ip=True):
 # レスポンス用のヘルパー関数
 def api_response(data: Any, status: int = 200, message: str = 'success') -> Tuple[Dict, int]:
     """API応答の標準形式"""
-    response = jsonify({
+    response_data = {
         'status': message,
         'data': data
-    })
+    }
+    
+    # デバッグログ - レスポンスの構造を出力
+    if logger.isEnabledFor(logging.DEBUG):
+        import json
+        logger.debug(f"API応答: {json.dumps(response_data, ensure_ascii=False, default=str)[:200]}...")
+    
+    response = jsonify(response_data)
     response.headers['Content-Type'] = 'application/json'
     return response, status
 
