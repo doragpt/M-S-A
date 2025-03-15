@@ -1198,17 +1198,24 @@ def api_average_ranking():
 def api_genre_ranking():
     """
     業種内のジャンル別平均稼働率ランキングを返すエンドポイント
-    クエリパラメータ: biz_type（業種でフィルタリング）
+
+    クエリパラメータ:
+        biz_type: 業種でフィルタリング（指定なしの場合は全業種）
     """
     biz_type = request.args.get('biz_type')
+
+    # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
 
-    # 業種が指定されていない場合、全業種のジャンル集計
+    # 業種が指定されていない場合は全業種のジャンル集計を返す
     if not biz_type:
         app.logger.info("業種が指定されていません。全業種のジャンルランキングを返します。")
+        # SQLiteを直接使用
         try:
             conn = get_db_connection()
+
+            # 全業種のジャンル別平均稼働率を計算するクエリ
             query = """
             SELECT 
                 genre,
@@ -1219,18 +1226,32 @@ def api_genre_ranking():
             GROUP BY genre
             ORDER BY avg_rate DESC
             """
+
             cursor = conn.execute(query)
             results = cursor.fetchall()
             conn.close()
 
-            data = [
-                {
-                    "genre": result['genre'] if result['genre'] else "不明",
-                    "store_count": result['store_count'] if result['store_count'] else 0,
-                    "avg_rate": round(float(result['avg_rate']) if result['avg_rate'] is not None else 0, 1)
-                } for result in results
-            ]
+            # 結果を整形
+            data = []
+            for result in results:
+                genre = result['genre'] if result['genre'] else "不明"
+                store_count = result['store_count'] if result['store_count'] else 0
 
+                # avg_rate の安全な取得と変換
+                avg_rate = 0
+                try:
+                    if result['avg_rate'] is not None:
+                        avg_rate = float(result['avg_rate'])
+                except (ValueError, TypeError) as e:
+                    app.logger.warning(f"平均値の変換エラー: {e}, genre: {genre}")
+
+                data.append({
+                    "genre": genre,
+                    "store_count": store_count,
+                    "avg_rate": round(avg_rate, 1)
+                })
+
+            # 結果が空の場合はダミーデータを作成（フロントエンドのエラー回避）
             if not data:
                 data = [{"genre": "データなし", "store_count": 0, "avg_rate": 0.0}]
 
@@ -1246,8 +1267,12 @@ def api_genre_ranking():
         except Exception as e:
             app.logger.error(f"全業種ジャンルランキング取得エラー: {e}")
             app.logger.error(traceback.format_exc())
+
+            # ダミーデータを返す（エラー情報付き）
             return jsonify({
-                "data": [{"genre": "データ取得エラー", "store_count": 0, "avg_rate": 0.0}],
+                "data": [
+                    {"genre": "データ取得エラー", "store_count": 0, "avg_rate": 0.0}
+                ],
                 "meta": {
                     "error": str(e),
                     "message": "全業種ジャンルランキングの取得中にエラーが発生しました",
@@ -1255,68 +1280,102 @@ def api_genre_ranking():
                 }
             }), 200
 
-    # 特定業種のジャンルランキング
+    # 特定業種のジャンルランキングを取得
     try:
+        # SQLiteを直接使用する方法に変更
         conn = get_db_connection()
-        query = """
-        SELECT 
-            genre,
-            COUNT(DISTINCT store_name) as store_count,
-            AVG((working_staff - active_staff) * 100.0 / working_staff) as avg_rate
-        FROM store_status
-        WHERE biz_type = ? AND working_staff > 0
-        GROUP BY genre
-        ORDER BY avg_rate DESC
-        """
-        cursor = conn.execute(query, [biz_type])
-        results = cursor.fetchall()
-        conn.close()
 
-        if not results:
-            app.logger.warning(f"業種「{biz_type}」のジャンルデータがありません。")
+        try:
+            # ジャンル別の平均稼働率を計算するクエリ
+            query = """
+            SELECT 
+                genre,
+                COUNT(DISTINCT store_name) as store_count,
+                AVG((working_staff - active_staff) * 100.0 / working_staff) as avg_rate
+            FROM store_status
+            WHERE biz_type = ? AND working_staff > 0
+            GROUP BY genre
+            ORDER BY avg_rate DESC
+            """
+
+            # クエリ実行
+            app.logger.debug(f"実行SQL: {query}")
+            app.logger.debug(f"パラメータ: {biz_type}")
+
+            cursor = conn.execute(query, [biz_type])
+            results = cursor.fetchall()
+
+            # 接続クローズ
+            conn.close()
+
+            # 結果が空の場合でもダミーデータを生成（フロントエンドのエラー回避のため）
+            if not results:
+                app.logger.warning(f"業種「{biz_type}」のジャンルデータがありません。ダミーデータを返します。")
+                return jsonify({
+                    "data": [
+                        {"genre": "該当データなし", "store_count": 0, "avg_rate": 0.0}
+                    ],
+                    "meta": {
+                        "biz_type": biz_type,
+                        "count": 1,
+                        "message": "該当するジャンルデータがありません",
+                        "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+                    }
+                }), 200
+
+            # 結果を整形
+            data = []
+            for result in results:
+                genre = result['genre'] if result['genre'] else "不明"
+                store_count = result['store_count'] if result['store_count'] else 0
+
+                # avg_rate の安全な取得と変換
+                avg_rate = 0
+                try:
+                    if result['avg_rate'] is not None:
+                        avg_rate = float(result['avg_rate'])
+                except (ValueError, TypeError) as e:
+                    app.logger.warning(f"平均値の変換エラー: {e}, genre: {genre}")
+
+                data.append({
+                    "genre": genre,
+                    "store_count": store_count,
+                    "avg_rate": round(avg_rate, 1)
+                })
+
+            # 統一されたレスポンス形式で返す
             return jsonify({
-                "data": [{"genre": "該当データなし", "store_count": 0, "avg_rate": 0.0}],
+                "data": data,
                 "meta": {
                     "biz_type": biz_type,
-                    "count": 1,
-                    "message": "該当するジャンルデータがありません",
+                    "count": len(data),
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
 
-        data = [
-            {
-                "genre": result['genre'] if result['genre'] else "不明",
-                "store_count": result['store_count'] if result['store_count'] else 0,
-                "avg_rate": round(float(result['avg_rate']) if result['avg_rate'] is not None else 0, 1)
-            } for result in results
-        ]
+        except Exception as query_error:
+            if conn:
+                conn.close()
 
-        return jsonify({
-            "data": data,
-            "meta": {
-                "biz_type": biz_type,
-                "count": len(data),
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-            }
-        }), 200
+            app.logger.error(f"ジャンルランキングクエリエラー: {query_error}")
+            app.logger.error(traceback.format_exc())
 
-    except Exception as e:
-        app.logger.error(f"ジャンルランキング取得エラー: {e}")
-        app.logger.error(traceback.format_exc())
-        return jsonify({
-            "data": [{"genre": "サーバーエラー", "store_count": 0, "avg_rate": 0.0}],
-            "meta": {
-                "error": str(e),
-                "message": "ジャンルランキングの取得中にエラーが発生しました",
-                "biz_type": biz_type,
-                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-            }
-        }), 200
+            # ダミーデータを返す（エラー情報付き）
+            return jsonify({
+                "data": [
+                    {"genre": "エラー発生", "store_count": 0, "avg_rate": 0.0}
+                ],
+                "meta": {
+                    "error": str(query_error),
+                    "message": "ジャンルランキングクエリの実行中にエラーが発生しました",
+                    "biz_type": biz_type,
+                    "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+                }
+            })
 
-# 次のエンドポイント
+# 時間帯別稼働率分析のAPIエンドポイント
 @app.route('/api/hourly-analysis')
-@cache.memoize(timeout=600)
+@cache.memoize(timeout=600)  # キャッシュ：10分間有効
 def api_hourly_analysis():
     """
     時間帯別の平均稼働率を返すエンドポイント
