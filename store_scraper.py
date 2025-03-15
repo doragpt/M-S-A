@@ -11,14 +11,14 @@ import gc
 # 定数設定
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
-# 8GB/6コアVPSのリソースを活用
-MAX_CONCURRENT_TASKS = 40  # 並列処理数を増加（8GB/6コアに最適化）
+# 8GB/6コアVPSのリソースを最適活用（コア数×2+2）
+MAX_CONCURRENT_TASKS = 14  # コア数×2+2の並列処理数（8GB/6コアに最適化）
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 7000  # ページロードのタイムアウト(7秒)
+PAGE_LOAD_TIMEOUT = 5000  # ページロードのタイムアウト(5秒)に短縮
 # メモリ管理
-FORCE_GC_AFTER_STORES = 80  # 80店舗処理後に強制GC実行
+FORCE_GC_AFTER_STORES = 40  # 40店舗処理後に強制GC実行（メモリ節約）
 
 # -------------------------------
 # fetch_page 関数
@@ -255,17 +255,24 @@ async def _scrape_all(store_urls: list) -> list:
         executablePath=executable_path,
         ignoreHTTPSErrors=True,
         defaultViewport=None,
+        handleSIGINT=False,
+        handleSIGTERM=False,
+        handleSIGHUP=False,
         args=[
             "--no-sandbox",
             "--disable-setuid-sandbox",
             "--disable-gpu",
             "--disable-dev-shm-usage",
-            "--single-process",
+            "--disable-extensions",
+            "--mute-audio",
             "--headless=new",
             "--disable-background-timer-throttling",
             "--disable-backgrounding-occluded-windows",
             "--disable-renderer-backgrounding",
-            "--disable-infobars"
+            "--disable-infobars",
+            "--js-flags=--expose-gc",
+            f"--memory-pressure-off",
+            f"--js-flags=--max-old-space-size=4096"
         ]
     )
     # 各店舗URLに対するスクレイピングタスクを作成
@@ -291,8 +298,8 @@ async def _scrape_all(store_urls: list) -> list:
                     
         results.extend(batch_results)
         logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
-        # 待機時間を0.1秒に短縮
-        await asyncio.sleep(0.1)
+        # バッチ間の待機なし - CPU使用率を最適化
+        await asyncio.sleep(0)
     
     logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()
