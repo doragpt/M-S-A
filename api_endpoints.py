@@ -466,7 +466,9 @@ def get_hourly_analysis():
             peak_hour = None
             min_hour = None
 
-        return api_response({
+        return jsonify({
+            'status': 'success',
+            'data': {
             'store': store or '全店舗',
             'days_analyzed': days,
             'hourly_data': hourly_data,
@@ -533,9 +535,12 @@ def get_area_stats():
                 'avg_operation_rate': row['avg_operation_rate']
             })
 
-        return api_response({
-            'area_count': len(area_data),
-            'areas': area_data
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'area_count': len(area_data),
+                'areas': area_data
+            }
         })
 
     except Exception as e:
@@ -591,10 +596,13 @@ def get_genre_ranking():
                 'avg_operation_rate': row['avg_operation_rate']
             })
 
-        return api_response({
-            'biz_type': biz_type,
-            'genre_count': len(genre_data),
-            'genres': genre_data
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'biz_type': biz_type,
+                'genre_count': len(genre_data),
+                'genres': genre_data
+            }
         })
 
     except Exception as e:
@@ -758,13 +766,16 @@ def get_popular_ranking():
                 'data_count': row['data_count']
             })
 
-        return api_response({
-            'period': period,
-            'start_date': start_date.isoformat(),
-            'end_date': now.isoformat(),
-            'limit': limit,
-            'store_count': len(store_data),
-            'stores': store_data
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'period': period,
+                'start_date': start_date.isoformat(),
+                'end_date': now.isoformat(),
+                'limit': limit,
+                'store_count': len(store_data),
+                'stores': store_data
+            }
         })
 
     except Exception as e:
