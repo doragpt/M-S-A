@@ -400,7 +400,7 @@
 
         async function updateDashboard() {
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/data?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             document.getElementById("totalStores").innerText = data.length;
             const avgRate =
@@ -507,7 +507,7 @@
 
         async function updateTop10Chart() {
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/data?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             data.forEach((store) => {
               store.currentRate = store.working_staff > 0
@@ -578,7 +578,7 @@
             return;
           }
           try {
-            const response = await fetchWithRetry("/api/data", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/data?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const compareData = data.filter((store) => selectedStores.includes(store.store_name));
             const labels = compareData.map((s) => s.store_name);
@@ -622,7 +622,7 @@
 
         async function updateHistoryChart() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const storeSelect = document.getElementById("storeSelectHistory");
             const selectedStore = storeSelect ? storeSelect.value : "";
@@ -719,7 +719,7 @@
 
         async function fillHistoryStoreDropdown() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const storeSelect = document.getElementById("storeSelectHistory");
             if (!storeSelect) return;
@@ -739,7 +739,7 @@
 
         async function updateHourlyAnalysis() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             const selectedStore = hourlyStoreSelect ? hourlyStoreSelect.value : "";
@@ -813,7 +813,7 @@
 
         async function fillHourlyStoreDropdown() {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const hourlyStoreSelect = document.getElementById("hourlyStoreSelect");
             if (!hourlyStoreSelect) return;
@@ -833,7 +833,7 @@
 
         async function updateDetailHistoryChart(storeName) {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const filtered = data.filter((record) => record.store_name === storeName).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             const labels = filtered.map((record) => {
@@ -893,7 +893,7 @@
 
         async function updateDetailHourlyChart(storeName) {
           try {
-            const response = await fetchWithRetry("/api/history", {}, 3, 2000);
+            const response = await fetchWithRetry("/api/history?per_page=500", {}, 3, 2000); // Modified
             const data = await response.json();
             const filtered = data.filter((record) => record.store_name === storeName);
             const hourly = {};
