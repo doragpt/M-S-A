@@ -732,7 +732,9 @@ def api_history():
         start_date: 指定日以降のデータ (YYYY-MM-DD形式)
         end_date: 指定日以前のデータ (YYYY-MM-DD形式)
         limit: 返す最大レコード数
-        page: ページ番号（1から始まる）        per_page: 1ページあたりの項目数（最大100）
+        page: ページ番号（1から始まる）
+        per_page: 1ページあたりの項目数（最大100）
+        force_refresh: '1'の場合、キャッシュをクリアして再取得
     """
     from page_helper import paginate_query_results, format_store_status
     from database import get_db_connection
@@ -742,13 +744,34 @@ def api_history():
     now_jst = datetime.now(jst)
 
     try:
-        #        # クエリパラメータの取得
+        # クエリパラメータの取得
         store = request.args.get('store')
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         limit = request.args.get('limit', type=int)
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 100, type=int), 100)  # 最大100件に制限
+        force_refresh = request.args.get('force_refresh', '0') == '1'
+
+        # 強制更新の場合はキャッシュをクリア
+        if force_refresh:
+            if store:
+                # 特定の店舗のキャッシュをクリア
+                cache_key = f"store_history_{store}"
+                cache.delete(cache_key)
+                app.logger.info(f"店舗 '{store}' の履歴キャッシュをクリアしました")
+            else:
+                # 全体の履歴キャッシュをクリア
+                cache.delete_memoized(api_history)
+                app.logger.info("全履歴キャッシュをクリアしました")
+
+        # 特定店舗のキャッシュチェック
+        if store and not force_refresh:
+            store_cache_key = f"store_history_{store}"
+            cached_data = cache.get(store_cache_key)
+            if cached_data:
+                app.logger.info(f"店舗 '{store}' の履歴キャッシュを使用")
+                return jsonify(cached_data)
 
         # SQLAlchemyを使用してデータを取得する
         try:
@@ -758,6 +781,7 @@ def api_history():
             # フィルタリング条件の適用
             if store:
                 query = query.filter(StoreStatus.store_name == store)
+                app.logger.info(f"店舗フィルター: '{store}'")
 
             if start_date:
                 try:
@@ -765,6 +789,7 @@ def api_history():
                     start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
                     start_datetime = jst.localize(start_datetime)
                     query = query.filter(StoreStatus.timestamp >= start_datetime)
+                    app.logger.info(f"開始日フィルター: {start_date}")
                 except Exception as e:
                     app.logger.error(f"開始日付変換エラー: {e}")
                     # エラー時は日付フィルタを適用しない
@@ -775,6 +800,7 @@ def api_history():
                     end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
                     end_datetime = jst.localize(end_datetime)
                     query = query.filter(StoreStatus.timestamp <= end_datetime)
+                    app.logger.info(f"終了日フィルター: {end_date}")
                 except Exception as e:
                     app.logger.error(f"終了日付変換エラー: {e}")
                     # エラー時は日付フィルタを適用しない
@@ -784,17 +810,21 @@ def api_history():
 
             # 総件数を取得
             total_count = query.count()
+            app.logger.info(f"履歴クエリ結果: {total_count}件")
 
             # ページネーションまたは制限を適用
             if 'page' in request.args or 'per_page' in request.args:
                 offset = (page - 1) * per_page
                 query = query.limit(per_page).offset(offset)
+                app.logger.info(f"ページネーション: ページ{page}、1ページあたり{per_page}件")
             elif limit:
                 query = query.limit(limit)
+                app.logger.info(f"件数制限: {limit}件")
 
             try:
                 # データ取得
                 results = query.all()
+                app.logger.info(f"取得したレコード数: {len(results)}件")
             except Exception as query_error:
                 app.logger.error(f"SQLAlchemyクエリエラー: {query_error}")
                 app.logger.error(traceback.format_exc())
@@ -839,6 +869,7 @@ def api_history():
                     # データ取得
                     results = list(conn.execute(sql_query, params).fetchall())
                     conn.close()
+                    app.logger.info(f"SQLite直接取得: {len(results)}件")
                 except Exception as sqlite_err:
                     app.logger.error(f"SQLite直接取得エラー: {sqlite_err}")
                     # エラーレスポンスを返す
@@ -904,11 +935,19 @@ def api_history():
                     }
                 }
 
-            # レスポンス返却
-            return jsonify({
+            # レスポンス作成
+            response = {
                 "data": data,
                 "meta": meta
-            })
+            }
+
+            # 特定店舗の場合はキャッシュに保存
+            if store:
+                store_cache_key = f"store_history_{store}"
+                cache.set(store_cache_key, response, timeout=300)  # 5分間キャッシュ
+
+            # レスポンス返却
+            return jsonify(response)
 
         except Exception as db_error:
             app.logger.error(f"データベース処理エラー: {db_error}")
@@ -1841,6 +1880,7 @@ def api_history_optimized():
     最適化されたスクレイピング履歴を返すエンドポイント
     - 大量データの場合は日時でダウンサンプリングする
     - 指定店舗のみの場合は完全なデータを返す
+    - refresh=1パラメータで強制的にキャッシュをクリアできる
     """
     from page_helper import paginate_query_results, format_store_status
 
@@ -1849,10 +1889,24 @@ def api_history_optimized():
     now_jst = datetime.now(jst)
 
     try:
+        # キャッシュクリアパラメータのチェック
+        refresh = request.args.get('refresh', '0') == '1'
+        if refresh:
+            # このエンドポイントのキャッシュをクリア
+            cache.delete_memoized(api_history_optimized)
+            app.logger.info("履歴データのキャッシュをクリアしました")
+
         # 店舗名フィルター（指定された場合は完全なデータを返す）
         store = request.args.get('store')
         if store:
-            # api_history()を直接呼び出さず、リダイレクトさせる
+            # 店舗ごとのユニークなキャッシュキーを生成するため、クエリパラメータを取得
+            force_refresh = request.args.get('force_refresh', '0') == '1'
+            if force_refresh:
+                # 特定店舗のキャッシュをクリア
+                cache.delete(f'store_history_{store}')
+                app.logger.info(f"店舗 '{store}' の履歴キャッシュをクリアしました")
+            
+            # api_history()を使用するが、レスポンスをキャッシュ
             return api_history()
 
         # 日付範囲フィルター
