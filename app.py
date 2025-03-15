@@ -1595,6 +1595,7 @@ def api_popular_ranking():
             }
         }), 200
 
+
 # 集計済みデータを提供するエンドポイント
 @app.route('/api/aggregated')
 @cache.memoize(timeout=3600)  # キャッシュ：1時間有効
