@@ -321,11 +321,11 @@ def get_store_history_optimized():
             'interval_minutes': interval,
             'data_points': len(history_data),
             'history': history_data
-        })
+        }, 200, 'success')
 
     except Exception as e:
         logger.error(f"店舗履歴データ取得エラー: {e}")
-        return error_response(f"履歴データ取得中にエラーが発生しました: {str(e)}")
+        return error_response(f"履歴データ取得中にエラーが発生しました: {str(e)}", 500)
 
 # 店舗名の一覧を取得するエンドポイント
 def get_store_names():
