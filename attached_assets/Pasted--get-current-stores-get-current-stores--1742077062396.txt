@@ -1,0 +1,79 @@
+基本的に、get_current_storesエンドポイントを修正してスクレイピングしたすべての店舗情報および最新の稼働状況を取得できるようにします。
+
+get_current_stores関数を修正し、データ取得についての制限を緩和します。
+SQLクエリの最適化によって、取得するデータの柔軟性が向上するようにします。
+以下のコードは、修正されたget_current_stores 関数です:
+
+def get_current_stores():
+    """
+    最新の店舗データを取得するエンドポイント
+    クエリパラメータ:
+    - page: ページ番号（デフォルト: 1）
+    - per_page: 1ページあたりの表示件数（0は全件表示）
+    - お気に入りやフィルタリング条件を追加
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 0, type=int)  # If 0, fetch all
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    sort = request.args.get('sort', 'rate')
+    order = request.args.get('order', 'desc')
+    search = request.args.get('search', '')
+    favorites_str = request.args.get('favorites', '')
+    favorites = [f.strip() for f in favorites_str.split(',') if f.strip()]
+    try:
+        query = """
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
+            FROM store_status
+            GROUP BY store_name
+        )
+        SELECT s.*, 
+               CASE 
+                   WHEN s.total_staff = 0 THEN 0
+                   ELSE CAST(s.working_staff AS FLOAT) / s.total_staff
+               END AS operation_rate
+        FROM store_status s
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE 1=1
+        """
+        params = []
+        if search:
+            query += " AND (s.store_name LIKE ? OR s.biz_type LIKE ? OR s.genre LIKE ? OR s.area LIKE ?)"
+            search_param = f"%{search}%"
+            params.extend([search_param] * 4)
+        if biz_type:
+            query += " AND s.biz_type = ?"
+            params.append(biz_type)
+        if genre:
+            query += " AND s.genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND s.area = ?"
+            params.append(area)
+        if favorites:
+            placeholders = ','.join(['?' for _ in favorites])
+            query += f" AND s.store_name IN ({placeholders})"
+            params.extend(favorites)
+        if sort == 'name':
+            query += f" ORDER BY s.store_name {'ASC' if order == 'asc' else 'DESC'}"
+        elif sort == 'rate':
+            query += f" ORDER BY operation_rate {'ASC' if order == 'asc' else 'DESC'}, s.store_name ASC"
+        if per_page > 0:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([per_page, (page - 1) * per_page])
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
+        # Count logic...
+        # Send response...
+        conn.close()
+    except Exception as e:
+        logger.error(f"Error fetching store data: {e}")
+        return error_response("データ取得中にエラーが発生しました")
+変更の概要:
+ページネーションとデータ取得の制限をより柔軟にし、per_page=0で全データを取得可能にしました。
+最新の店舗情報のみを取得するためのSQLロジックを含めました。
+検索条件やフィルターを拡張し、検索の効率化と最適化を図っています。
+この修正によって、ユーザーが必要とする「すべての店舗の情報」と「最新の稼働状況」を効率的に取得できるようになりました。また、コードが管理しやすく柔軟性を持たせることが可能です。
