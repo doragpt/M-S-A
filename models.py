@@ -83,6 +83,19 @@ class MonthlyAverage(db.Model):
     updated_at = Column(DateTime, default=func.now())
 
 
+class DailyStats(db.Model):
+    """日次の統計データ"""
+    __tablename__ = 'daily_stats'
+    id = Column(Integer, primary_key=True)
+    date = Column(DateTime, index=True)
+    record_count = Column(Integer, default=0)
+    store_count = Column(Integer, default=0)
+    avg_working_staff = Column(Float, default=0.0)
+    avg_total_staff = Column(Float, default=0.0)
+    avg_operation_rate = Column(Float, default=0.0)
+    last_updated = Column(DateTime, default=func.now())
+
+
 class StoreAverage(db.Model):
     """店舗ごとの全期間平均稼働率（2年以内）"""
     __tablename__ = 'store_averages'
