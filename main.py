@@ -376,4 +376,20 @@ if __name__ == '__main__':
     now_jst = datetime.now(jst)
     print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
     print(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
+    
+    # 初期データのスクレイピングを実行
+    with app.app_context():
+        try:
+            # 既存データがあるかチェック
+            from models import StoreStatus
+            count = StoreStatus.query.count()
+            if count == 0:
+                print("初期データがありません。スクレイピングを実行します...")
+                scheduled_scrape()
+            else:
+                print(f"既存データ: {count}件")
+        except Exception as e:
+            print(f"初期データチェックエラー: {e}")
+    
+    # サーバー起動
     socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
