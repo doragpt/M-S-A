@@ -1371,7 +1371,23 @@ def api_genre_ranking():
                     "biz_type": biz_type,
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
-            })
+            }), 200
+    except Exception as e:
+        app.logger.error(f"ジャンルランキング全体取得エラー: {e}")
+        app.logger.error(traceback.format_exc())
+        
+        # 一般的なエラー時のダミーデータ
+        return jsonify({
+            "data": [
+                {"genre": "エラー発生", "store_count": 0, "avg_rate": 0.0}
+            ],
+            "meta": {
+                "error": str(e),
+                "message": "ジャンルランキングの取得中にエラーが発生しました",
+                "biz_type": biz_type if biz_type else "全業種",
+                "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            }
+        }), 200
 
 # 時間帯別稼働率分析のAPIエンドポイント
 @app.route('/api/hourly-analysis')
