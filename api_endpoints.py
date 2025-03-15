@@ -1,846 +1,1056 @@
 
-from flask import request, jsonify, current_app as app
-from sqlalchemy import func, desc, and_
-import pytz
+import os
+import logging
+import json
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Dict, List, Union, Optional, Any, Tuple
+import pytz
+
+from flask import Blueprint, request, jsonify, current_app
 from flask_caching import Cache
 
+from models import db, StoreStatus, AggregatedStat
 from database import get_db_connection
-from models import StoreStatus, DailyAverage, WeeklyAverage, MonthlyAverage, StoreAverage
 
-# キャッシュインスタンスを初期化（app.pyから渡される）
+# キャッシュ設定
 cache = None
 
 def init_cache(cache_instance):
-    """キャッシュインスタンスをセット"""
+    """キャッシュインスタンスを初期化"""
     global cache
     cache = cache_instance
 
-# ----------------------- ヘルパー関数 -----------------------
+# APIロガーの設定
+logger = logging.getLogger('api')
 
-def format_store_status(item, jst):
-    """店舗データをフォーマットする関数"""
-    try:
-        # タイムスタンプの処理
-        timestamp = None
-        if hasattr(item, 'timestamp'):
-            timestamp = item.timestamp
-        elif isinstance(item, dict) and 'timestamp' in item:
-            timestamp = item['timestamp']
-            
-        # ISO形式に変換
-        if timestamp:
-            if isinstance(timestamp, str):
-                try:
-                    timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                except ValueError:
-                    try:
-                        timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-                    except ValueError:
-                        timestamp = datetime.now(jst)
-            
-            # タイムゾーン変換
-            if timestamp.tzinfo is None:
-                timestamp = jst.localize(timestamp)
-            else:
-                timestamp = timestamp.astimezone(jst)
+# レートリミット用の簡易キャッシュ（本番環境ではRedisなどに置き換え）
+rate_limit_cache = {}
+
+# キャッシュデコレーター関数
+def cached(timeout=300, key_prefix='view/%s'):
+    """キャッシュするためのデコレーター"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if cache is None:
+                # キャッシュが設定されていない場合は通常通り実行
+                return f(*args, **kwargs)
                 
-            formatted_timestamp = timestamp.isoformat()
-        else:
-            formatted_timestamp = datetime.now(jst).isoformat()
+            cache_key = key_prefix % request.path
+            
+            # クエリパラメータがある場合はキャッシュキーに追加
+            if request.query_string:
+                cache_key = f"{cache_key}?{request.query_string.decode('utf-8')}"
+                
+            # キャッシュから取得
+            cached_response = cache.get(cache_key)
+            if cached_response is not None:
+                return cached_response
+                
+            # 関数を実行してレスポンスを生成
+            response = f(*args, **kwargs)
+            
+            # レスポンスをキャッシュに保存
+            cache.set(cache_key, response, timeout=timeout)
+            
+            return response
+        return decorated_function
+    return decorator
 
-        # 店舗データの抽出
-        if hasattr(item, 'store_name'):
-            # SQLAlchemyモデルの場合
-            store_name = item.store_name
-            biz_type = item.biz_type
-            genre = item.genre
-            area = item.area
-            total_staff = item.total_staff or 0
-            working_staff = item.working_staff or 0
-            active_staff = item.active_staff or 0
-            url = item.url
-            shift_time = item.shift_time
-        else:
-            # 辞書の場合
-            store_name = item.get('store_name', '')
-            biz_type = item.get('biz_type', '')
-            genre = item.get('genre', '')
-            area = item.get('area', '')
-            total_staff = item.get('total_staff', 0) or 0
-            working_staff = item.get('working_staff', 0) or 0
-            active_staff = item.get('active_staff', 0) or 0
-            url = item.get('url', '')
-            shift_time = item.get('shift_time', '')
+# レートリミットデコレーター
+def rate_limit(limit=60, per=60, by_ip=True):
+    """簡易的なレートリミット"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            now = datetime.now()
+            
+            # クライアントの識別子
+            client_id = request.remote_addr if by_ip else 'global'
+            
+            # レートリミット情報の取得または初期化
+            if client_id not in rate_limit_cache:
+                rate_limit_cache[client_id] = {
+                    'count': 0,
+                    'reset_at': now + timedelta(seconds=per)
+                }
+            
+            # 制限時間が経過していれば、カウンタをリセット
+            if now >= rate_limit_cache[client_id]['reset_at']:
+                rate_limit_cache[client_id]['count'] = 0
+                rate_limit_cache[client_id]['reset_at'] = now + timedelta(seconds=per)
+            
+            # リクエスト数のカウントアップ
+            rate_limit_cache[client_id]['count'] += 1
+            
+            # 制限を超えたかチェック
+            if rate_limit_cache[client_id]['count'] > limit:
+                return jsonify({'error': 'Rate limit exceeded'}), 429
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
-        # 稼働率の計算
-        rate = 0
-        if working_staff > 0:
-            rate = ((working_staff - active_staff) / working_staff) * 100
-            rate = round(rate, 1)  # 小数点第1位まで
-
-        return {
-            'timestamp': formatted_timestamp,
-            'store_name': store_name,
-            'biz_type': biz_type,
-            'genre': genre,
-            'area': area,
-            'total_staff': total_staff,
-            'working_staff': working_staff,
-            'active_staff': active_staff,
-            'url': url,
-            'shift_time': shift_time,
-            'rate': rate
-        }
-    except Exception as e:
-        app.logger.error(f"データフォーマットエラー: {e}")
-        # エラー時にも最低限のデータを返す
-        return {
-            'timestamp': datetime.now(jst).isoformat(),
-            'store_name': getattr(item, 'store_name', '') if hasattr(item, 'store_name') else item.get('store_name', '不明'),
-            'error': str(e)
-        }
-
-def error_response(message, status_code=200):
-    """エラーレスポンスを統一形式で返す"""
-    jst = pytz.timezone('Asia/Tokyo')
-    now_jst = datetime.now(jst)
+# レスポンス用のヘルパー関数
+def api_response(data: Any, status: int = 200, message: str = 'success') -> Tuple[Dict, int]:
+    """API応答の標準形式"""
     return jsonify({
-        "data": [],
-        "meta": {
-            "error": message,
-            "message": message,
-            "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-        }
-    }), status_code
+        'status': message,
+        'data': data
+    }), status
 
-def success_response(data, meta=None):
-    """成功レスポンスを統一形式で返す"""
-    jst = pytz.timezone('Asia/Tokyo')
-    now_jst = datetime.now(jst)
-    
-    if meta is None:
-        meta = {}
-    
-    meta["current_time"] = now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-    
+def error_response(message: str, status: int = 400) -> Tuple[Dict, int]:
+    """エラー応答の標準形式"""
     return jsonify({
-        "data": data,
-        "meta": meta
-    })
+        'status': 'error',
+        'message': message
+    }), status
 
-# APIエンドポイントの実装
-# ----------------------- 1. 基本データエンドポイント -----------------------
+# グローバルヘルスチェックエンドポイント（Blueprintの外側）
+def register_health_check(app):
+    @app.route('/api/v1/health')
+    @cached(timeout=10)
+    def health_check():
+        """APIの健康状態を確認するエンドポイント"""
+        return api_response({
+            'status': 'ok',
+            'timestamp': datetime.now().isoformat(),
+            'version': '1.0'
+        })
 
-@app.route('/api/v1/stores/current')
-@cache.memoize(timeout=60)  # 1分間キャッシュ
+# 最新の店舗データを取得するエンドポイント
 def get_current_stores():
     """
-    現在の全店舗データを取得するエンドポイント
+    最新の店舗データを取得するエンドポイント
     
     クエリパラメータ:
-        page: ページ番号（1から開始）
-        per_page: 1ページあたりの件数
-        biz_type: 業種フィルター
-        genre: ジャンルフィルター
-        area: エリアフィルター
-        search: 店舗名検索
+    - page: ページ番号（デフォルト: 1）
+    - per_page: 1ページあたりの表示件数（デフォルト: 50）
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
+    - sort: ソート順（稼働率 - rate, 名前 - name）
+    - order: 昇順/降順（asc/desc）
     """
-    jst = pytz.timezone('Asia/Tokyo')
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 50, type=int), 100)
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    sort = request.args.get('sort', 'rate')
+    order = request.args.get('order', 'desc')
+    
     try:
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_current_stores)
-            
-        # クエリパラメータ取得
-        page = request.args.get('page', 1, type=int)
-        per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100件
-        biz_type = request.args.get('biz_type')
-        genre = request.args.get('genre')
-        area = request.args.get('area')
-        search = request.args.get('search')
-        
-        # SQLiteデータベースに直接接続
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-        
-        # 最新レコードを取得するサブクエリ
+        # SQLクエリ構築
         query = """
-        WITH LatestTimestamps AS (
-            SELECT store_name, MAX(timestamp) as max_timestamp
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
             FROM store_status
             GROUP BY store_name
         )
-        SELECT s.*
+        SELECT s.*,
+               CASE 
+                   WHEN s.total_staff = 0 THEN 0
+                   ELSE CAST(s.working_staff AS FLOAT) / s.total_staff
+               END AS operation_rate
         FROM store_status s
-        JOIN LatestTimestamps lt ON s.store_name = lt.store_name AND s.timestamp = lt.max_timestamp
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
         WHERE 1=1
         """
         
         params = []
         
-        # フィルター条件を追加
-        if biz_type and biz_type != 'all':
+        # フィルター条件の追加
+        if biz_type:
             query += " AND s.biz_type = ?"
             params.append(biz_type)
-            
-        if genre and genre != 'all':
+        if genre:
             query += " AND s.genre = ?"
             params.append(genre)
-            
-        if area and area != 'all':
+        if area:
             query += " AND s.area = ?"
             params.append(area)
-            
-        if search:
-            query += " AND s.store_name LIKE ?"
-            params.append(f"%{search}%")
         
-        # カウントクエリ実行（総件数取得）
-        count_query = f"""
-        SELECT COUNT(*) FROM ({query}) as count_table
-        """
-        
-        try:
-            total_count = conn.execute(count_query, params).fetchone()[0]
-        except Exception as e:
-            app.logger.error(f"カウントクエリエラー: {e}")
-            total_count = 0
+        # ソート順の設定
+        if sort == 'name':
+            query += f" ORDER BY s.store_name {'ASC' if order == 'asc' else 'DESC'}"
+        else:
+            query += f" ORDER BY operation_rate {'ASC' if order == 'asc' else 'DESC'}, s.store_name ASC"
         
         # ページネーション
-        if page > 0:
-            query += f" LIMIT {per_page} OFFSET {(page - 1) * per_page}"
-            
-        # メインクエリ実行
-        try:
-            results = list(conn.execute(query, params).fetchall())
-        except Exception as e:
-            app.logger.error(f"メインクエリエラー: {e}")
-            conn.close()
-            return error_response(f"データ取得エラー: {e}")
-            
-        conn.close()
-        
-        # 結果が0件の場合
-        if len(results) == 0:
-            return success_response([], {
-                "total_count": 0,
-                "message": "データが見つかりません"
-            })
-            
-        # 集計値の計算
-        total_store_count = len(results)
-        total_working_staff = 0
-        total_active_staff = 0
-        valid_stores = 0
-        max_rate = 0
-        
-        for item in results:
-            try:
-                working_staff = item['working_staff'] if item['working_staff'] is not None else 0
-                active_staff = item['active_staff'] if item['active_staff'] is not None else 0
-                
-                if working_staff > 0:
-                    valid_stores += 1
-                    total_working_staff += working_staff
-                    total_active_staff += active_staff
-                    
-                    rate = ((working_staff - active_staff) / working_staff) * 100
-                    max_rate = max(max_rate, rate)
-            except (ValueError, TypeError, ZeroDivisionError, KeyError) as e:
-                app.logger.debug(f"集計スキップ: {e}")
-                continue
-                
-        # 全体平均稼働率の計算
-        avg_rate = 0
-        if valid_stores > 0 and total_working_staff > 0:
-            avg_rate = ((total_working_staff - total_active_staff) / total_working_staff) * 100
-            
-        # データをフォーマット
-        formatted_data = [format_store_status(item, jst) for item in results]
-        
-        # ページネーション情報
-        meta = {
-            "total_count": total_count,
-            "valid_stores": valid_stores,
-            "avg_rate": round(avg_rate, 1),
-            "max_rate": round(max_rate, 1),
-            "total_working_staff": total_working_staff,
-            "total_active_staff": total_active_staff
-        }
-        
-        if page > 0:
-            total_pages = (total_count + per_page - 1) // per_page if per_page > 0 else 1
-            meta.update({
-                "page": page,
-                "per_page": per_page,
-                "total_pages": total_pages,
-                "has_next": page < total_pages,
-                "has_prev": page > 1
-            })
-            
-        return success_response(formatted_data, meta)
-        
-    except Exception as e:
-        app.logger.error(f"店舗データ取得エラー: {e}")
-        return error_response(f"データ取得中にエラーが発生しました: {e}")
-
-@app.route('/api/v1/stores/history')
-@cache.memoize(timeout=300)  # 5分間キャッシュ
-def get_store_history():
-    """
-    店舗の履歴データを取得するエンドポイント
-    
-    クエリパラメータ:
-        store: 店舗名（必須）
-        start_date: 開始日（YYYY-MM-DD形式）
-        end_date: 終了日（YYYY-MM-DD形式）
-        optimize: 大量データの場合に間引くかどうか（1=有効, 0=無効）
-    """
-    jst = pytz.timezone('Asia/Tokyo')
-    try:
-        # パラメータ取得
-        store = request.args.get('store')
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        optimize = request.args.get('optimize', '1') == '1'  # デフォルトで最適化ON
-        
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_store_history)
-            
-        # 店舗名は必須
-        if not store:
-            return error_response("店舗名が指定されていません")
-            
-        # SQLiteに直接接続
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # クエリを構築
-        query = "SELECT * FROM store_status WHERE store_name = ?"
-        params = [store]
-        
-        # 日付フィルター
-        if start_date:
-            query += " AND date(timestamp) >= date(?)"
-            params.append(start_date)
-            
-        if end_date:
-            query += " AND date(timestamp) <= date(?)"
-            params.append(end_date)
-            
-        # 時間順にソート
-        query += " ORDER BY timestamp ASC"
+        query += " LIMIT ? OFFSET ?"
+        params.extend([per_page, (page - 1) * per_page])
         
         # クエリ実行
-        try:
-            results = list(conn.execute(query, params).fetchall())
-        except Exception as e:
-            app.logger.error(f"履歴クエリエラー: {e}")
-            conn.close()
-            return error_response(f"履歴データ取得エラー: {e}")
-            
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
+        
+        # 総件数の取得（別クエリ）
+        count_query = """
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
+            FROM store_status
+            GROUP BY store_name
+        )
+        SELECT COUNT(*) as total
+        FROM store_status s
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE 1=1
+        """
+        
+        count_params = []
+        if biz_type:
+            count_query += " AND s.biz_type = ?"
+            count_params.append(biz_type)
+        if genre:
+            count_query += " AND s.genre = ?"
+            count_params.append(genre)
+        if area:
+            count_query += " AND s.area = ?"
+            count_params.append(area)
+        
+        total = conn.execute(count_query, count_params).fetchone()['total']
         conn.close()
         
-        if len(results) == 0:
-            return success_response([], {
-                "message": f"店舗 '{store}' の履歴データが見つかりませんでした"
-            })
-            
-        # データの間引き処理（最適化）
-        if optimize and len(results) > 100:
-            # データが大量の場合は間引き
-            sample_rate = max(1, len(results) // 100)
-            results = results[::sample_rate]
-            
-        # データをフォーマット
-        formatted_data = [format_store_status(item, jst) for item in results]
+        # 結果の整形
+        stores = []
+        for row in results:
+            store = {
+                'id': row['id'],
+                'store_name': row['store_name'],
+                'biz_type': row['biz_type'],
+                'genre': row['genre'],
+                'area': row['area'],
+                'total_staff': row['total_staff'],
+                'working_staff': row['working_staff'],
+                'active_staff': row['active_staff'],
+                'operation_rate': row['operation_rate'],
+                'timestamp': row['timestamp'],
+                'url': row['url'],
+                'shift_time': row['shift_time']
+            }
+            stores.append(store)
         
-        # メタデータ
-        meta = {
-            "store": store,
-            "total_count": len(formatted_data),
-            "start_date": start_date if start_date else formatted_data[0]['timestamp'].split('T')[0],
-            "end_date": end_date if end_date else formatted_data[-1]['timestamp'].split('T')[0],
-            "is_sampled": optimize and len(results) > 100
+        # メタデータを含むレスポンス
+        result = {
+            'stores': stores,
+            'meta': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
         }
         
-        return success_response(formatted_data, meta)
+        return api_response(result)
         
     except Exception as e:
-        app.logger.error(f"履歴データ取得エラー: {e}")
-        return error_response(f"履歴データ取得中にエラーが発生しました: {e}")
+        logger.error(f"店舗データ取得エラー: {e}")
+        return error_response(f"データ取得中にエラーが発生しました: {str(e)}")
 
-@app.route('/api/v1/store-names')
-@cache.memoize(timeout=600)  # 10分間キャッシュ
-def get_store_names():
-    """すべての店舗名リストを取得するエンドポイント"""
+# 店舗履歴データを取得するエンドポイント（最適化版）
+def get_store_history_optimized():
+    """
+    指定した店舗の履歴データを取得するエンドポイント（最適化版）
+    
+    クエリパラメータ:
+    - store_name: 店舗名（必須）
+    - start_date: 開始日（YYYY-MM-DD）
+    - end_date: 終了日（YYYY-MM-DD）
+    - interval: データ間隔（分、デフォルト: 60）
+    """
+    store_name = request.args.get('store_name', '')
+    if not store_name:
+        return error_response("店舗名が指定されていません")
+    
+    # 日付範囲のパース
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    interval = min(request.args.get('interval', 60, type=int), 1440)  # 最大値は1日（1440分）
+    
     try:
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        query = "SELECT DISTINCT store_name FROM store_status ORDER BY store_name ASC"
+        jst = pytz.timezone('Asia/Tokyo')
+        now = datetime.now(jst)
         
-        try:
-            results = conn.execute(query).fetchall()
-            store_names = [row[0] for row in results if row[0]]
-        except Exception as e:
-            app.logger.error(f"店舗名取得クエリエラー: {e}")
-            conn.close()
-            return error_response(f"店舗名取得エラー: {e}")
-            
+        # デフォルト: 過去24時間
+        if not start_date_str:
+            start_date = (now - timedelta(hours=24)).replace(tzinfo=None)
+        else:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        
+        if not end_date_str:
+            end_date = now.replace(tzinfo=None)
+        else:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            # 終了日は23:59:59に設定
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # 期間が30日以上の場合はintervalを大きく
+        if (end_date - start_date).days > 30:
+            interval = max(interval, 240)  # 4時間以上
+        
+        # SQLクエリ構築（時間でグループ化）
+        query = """
+        SELECT 
+            CAST(strftime('%s', timestamp) / (? * 60) * (? * 60) AS INTEGER) AS interval_timestamp,
+            AVG(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS avg_operation_rate,
+            MAX(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS max_operation_rate,
+            MIN(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS min_operation_rate,
+            AVG(working_staff) AS avg_working_staff,
+            AVG(active_staff) AS avg_active_staff,
+            COUNT(*) AS sample_count,
+            MAX(timestamp) AS latest_timestamp
+        FROM store_status
+        WHERE store_name = ?
+        AND timestamp BETWEEN ? AND ?
+        GROUP BY interval_timestamp
+        ORDER BY interval_timestamp
+        """
+        
+        conn = get_db_connection()
+        results = conn.execute(query, [interval, interval, store_name, start_date, end_date]).fetchall()
         conn.close()
         
-        return success_response(store_names, {
-            "count": len(store_names)
+        # 結果の整形
+        history_data = []
+        for row in results:
+            # Unixタイムスタンプを日時に変換
+            timestamp = datetime.fromtimestamp(row['interval_timestamp'])
+            
+            history_data.append({
+                'timestamp': timestamp.isoformat(),
+                'avg_operation_rate': row['avg_operation_rate'],
+                'max_operation_rate': row['max_operation_rate'],
+                'min_operation_rate': row['min_operation_rate'],
+                'avg_working_staff': row['avg_working_staff'],
+                'avg_active_staff': row['avg_active_staff'],
+                'sample_count': row['sample_count']
+            })
+        
+        return api_response({
+            'store_name': store_name,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'interval_minutes': interval,
+            'data_points': len(history_data),
+            'history': history_data
         })
         
     except Exception as e:
-        app.logger.error(f"店舗名取得エラー: {e}")
-        return error_response(f"店舗名取得中にエラーが発生しました: {e}")
+        logger.error(f"店舗履歴データ取得エラー: {e}")
+        return error_response(f"履歴データ取得中にエラーが発生しました: {str(e)}")
 
-# ----------------------- 2. 分析・ランキングエンドポイント -----------------------
-
-@app.route('/api/v1/analysis/hourly')
-@cache.memoize(timeout=600)  # 10分間キャッシュ
-def get_hourly_analysis():
+# 店舗名の一覧を取得するエンドポイント
+def get_store_names():
     """
-    時間帯別分析データを取得するエンドポイント
+    店舗名の一覧を取得するエンドポイント
     
     クエリパラメータ:
-        store: 特定店舗名（省略時は全店舗の平均）
-        biz_type: 業種フィルター
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
     """
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    
     try:
-        # パラメータ取得
-        store = request.args.get('store')
-        biz_type = request.args.get('biz_type')
-        
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_hourly_analysis)
-            
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # クエリを構築
+        # 最新の店舗状態に基づいて店舗名を取得
         query = """
-        SELECT 
-            strftime('%H', timestamp) AS hour,
-            AVG((working_staff - active_staff) * 100.0 / working_staff) AS avg_rate,
-            COUNT(*) AS sample_count
-        FROM store_status
-        WHERE working_staff > 0
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
+            FROM store_status
+            GROUP BY store_name
+        )
+        SELECT DISTINCT s.store_name
+        FROM store_status s
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE 1=1
         """
         
         params = []
         
-        if store:
-            query += " AND store_name = ?"
-            params.append(store)
-            
+        # フィルター条件の追加
         if biz_type:
-            query += " AND biz_type = ?"
+            query += " AND s.biz_type = ?"
             params.append(biz_type)
-            
-        query += " GROUP BY strftime('%H', timestamp) ORDER BY hour"
+        if genre:
+            query += " AND s.genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND s.area = ?"
+            params.append(area)
         
-        # クエリ実行
-        try:
-            results = list(conn.execute(query, params).fetchall())
-        except Exception as e:
-            app.logger.error(f"時間帯分析クエリエラー: {e}")
-            conn.close()
-            return error_response(f"時間帯分析データ取得エラー: {e}")
-            
+        query += " ORDER BY s.store_name ASC"
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
         conn.close()
         
-        # 0-23時の全時間帯データを生成
-        hourly_data = []
-        for hour in range(24):
-            hour_str = f"{hour:02d}"
-            
-            # その時間帯のデータを探す
-            found = False
-            for row in results:
-                if row['hour'] == hour_str:
-                    try:
-                        avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
-                    except (ValueError, TypeError):
-                        avg_rate = 0
-                        
-                    hourly_data.append({
-                        'hour': hour,
-                        'hour_str': f"{hour}:00",
-                        'avg_rate': round(avg_rate, 1),
-                        'sample_count': row['sample_count']
-                    })
-                    found = True
-                    break
-                    
-            # データがない時間帯は0で埋める
-            if not found:
-                hourly_data.append({
-                    'hour': hour,
-                    'hour_str': f"{hour}:00",
-                    'avg_rate': 0,
-                    'sample_count': 0
-                })
-                
-        # 分析結果の生成
-        analysis = {}
+        # 結果をリスト化
+        store_names = [row['store_name'] for row in results]
         
-        # ピーク時間と空き時間
-        sorted_by_rate = sorted(hourly_data, key=lambda x: x['avg_rate'], reverse=True)
-        analysis['peak_hours'] = sorted_by_rate[:3]  # 上位3つ
-        analysis['quiet_hours'] = sorted_by_rate[-3:]  # 下位3つ
-        
-        # 時間帯グループの平均
-        time_groups = {
-            'morning': {'hours': [6, 7, 8, 9], 'avg': 0},
-            'noon': {'hours': [10, 11, 12, 13], 'avg': 0},
-            'afternoon': {'hours': [14, 15, 16, 17], 'avg': 0},
-            'evening': {'hours': [18, 19, 20, 21], 'avg': 0},
-            'night': {'hours': [22, 23, 0, 1, 2, 3, 4, 5], 'avg': 0}
-        }
-        
-        for group_name, group_data in time_groups.items():
-            hours = group_data['hours']
-            group_values = [item['avg_rate'] for item in hourly_data if item['hour'] in hours]
-            if group_values:
-                time_groups[group_name]['avg'] = sum(group_values) / len(group_values)
-                
-        analysis['time_groups'] = time_groups
-        
-        # 全体平均
-        all_rates = [item['avg_rate'] for item in hourly_data]
-        analysis['overall_avg'] = sum(all_rates) / len(all_rates) if all_rates else 0
-        
-        return success_response(hourly_data, {
-            "store": store if store else "全店舗",
-            "biz_type": biz_type if biz_type else "全業種",
-            "analysis": analysis
+        return api_response({
+            'count': len(store_names),
+            'store_names': store_names
         })
         
     except Exception as e:
-        app.logger.error(f"時間帯分析エラー: {e}")
-        return error_response(f"時間帯分析中にエラーが発生しました: {e}")
+        logger.error(f"店舗名一覧取得エラー: {e}")
+        return error_response(f"店舗名一覧取得中にエラーが発生しました: {str(e)}")
 
-@app.route('/api/v1/analysis/area')
-@cache.memoize(timeout=600)  # 10分間キャッシュ
-def get_area_stats():
-    """エリア別統計データを取得するエンドポイント"""
+# 時間帯別分析データを取得するエンドポイント
+def get_hourly_analysis():
+    """
+    時間帯別の平均稼働率データを取得するエンドポイント
+    
+    クエリパラメータ:
+    - store: 特定の店舗名（指定がなければ全店舗の平均）
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
+    - days: 過去何日分のデータを使用するか（デフォルト: 7）
+    """
+    store = request.args.get('store', '')
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    days = min(request.args.get('days', 7, type=int), 30)  # 最大30日まで
+    
     try:
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_area_stats)
-            
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # 最新のデータを使ったエリア統計
+        # 過去X日間のデータに限定
+        jst = pytz.timezone('Asia/Tokyo')
+        end_date = datetime.now(jst).replace(tzinfo=None)
+        start_date = end_date - timedelta(days=days)
+        
+        # SQLクエリ構築（時間帯別にグループ化）
         query = """
-        WITH LatestTimestamps AS (
-            SELECT store_name, MAX(timestamp) as max_timestamp
+        SELECT 
+            CAST(strftime('%H', timestamp) AS INTEGER) AS hour,
+            AVG(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS avg_operation_rate,
+            AVG(working_staff) AS avg_working_staff,
+            AVG(active_staff) AS avg_active_staff,
+            COUNT(DISTINCT date(timestamp)) AS day_count,
+            COUNT(*) AS data_count
+        FROM store_status
+        WHERE timestamp BETWEEN ? AND ?
+        """
+        
+        params = [start_date, end_date]
+        
+        # フィルター条件の追加
+        if store:
+            query += " AND store_name = ?"
+            params.append(store)
+        if biz_type:
+            query += " AND biz_type = ?"
+            params.append(biz_type)
+        if genre:
+            query += " AND genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND area = ?"
+            params.append(area)
+        
+        query += " GROUP BY hour ORDER BY hour"
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
+        conn.close()
+        
+        # 結果の整形
+        hourly_data = []
+        for row in results:
+            hourly_data.append({
+                'hour': row['hour'],
+                'avg_operation_rate': row['avg_operation_rate'],
+                'avg_working_staff': row['avg_working_staff'],
+                'avg_active_staff': row['avg_active_staff'],
+                'day_count': row['day_count'],
+                'data_count': row['data_count']
+            })
+        
+        # ピーク時間の計算
+        if hourly_data:
+            peak_hour = max(hourly_data, key=lambda x: x['avg_operation_rate'])
+            min_hour = min(hourly_data, key=lambda x: x['avg_operation_rate'])
+        else:
+            peak_hour = None
+            min_hour = None
+        
+        return api_response({
+            'store': store or '全店舗',
+            'days_analyzed': days,
+            'hourly_data': hourly_data,
+            'peak_hour': peak_hour,
+            'min_hour': min_hour
+        })
+        
+    except Exception as e:
+        logger.error(f"時間帯別分析データ取得エラー: {e}")
+        return error_response(f"時間帯別分析データ取得中にエラーが発生しました: {str(e)}")
+
+# エリア別の統計情報を取得するエンドポイント
+def get_area_stats():
+    """
+    エリア別の統計情報を取得するエンドポイント
+    
+    クエリパラメータ:
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    """
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    
+    try:
+        # SQLクエリ構築（エリア別に集計）
+        query = """
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
             FROM store_status
             GROUP BY store_name
         )
         SELECT 
             s.area,
-            COUNT(DISTINCT s.store_name) as store_count,
-            AVG((s.working_staff - s.active_staff) * 100.0 / s.working_staff) as avg_rate
+            COUNT(*) AS store_count,
+            AVG(CASE WHEN s.total_staff = 0 THEN 0 ELSE CAST(s.working_staff AS FLOAT) / s.total_staff END) AS avg_operation_rate
         FROM store_status s
-        JOIN LatestTimestamps lt ON s.store_name = lt.store_name AND s.timestamp = lt.max_timestamp
-        WHERE s.working_staff > 0 AND s.area IS NOT NULL AND s.area != ''
-        GROUP BY s.area
-        ORDER BY avg_rate DESC
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE 1=1
         """
         
-        try:
-            results = list(conn.execute(query).fetchall())
-        except Exception as e:
-            app.logger.error(f"エリア統計クエリエラー: {e}")
-            conn.close()
-            return error_response(f"エリア統計データ取得エラー: {e}")
-            
+        params = []
+        
+        # フィルター条件の追加
+        if biz_type:
+            query += " AND s.biz_type = ?"
+            params.append(biz_type)
+        if genre:
+            query += " AND s.genre = ?"
+            params.append(genre)
+        
+        query += " GROUP BY s.area ORDER BY store_count DESC, avg_operation_rate DESC"
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
         conn.close()
         
-        # 結果をフォーマット
+        # 結果の整形
         area_data = []
         for row in results:
-            try:
-                avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
-            except (ValueError, TypeError):
-                avg_rate = 0
-                
             area_data.append({
-                'area': row['area'] if row['area'] else '不明',
+                'area': row['area'],
                 'store_count': row['store_count'],
-                'avg_rate': round(avg_rate, 1)
+                'avg_operation_rate': row['avg_operation_rate']
             })
-            
-        return success_response(area_data, {
-            "count": len(area_data)
+        
+        return api_response({
+            'area_count': len(area_data),
+            'areas': area_data
         })
         
     except Exception as e:
-        app.logger.error(f"エリア統計エラー: {e}")
-        return error_response(f"エリア統計中にエラーが発生しました: {e}")
+        logger.error(f"エリア別統計データ取得エラー: {e}")
+        return error_response(f"エリア別統計データ取得中にエラーが発生しました: {str(e)}")
 
-@app.route('/api/v1/ranking/genre')
-@cache.memoize(timeout=600)  # 10分間キャッシュ
+# 業種内ジャンル別の平均稼働率ランキングを取得するエンドポイント
 def get_genre_ranking():
     """
-    ジャンル別ランキングを取得するエンドポイント
+    業種内のジャンル別平均稼働率ランキングを取得するエンドポイント
     
     クエリパラメータ:
-        biz_type: 業種でフィルタリング
+    - biz_type: 業種（必須）
+    - limit: 上位何件を取得するか（デフォルト: 10）
     """
+    biz_type = request.args.get('biz_type', '')
+    if not biz_type:
+        return error_response("業種が指定されていません")
+    
+    limit = min(request.args.get('limit', 10, type=int), 50)  # 最大50件まで
+    
     try:
-        # パラメータ取得
-        biz_type = request.args.get('biz_type')
-        
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_genre_ranking)
-            
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # クエリを構築
+        # SQLクエリ構築（ジャンル別に集計）
         query = """
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
+            FROM store_status
+            GROUP BY store_name
+        )
         SELECT 
-            genre,
-            COUNT(DISTINCT store_name) as store_count,
-            AVG((working_staff - active_staff) * 100.0 / working_staff) as avg_rate
-        FROM store_status
-        WHERE working_staff > 0 AND genre IS NOT NULL AND genre != ''
+            s.genre,
+            COUNT(*) AS store_count,
+            AVG(CASE WHEN s.total_staff = 0 THEN 0 ELSE CAST(s.working_staff AS FLOAT) / s.total_staff END) AS avg_operation_rate
+        FROM store_status s
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE s.biz_type = ?
+        GROUP BY s.genre
+        ORDER BY avg_operation_rate DESC
+        LIMIT ?
         """
         
-        params = []
-        
-        if biz_type:
-            query += " AND biz_type = ?"
-            params.append(biz_type)
-            
-        query += " GROUP BY genre ORDER BY avg_rate DESC"
-        
-        # クエリ実行
-        try:
-            results = list(conn.execute(query, params).fetchall())
-        except Exception as e:
-            app.logger.error(f"ジャンルランキングクエリエラー: {e}")
-            conn.close()
-            return error_response(f"ジャンルランキング取得エラー: {e}")
-            
+        conn = get_db_connection()
+        results = conn.execute(query, [biz_type, limit]).fetchall()
         conn.close()
         
-        if len(results) == 0:
-            return success_response([{
-                "genre": "該当データなし",
-                "store_count": 0,
-                "avg_rate": 0.0
-            }], {
-                "biz_type": biz_type if biz_type else "全業種",
-                "message": "該当するジャンルデータがありません"
-            })
-            
-        # 結果をフォーマット
+        # 結果の整形
         genre_data = []
         for row in results:
-            try:
-                avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
-            except (ValueError, TypeError):
-                avg_rate = 0
-                
             genre_data.append({
-                'genre': row['genre'] if row['genre'] else '不明',
+                'genre': row['genre'],
                 'store_count': row['store_count'],
-                'avg_rate': round(avg_rate, 1)
+                'avg_operation_rate': row['avg_operation_rate']
             })
-            
-        return success_response(genre_data, {
-            "biz_type": biz_type if biz_type else "全業種",
-            "count": len(genre_data)
+        
+        return api_response({
+            'biz_type': biz_type,
+            'genre_count': len(genre_data),
+            'genres': genre_data
         })
         
     except Exception as e:
-        app.logger.error(f"ジャンルランキングエラー: {e}")
-        return error_response(f"ジャンルランキング中にエラーが発生しました: {e}")
+        logger.error(f"ジャンル別ランキングデータ取得エラー: {e}")
+        return error_response(f"ジャンル別ランキングデータ取得中にエラーが発生しました: {str(e)}")
 
-@app.route('/api/v1/ranking/popular')
-@cache.memoize(timeout=600)  # 10分間キャッシュ
-def get_popular_ranking():
+# 店舗の平均稼働率ランキングを取得するエンドポイント
+def get_average_ranking():
     """
-    人気店舗ランキングを取得するエンドポイント
+    店舗の平均稼働率ランキングを取得するエンドポイント
     
     クエリパラメータ:
-        period: 'daily', 'weekly', 'monthly', 'all'（デフォルトは'weekly'）
-        biz_type: 業種フィルター
-        limit: 上位何件を表示するか（デフォルト20件）
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
+    - limit: 上位何件を取得するか（デフォルト: 10）
     """
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    limit = min(request.args.get('limit', 10, type=int), 50)  # 最大50件まで
+    
     try:
-        # パラメータ取得
-        period = request.args.get('period', 'weekly')
-        biz_type = request.args.get('biz_type')
-        limit = request.args.get('limit', 20, type=int)
-        
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_popular_ranking)
-            
-        # 期間に基づいてテーブル選択
-        table_name = {
-            'daily': 'daily_averages',
-            'weekly': 'weekly_averages',
-            'monthly': 'monthly_averages',
-            'all': 'store_averages'
-        }.get(period, 'weekly_averages')
-        
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # クエリを構築
-        query = f"""
+        # SQLクエリ構築（店舗別に集計）
+        query = """
+        WITH latest_timestamps AS (
+            SELECT store_name, MAX(timestamp) as latest_timestamp
+            FROM store_status
+            GROUP BY store_name
+        )
         SELECT 
-            store_name,
-            avg_rate,
-            sample_count,
-            biz_type,
-            genre,
-            area
-        FROM {table_name}
-        WHERE sample_count > 0
+            s.store_name,
+            s.biz_type,
+            s.genre,
+            s.area,
+            CASE WHEN s.total_staff = 0 THEN 0 ELSE CAST(s.working_staff AS FLOAT) / s.total_staff END AS operation_rate
+        FROM store_status s
+        JOIN latest_timestamps lt
+            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+        WHERE 1=1
         """
         
         params = []
         
+        # フィルター条件の追加
+        if biz_type:
+            query += " AND s.biz_type = ?"
+            params.append(biz_type)
+        if genre:
+            query += " AND s.genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND s.area = ?"
+            params.append(area)
+        
+        query += " ORDER BY operation_rate DESC LIMIT ?"
+        params.append(limit)
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
+        conn.close()
+        
+        # 結果の整形
+        store_data = []
+        for row in results:
+            store_data.append({
+                'store_name': row['store_name'],
+                'biz_type': row['biz_type'],
+                'genre': row['genre'],
+                'area': row['area'],
+                'operation_rate': row['operation_rate']
+            })
+        
+        return api_response({
+            'limit': limit,
+            'store_count': len(store_data),
+            'stores': store_data
+        })
+        
+    except Exception as e:
+        logger.error(f"稼働率ランキングデータ取得エラー: {e}")
+        return error_response(f"稼働率ランキングデータ取得中にエラーが発生しました: {str(e)}")
+
+# 期間別の人気店舗ランキングを取得するエンドポイント
+def get_popular_ranking():
+    """
+    期間別の人気店舗ランキングを取得するエンドポイント
+    
+    クエリパラメータ:
+    - period: 期間（daily, weekly, monthly）
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
+    - limit: 上位何件を取得するか（デフォルト: 10）
+    """
+    period = request.args.get('period', 'daily')
+    if period not in ['daily', 'weekly', 'monthly']:
+        return error_response("無効な期間が指定されています（有効値: daily, weekly, monthly）")
+    
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    limit = min(request.args.get('limit', 10, type=int), 50)  # 最大50件まで
+    
+    try:
+        # 期間に応じたデータ範囲の設定
+        jst = pytz.timezone('Asia/Tokyo')
+        now = datetime.now(jst).replace(tzinfo=None)
+        
+        if period == 'daily':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == 'weekly':
+            start_date = now - timedelta(days=7)
+        else:  # monthly
+            start_date = now - timedelta(days=30)
+        
+        # SQLクエリ構築（期間内の平均稼働率）
+        query = """
+        SELECT 
+            store_name,
+            biz_type,
+            genre,
+            area,
+            AVG(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS avg_operation_rate,
+            COUNT(*) AS data_count
+        FROM store_status
+        WHERE timestamp BETWEEN ? AND ?
+        """
+        
+        params = [start_date, now]
+        
+        # フィルター条件の追加
         if biz_type:
             query += " AND biz_type = ?"
             params.append(biz_type)
-            
-        query += " ORDER BY avg_rate DESC"
+        if genre:
+            query += " AND genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND area = ?"
+            params.append(area)
         
-        if limit > 0:
-            query += f" LIMIT {limit}"
-            
-        # クエリ実行
-        try:
-            results = list(conn.execute(query, params).fetchall())
-        except Exception as e:
-            app.logger.error(f"人気店舗ランキングクエリエラー: {e}")
-            conn.close()
-            return error_response(f"人気店舗ランキング取得エラー: {e}")
-            
+        query += " GROUP BY store_name, biz_type, genre, area"
+        query += " HAVING data_count >= 3"  # 少なくとも3件以上のデータがある店舗のみ
+        query += " ORDER BY avg_operation_rate DESC LIMIT ?"
+        params.append(limit)
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
         conn.close()
         
-        # 結果をフォーマット
-        ranking_data = []
-        for idx, row in enumerate(results, 1):
-            try:
-                avg_rate = float(row['avg_rate']) if row['avg_rate'] is not None else 0
-            except (ValueError, TypeError):
-                avg_rate = 0
-                
-            ranking_data.append({
-                'rank': idx,
+        # 結果の整形
+        store_data = []
+        for row in results:
+            store_data.append({
                 'store_name': row['store_name'],
-                'avg_rate': round(avg_rate, 1),
-                'sample_count': row['sample_count'],
-                'biz_type': row['biz_type'] if row['biz_type'] else '不明',
-                'genre': row['genre'] if row['genre'] else '不明',
-                'area': row['area'] if row['area'] else '不明'
+                'biz_type': row['biz_type'],
+                'genre': row['genre'],
+                'area': row['area'],
+                'avg_operation_rate': row['avg_operation_rate'],
+                'data_count': row['data_count']
             })
-            
-        # 期間表示名
-        period_names = {
-            'daily': '直近24時間',
-            'weekly': '直近1週間',
-            'monthly': '直近1ヶ月',
-            'all': '全期間'
-        }
-            
-        return success_response(ranking_data, {
-            "period": period,
-            "period_name": period_names.get(period, '不明'),
-            "biz_type": biz_type if biz_type else "全業種",
-            "count": len(ranking_data)
+        
+        return api_response({
+            'period': period,
+            'start_date': start_date.isoformat(),
+            'end_date': now.isoformat(),
+            'limit': limit,
+            'store_count': len(store_data),
+            'stores': store_data
         })
         
     except Exception as e:
-        app.logger.error(f"人気店舗ランキングエラー: {e}")
-        return error_response(f"人気店舗ランキング中にエラーが発生しました: {e}")
+        logger.error(f"人気店舗ランキングデータ取得エラー: {e}")
+        return error_response(f"人気店舗ランキングデータ取得中にエラーが発生しました: {str(e)}")
 
-@app.route('/api/v1/stats/aggregated')
-@cache.memoize(timeout=3600)  # 1時間キャッシュ
-def get_aggregated_stats():
-    """日付ごとに集計された平均稼働率データを取得するエンドポイント"""
+# 期間別（日次/週次/月次）の平均稼働率データを取得するエンドポイント
+def get_period_averages(period):
+    """
+    期間別の平均稼働率データを取得するエンドポイント
+    
+    クエリパラメータ:
+    - biz_type: 業種でフィルタリング
+    - genre: ジャンルでフィルタリング
+    - area: エリアでフィルタリング
+    - limit: データ件数の上限（デフォルト: 30）
+    """
+    if period not in ['daily', 'weekly', 'monthly']:
+        return error_response("無効な期間が指定されています（有効値: daily, weekly, monthly）")
+    
+    biz_type = request.args.get('biz_type', '')
+    genre = request.args.get('genre', '')
+    area = request.args.get('area', '')
+    limit = min(request.args.get('limit', 30, type=int), 90)  # 最大90件まで
+    
     try:
-        # キャッシュクリアパラメータ
-        if request.args.get('refresh', '0') == '1':
-            cache.delete_memoized(get_aggregated_stats)
-            
-        conn = get_db_connection()
-        if not conn:
-            return error_response("データベース接続エラー")
-            
-        # 日付ごとの平均稼働率を計算するクエリ
-        query = """
+        # 日付グループ化の設定
+        if period == 'daily':
+            date_format = '%Y-%m-%d'
+            group_by = "strftime('%Y-%m-%d', timestamp)"
+        elif period == 'weekly':
+            date_format = '%Y-%W'  # 年と週番号
+            group_by = "strftime('%Y-%W', timestamp)"
+        else:  # monthly
+            date_format = '%Y-%m'
+            group_by = "strftime('%Y-%m', timestamp)"
+        
+        # SQLクエリ構築
+        query = f"""
         SELECT 
-            date(timestamp) as date,
-            AVG((working_staff - active_staff) * 100.0 / working_staff) as avg_rate,
-            COUNT(*) as sample_count
+            {group_by} AS period_label,
+            AVG(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS avg_operation_rate,
+            COUNT(DISTINCT store_name) AS store_count,
+            COUNT(*) AS data_count
         FROM store_status
-        WHERE working_staff > 0
-        GROUP BY date(timestamp)
-        ORDER BY date(timestamp)
+        WHERE 1=1
         """
         
-        # クエリ実行
-        try:
-            results = list(conn.execute(query).fetchall())
-        except Exception as e:
-            app.logger.error(f"集計データクエリエラー: {e}")
-            conn.close()
-            return error_response(f"集計データ取得エラー: {e}")
-            
+        params = []
+        
+        # フィルター条件の追加
+        if biz_type:
+            query += " AND biz_type = ?"
+            params.append(biz_type)
+        if genre:
+            query += " AND genre = ?"
+            params.append(genre)
+        if area:
+            query += " AND area = ?"
+            params.append(area)
+        
+        query += f" GROUP BY {group_by}"
+        query += " ORDER BY period_label DESC LIMIT ?"
+        params.append(limit)
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
         conn.close()
         
-        # 結果をフォーマット
-        aggregated_data = []
+        # 結果の整形と日付のフォーマット
+        data = []
         for row in results:
-            if not row['date']:
-                continue
-                
-            try:
-                avg_rate = 0.0
-                if row['avg_rate'] is not None:
-                    avg_rate = float(row['avg_rate'])
-                    
-                sample_count = row['sample_count'] or 0
-                
-                aggregated_data.append({
-                    'date': row['date'],
-                    'avg_rate': round(avg_rate, 1),
-                    'sample_count': sample_count
-                })
-            except (ValueError, TypeError) as e:
-                app.logger.warning(f"データ変換エラー: {e}, レコード: {row}")
-                continue
-                
-        return success_response(aggregated_data, {
-            "count": len(aggregated_data)
+            # 日付表示の整形
+            period_label = row['period_label']
+            if period == 'weekly':
+                # 週番号から日付範囲への変換
+                year, week = period_label.split('-')
+                try:
+                    import datetime
+                    # 指定した年の第1週の月曜日を取得
+                    first_day = datetime.datetime.strptime(f'{year}-01-01', '%Y-%m-%d')
+                    # 週の始まりを月曜にする
+                    weekday = first_day.weekday()
+                    # 第1週の月曜日を計算（前年の最終週になることもある）
+                    first_monday = first_day - datetime.timedelta(days=weekday)
+                    # 指定した週の月曜日を計算
+                    week_monday = first_monday + datetime.timedelta(weeks=int(week))
+                    # 週の終わり（日曜日）
+                    week_sunday = week_monday + datetime.timedelta(days=6)
+                    # 表示用にフォーマット
+                    formatted_date = f"{week_monday.strftime('%m/%d')}～{week_sunday.strftime('%m/%d')}"
+                except Exception:
+                    formatted_date = f"{year}年第{week}週"
+            elif period == 'monthly':
+                # YYYY-MM to YYYY年MM月
+                year, month = period_label.split('-')
+                formatted_date = f"{year}年{month}月"
+            else:
+                # YYYY-MM-DD to YYYY/MM/DD
+                formatted_date = period_label.replace('-', '/')
+            
+            data.append({
+                'period': period_label,
+                'formatted_date': formatted_date,
+                'avg_operation_rate': row['avg_operation_rate'],
+                'store_count': row['store_count'],
+                'data_count': row['data_count']
+            })
+        
+        return api_response({
+            'period_type': period,
+            'data_count': len(data),
+            'averages': data
         })
         
     except Exception as e:
-        app.logger.error(f"集計データエラー: {e}")
-        return error_response(f"集計データ取得中にエラーが発生しました: {e}")
+        logger.error(f"{period}平均データ取得エラー: {e}")
+        return error_response(f"{period}平均データ取得中にエラーが発生しました: {str(e)}")
+
+# 店舗別の平均稼働率の時系列データを取得するエンドポイント
+def get_store_averages():
+    """
+    店舗別の平均稼働率の時系列データを取得するエンドポイント
+    
+    クエリパラメータ:
+    - store_names: カンマ区切りの店舗名リスト（必須）
+    - days: 過去何日分のデータを取得するか（デフォルト: 7）
+    """
+    store_names_str = request.args.get('store_names', '')
+    if not store_names_str:
+        return error_response("店舗名が指定されていません")
+    
+    store_names = [name.strip() for name in store_names_str.split(',')]
+    if len(store_names) > 5:
+        return error_response("一度に取得できる店舗数は最大5店舗です")
+    
+    days = min(request.args.get('days', 7, type=int), 30)  # 最大30日まで
+    
+    try:
+        # 過去X日間のデータに限定
+        jst = pytz.timezone('Asia/Tokyo')
+        end_date = datetime.now(jst).replace(tzinfo=None)
+        start_date = end_date - timedelta(days=days)
+        
+        # SQLクエリ構築（日付と店舗でグループ化）
+        query = """
+        SELECT 
+            store_name,
+            strftime('%Y-%m-%d', timestamp) AS date,
+            AVG(CASE WHEN total_staff = 0 THEN 0 ELSE CAST(working_staff AS FLOAT) / total_staff END) AS avg_operation_rate,
+            COUNT(*) AS data_count
+        FROM store_status
+        WHERE timestamp BETWEEN ? AND ?
+        AND store_name IN ({})
+        GROUP BY store_name, date
+        ORDER BY date, store_name
+        """.format(','.join(['?'] * len(store_names)))
+        
+        params = [start_date, end_date] + store_names
+        
+        conn = get_db_connection()
+        results = conn.execute(query, params).fetchall()
+        conn.close()
+        
+        # 店舗ごとのデータを整理
+        store_data = {}
+        for row in results:
+            store_name = row['store_name']
+            if store_name not in store_data:
+                store_data[store_name] = []
+            
+            store_data[store_name].append({
+                'date': row['date'],
+                'avg_operation_rate': row['avg_operation_rate'],
+                'data_count': row['data_count']
+            })
+        
+        return api_response({
+            'stores': store_names,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'days': days,
+            'data': store_data
+        })
+        
+    except Exception as e:
+        logger.error(f"店舗別平均データ取得エラー: {e}")
+        return error_response(f"店舗別平均データ取得中にエラーが発生しました: {str(e)}")
+
+# フィルター用のオプション（業種、ジャンル、エリア）を取得するエンドポイント
+def get_filter_options():
+    """フィルター用のオプション（業種、ジャンル、エリア）を取得するエンドポイント"""
+    try:
+        conn = get_db_connection()
+        
+        # 業種の取得
+        biz_types = conn.execute(
+            "SELECT DISTINCT biz_type FROM store_status WHERE biz_type IS NOT NULL ORDER BY biz_type"
+        ).fetchall()
+        
+        # ジャンルの取得
+        genres = conn.execute(
+            "SELECT DISTINCT genre FROM store_status WHERE genre IS NOT NULL ORDER BY genre"
+        ).fetchall()
+        
+        # エリアの取得
+        areas = conn.execute(
+            "SELECT DISTINCT area FROM store_status WHERE area IS NOT NULL ORDER BY area"
+        ).fetchall()
+        
+        conn.close()
+        
+        return api_response({
+            'biz_types': [row['biz_type'] for row in biz_types],
+            'genres': [row['genre'] for row in genres],
+            'areas': [row['area'] for row in areas]
+        })
+        
+    except Exception as e:
+        logger.error(f"フィルターオプション取得エラー: {e}")
+        return error_response(f"フィルターオプション取得中にエラーが発生しました: {str(e)}")
+
+# APIエンドポイント関数をルート定義と関連付ける関数
+def register_api_routes(api_bp):
+    """APIエンドポイント関数をBlueprintに登録する"""
+    # 最新店舗データ
+    api_bp.route('/stores/current')(cached(300)(rate_limit(limit=30)(get_current_stores)))
+    
+    # 店舗履歴データ
+    api_bp.route('/stores/history/optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
+    
+    # 店舗名リスト
+    api_bp.route('/stores/names')(cached(600)(get_store_names))
+    
+    # 時間帯別分析
+    api_bp.route('/analysis/hourly')(cached(1800)(get_hourly_analysis))
+    
+    # エリア統計
+    api_bp.route('/stats/area')(cached(1800)(get_area_stats))
+    
+    # ランキング
+    api_bp.route('/ranking/genre')(cached(1800)(get_genre_ranking))
+    api_bp.route('/ranking/average')(cached(1800)(get_average_ranking))
+    api_bp.route('/ranking/popular')(cached(1800)(get_popular_ranking))
+    
+    # 期間別平均
+    api_bp.route('/averages/daily')(cached(3600)(lambda: get_period_averages('daily')))
+    api_bp.route('/averages/weekly')(cached(3600)(lambda: get_period_averages('weekly')))
+    api_bp.route('/averages/monthly')(cached(3600)(lambda: get_period_averages('monthly')))
+    
+    # 店舗別平均
+    api_bp.route('/averages/stores')(cached(1800)(get_store_averages))
+    
+    # フィルターオプション
+    api_bp.route('/filter-options')(cached(3600)(get_filter_options))
+
+# 既存のAPIエンドポイントと互換性を保つための関数を登録するためのヘルパー関数
+def register_legacy_routes(app):
+    """既存のAPIエンドポイントと互換性を保つための関数を登録する"""
+    # 互換性のためのルート
+    app.route('/api/data')(cached(300)(rate_limit(limit=30)(get_current_stores)))
+    app.route('/api/history/optimized')(cached(300)(rate_limit(limit=20)(get_store_history_optimized)))
+    app.route('/api/store-names')(cached(600)(get_store_names))
+    app.route('/api/hourly-analysis')(cached(1800)(get_hourly_analysis))
+    app.route('/api/area-stats')(cached(1800)(get_area_stats))
+    app.route('/api/ranking/genre')(cached(1800)(get_genre_ranking))
+    app.route('/api/ranking/average')(cached(1800)(get_average_ranking))
+    app.route('/api/ranking/popular')(cached(1800)(get_popular_ranking))
+    app.route('/api/averages/daily')(cached(3600)(lambda: get_period_averages('daily')))
+    app.route('/api/averages/weekly')(cached(3600)(lambda: get_period_averages('weekly')))
+    app.route('/api/averages/monthly')(cached(3600)(lambda: get_period_averages('monthly')))
+    app.route('/api/averages/stores')(cached(1800)(get_store_averages))
+    app.route('/api/filter-options')(cached(3600)(get_filter_options))
