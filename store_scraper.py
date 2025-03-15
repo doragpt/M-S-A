@@ -20,6 +20,12 @@ PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に�
 # メモリ管理
 FORCE_GC_AFTER_STORES = 40  # 40店舗処理後に強制GC実行（メモリ節約）
 
+# ロギングレベルを設定
+import logging
+logging.getLogger('websockets.client').setLevel(logging.ERROR)
+logging.getLogger('websockets.server').setLevel(logging.ERROR)
+logging.getLogger('pyppeteer').setLevel(logging.WARNING)
+
 # -------------------------------
 # fetch_page 関数
 # -------------------------------
@@ -258,6 +264,8 @@ async def _scrape_all(store_urls: list) -> list:
         handleSIGINT=False,
         handleSIGTERM=False,
         handleSIGHUP=False,
+        logLevel=logging.ERROR,  # ブラウザのログレベルをERRORに設定
+        dumpio=False,  # 標準出力/標準エラー出力をキャプチャしない
         args=[
             "--no-sandbox",
             "--disable-setuid-sandbox",
