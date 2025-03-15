@@ -18,14 +18,20 @@ from aggregated_data import AggregatedData
 
 # ロギング設定
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
 # Flaskアプリの初期化
-app = Flask(__name__, template_folder='templates', static_folder='static')
+import os
+app_dir = os.path.dirname(os.path.abspath(__file__))
+template_dir = os.path.join(app_dir, 'templates')
+static_dir = os.path.join(app_dir, 'static')
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+print(f"テンプレートディレクトリ: {template_dir}")
+print(f"静的ファイルディレクトリ: {static_dir}")
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 
 # データベース設定
