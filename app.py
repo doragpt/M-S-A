@@ -395,7 +395,7 @@ scheduler.start()
 # 5. API エンドポイント
 # ---------------------------------------------------------------------
 @app.route('/api/data')
-@cache.memoize(timeout=30)  # キャッシュ：30秒間に短縮して最新データを提供
+@cache.memoize(timeout=60)  # キャッシュ：60秒間有効（パフォーマンス向上のため）
 def api_data():
     """
     各店舗の最新レコードのみを返すエンドポイント（タイムゾーンは JST）。
@@ -1200,7 +1200,7 @@ def api_genre_ranking():
     業種内のジャンル別平均稼働率ランキングを返すエンドポイント
 
     クエリパラメータ:
-        biz_type: 業種でフィルタリング（必須）
+        biz_type: 業種でフィルタリング（指定なしの場合は全業種）
     """
     biz_type = request.args.get('biz_type')
 
@@ -1208,7 +1208,7 @@ def api_genre_ranking():
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
 
-    # 業種が指定されていない場合でも、全業種の集計結果を返すように変更
+    # 業種が指定されていない場合は全業種のジャンル集計を返す
     if not biz_type:
         app.logger.info("業種が指定されていません。全業種のジャンルランキングを返します。")
         # SQLiteを直接使用
@@ -1251,6 +1251,10 @@ def api_genre_ranking():
                     "avg_rate": round(avg_rate, 1)
                 })
 
+            # 結果が空の場合はダミーデータを作成（フロントエンドのエラー回避）
+            if not data:
+                data = [{"genre": "データなし", "store_count": 0, "avg_rate": 0.0}]
+                
             return jsonify({
                 "data": data,
                 "meta": {
@@ -1264,9 +1268,11 @@ def api_genre_ranking():
             app.logger.error(f"全業種ジャンルランキング取得エラー: {e}")
             app.logger.error(traceback.format_exc())
 
-            # 空のデータを返す（エラー情報付き）
+            # ダミーデータを返す（エラー情報付き）
             return jsonify({
-                "data": [],
+                "data": [
+                    {"genre": "データ取得エラー", "store_count": 0, "avg_rate": 0.0}
+                ],
                 "meta": {
                     "error": str(e),
                     "message": "全業種ジャンルランキングの取得中にエラーが発生しました",
@@ -1901,6 +1907,7 @@ def api_top_ranking():
 
     クエリパラメータ:
         limit: 各業種ごとの上位件数（デフォルト3件）
+        min_samples: 最小サンプル数（デフォルト1件）
     """
     # JSTタイムゾーン設定
     jst = pytz.timezone('Asia/Tokyo')
@@ -1908,6 +1915,7 @@ def api_top_ranking():
 
     try:
         limit = request.args.get('limit', 3, type=int)
+        min_samples = request.args.get('min_samples', 1, type=int)  # サンプル数条件を緩和（デフォルト1）
 
         # 業種の一覧を取得
         try:
@@ -1941,7 +1949,7 @@ def api_top_ranking():
 
         for biz_type in biz_types:
             try:
-                # 各業種ごとにトップ店舗を取得
+                # 各業種ごとにトップ店舗を取得（サンプル数条件を変数化）
                 query = """
                 SELECT 
                     store_name,
@@ -1952,13 +1960,19 @@ def api_top_ranking():
                 FROM store_status
                 WHERE biz_type = ? AND working_staff > 0
                 GROUP BY store_name
-                HAVING COUNT(*) >= 5
+                HAVING COUNT(*) >= ?
                 ORDER BY avg_rate DESC
                 LIMIT ?
                 """
 
-                cursor = conn.execute(query, [biz_type, limit])
+                cursor = conn.execute(query, [biz_type, min_samples, limit])
                 subq = cursor.fetchall()
+
+                # データがない場合、サンプル数条件を1に緩和して再試行
+                if not subq and min_samples > 1:
+                    app.logger.warning(f"業種「{biz_type}」でデータが見つからなかったため、サンプル数条件を緩和します")
+                    cursor = conn.execute(query, [biz_type, 1, limit])
+                    subq = cursor.fetchall()
 
                 if subq:
                     result[biz_type] = []
@@ -1980,9 +1994,10 @@ def api_top_ranking():
                         })
                     biz_type_counts[biz_type] = len(result[biz_type])
                 else:
-                    # データがない場合はダミーデータを生成
+                    # 2回目の試行でも結果がない場合のみダミーデータを生成
+                    app.logger.warning(f"業種「{biz_type}」ではデータが見つかりませんでした")
                     result[biz_type] = [{
-                        'store_name': f'{biz_type}サンプル店舗',
+                        'store_name': f'{biz_type}データなし',
                         'avg_rate': 0.0,
                         'sample_count': 0,
                         'genre': '不明',
@@ -2024,6 +2039,7 @@ def api_top_ranking():
                 "biz_types": len(biz_types),
                 "biz_type_counts": biz_type_counts,
                 "limit": limit,
+                "min_samples": min_samples,
                 "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
             }
         }), 200

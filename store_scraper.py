@@ -12,13 +12,13 @@ import gc
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
 # 8GB/6コアVPSのリソースを活用
-MAX_CONCURRENT_TASKS = 20  # 並列処理数を増加（8GB/6コアに最適化）
+MAX_CONCURRENT_TASKS = 40  # 並列処理数を増加（8GB/6コアに最適化）
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 10000  # ページロードのタイムアウト(10秒)
+PAGE_LOAD_TIMEOUT = 7000  # ページロードのタイムアウト(7秒)
 # メモリ管理
-FORCE_GC_AFTER_STORES = 50  # 50店舗処理後に強制GC実行
+FORCE_GC_AFTER_STORES = 80  # 80店舗処理後に強制GC実行
 
 # -------------------------------
 # fetch_page 関数
@@ -86,13 +86,13 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
         )
 
         logger.info("スクレイピング開始: %s", attend_url)
-        # 指定URLにアクセス。タイムアウト10秒、リトライ2回に短縮
-        success = await fetch_page(page, attend_url, retries=2, timeout=10000)
+        # 指定URLにアクセス。タイムアウト7秒、リトライ1回に短縮
+        success = await fetch_page(page, attend_url, retries=1, timeout=7000)
         if not success:
             await page.close()
             return {}
-        # ページ読み込み後の待機時間を0.5秒に短縮
-        await asyncio.sleep(0.5)
+        # ページ読み込み後の待機時間を0.2秒に短縮
+        await asyncio.sleep(0.2)
         # ページコンテンツを取得し、BeautifulSoupでパース
         content = await page.content()
         soup = BeautifulSoup(content, "html.parser")
@@ -291,8 +291,8 @@ async def _scrape_all(store_urls: list) -> list:
                     
         results.extend(batch_results)
         logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
-        # 待機時間を0.5秒に短縮
-        await asyncio.sleep(0.5)
+        # 待機時間を0.1秒に短縮
+        await asyncio.sleep(0.1)
     
     logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()
