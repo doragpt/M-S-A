@@ -1316,12 +1316,13 @@ def api_genre_ranking():
             GROUP BY genre
             ORDER BY avg_rate DESC
             """
+            params = [biz_type]
 
             # クエリ実行
             app.logger.debug(f"実行SQL: {query}")
-            app.logger.debug(f"パラメータ: {biz_type}")
+            app.logger.debug(f"パラメータ: {params}")
 
-            cursor = conn.execute(query, [biz_type])
+            cursor = conn.execute(query, params)
             results = cursor.fetchall()
 
             # 接続クローズ
@@ -2184,8 +2185,9 @@ def api_top_ranking():
                 ORDER BY avg_rate DESC
                 LIMIT ?
                 """
+                params = [biz_type, min_samples, limit]
 
-                cursor = conn.execute(query, [biz_type, min_samples, limit])
+                cursor = conn.execute(query, params)
                 subq = cursor.fetchall()
 
                 # データがない場合、サンプル数条件を1に緩和して再試行
