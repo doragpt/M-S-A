@@ -1,6 +1,7 @@
 
 import sqlite3
-from app import db, StoreURL, app
+from main import app
+from models import StoreURL
 
 # アプリケーションコンテキスト内で実行
 with app.app_context():
@@ -21,9 +22,7 @@ with app.app_context():
             print("カラムが正常に追加されました")
         else:
             print("error_flag カラムは既に存在します")
-        
+            
         conn.close()
     except Exception as e:
         print(f"エラーが発生しました: {e}")
-        if conn:
-            conn.close()
