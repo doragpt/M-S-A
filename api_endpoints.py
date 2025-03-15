@@ -133,52 +133,52 @@ def register_health_check(app):
 def get_current_stores():
     """
     最新の店舗データを取得するエンドポイント
-
     クエリパラメータ:
     - page: ページ番号（デフォルト: 1）
     - per_page: 1ページあたりの表示件数（0は全件表示）
     - お気に入りやフィルタリング条件を追加
     """
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 0, type=int)  # If 0, fetch all
-    biz_type = request.args.get('biz_type', '')
-    genre = request.args.get('genre', '')
-    area = request.args.get('area', '')
-    sort = request.args.get('sort', 'rate')
-    order = request.args.get('order', 'desc')
-    search = request.args.get('search', '')
-    favorites_str = request.args.get('favorites', '')
-    favorites = [f.strip() for f in favorites_str.split(',') if f.strip()]
-
     try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 0, type=int)
+        biz_type = request.args.get('biz_type', '')
+        genre = request.args.get('genre', '')
+        area = request.args.get('area', '')
+        sort = request.args.get('sort', 'rate')
+        order = request.args.get('order', 'desc')
+        search = request.args.get('search', '')
+        favorites_str = request.args.get('favorites', '')
+        favorites = [f.strip() for f in favorites_str.split(',') if f.strip()]
+
         query = """
         WITH latest_timestamps AS (
             SELECT store_name, MAX(timestamp) as latest_timestamp
             FROM store_status
             GROUP BY store_name
         )
-        SELECT s.*,
+        SELECT DISTINCT s.store_name,
+               s.biz_type,
+               s.genre,
+               s.area,
+               s.total_staff,
+               s.working_staff,
+               s.active_staff,
                CASE 
                    WHEN s.total_staff = 0 THEN 0
-                   ELSE CAST(s.working_staff AS FLOAT) / s.total_staff
-               END AS operation_rate,
-               CASE 
-                   WHEN s.working_staff = 0 THEN 0
-                   ELSE CAST((s.working_staff - s.active_staff) AS FLOAT) / s.working_staff * 100
-               END AS actual_operation_rate
+                   ELSE ROUND(CAST(s.working_staff AS FLOAT) / s.total_staff * 100, 2)
+               END AS operation_rate
         FROM store_status s
         JOIN latest_timestamps lt
-            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
+            ON s.store_name = lt.store_name 
+            AND s.timestamp = lt.latest_timestamp
         WHERE 1=1
         """
 
         params = []
-
         if search:
             query += " AND (s.store_name LIKE ? OR s.biz_type LIKE ? OR s.genre LIKE ? OR s.area LIKE ?)"
             search_param = f"%{search}%"
             params.extend([search_param] * 4)
-
         if biz_type:
             query += " AND s.biz_type = ?"
             params.append(biz_type)
@@ -196,8 +196,6 @@ def get_current_stores():
         if sort == 'name':
             query += f" ORDER BY s.store_name {'ASC' if order == 'asc' else 'DESC'}"
         elif sort == 'rate':
-            query += f" ORDER BY actual_operation_rate {'ASC' if order == 'asc' else 'DESC'}, s.store_name ASC"
-        else:
             query += f" ORDER BY operation_rate {'ASC' if order == 'asc' else 'DESC'}, s.store_name ASC"
 
         if per_page > 0:
@@ -206,57 +204,11 @@ def get_current_stores():
 
         conn = get_db_connection()
         results = conn.execute(query, params).fetchall()
-
-        count_query = """
-        WITH latest_timestamps AS (
-            SELECT store_name, MAX(timestamp) as latest_timestamp
-            FROM store_status
-            GROUP BY store_name
-        )
-        SELECT COUNT(*) as total
-        FROM store_status s
-        JOIN latest_timestamps lt
-            ON s.store_name = lt.store_name AND s.timestamp = lt.latest_timestamp
-        WHERE 1=1
-        """
-        count_params = []
-
-        if search:
-            count_query += " AND (s.store_name LIKE ? OR s.biz_type LIKE ? OR s.genre LIKE ? OR s.area LIKE ?)"
-            search_param = f"%{search}%"
-            count_params.extend([search_param] * 4)
-
-        if biz_type:
-            count_query += " AND s.biz_type = ?"
-            count_params.append(biz_type)
-        if genre:
-            count_query += " AND s.genre = ?"
-            count_params.append(genre)
-        if area:
-            count_query += " AND s.area = ?"
-            count_params.append(area)
-
-        if favorites:
-            placeholders = ','.join(['?' for _ in favorites])
-            count_query += f" AND s.store_name IN ({placeholders})"
-            count_params.extend(favorites)
-
-        total = conn.execute(count_query, count_params).fetchone()['total']
-
-        latest_time_query = "SELECT MAX(timestamp) as latest_time FROM store_status"
-        latest_time_result = conn.execute(latest_time_query).fetchone()
-        latest_time = latest_time_result['latest_time'] if latest_time_result else None
-
         conn.close()
 
         stores = []
         for row in results:
-            actual_rate = 0
-            if row['working_staff'] > 0:
-                actual_rate = (row['working_staff'] - row['active_staff']) / row['working_staff'] * 100
-
-            store = {
-                'id': row['id'],
+            store_data = {
                 'store_name': row['store_name'],
                 'biz_type': row['biz_type'],
                 'genre': row['genre'],
@@ -264,30 +216,24 @@ def get_current_stores():
                 'total_staff': row['total_staff'],
                 'working_staff': row['working_staff'],
                 'active_staff': row['active_staff'],
-                'operation_rate': row['operation_rate'],
-                'actual_operation_rate': actual_rate,
-                'timestamp': row['timestamp'],
-                'url': row['url'],
-                'shift_time': row['shift_time']
+                'operation_rate': float(row['operation_rate'])
             }
-            stores.append(store)
+            stores.append(store_data)
 
-        result = {
-            'stores': stores,
-            'meta': {
-                'page': page,
-                'per_page': per_page,
-                'total': total,
-                'pages': (total + per_page - 1) // per_page if per_page > 0 else 1,
-                'latest_update': latest_time
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'stores': stores,
+                'count': len(stores)
             }
-        }
-
-        return api_response(result)
+        })
 
     except Exception as e:
-        logger.error(f"店舗データ取得エラー: {e}")
-        return error_response(f"データ取得中にエラーが発生しました: {str(e)}")
+        logger.error(f"店舗データ取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f"データ取得中にエラーが発生しました: {str(e)}"
+        }), 500
 
 # 店舗履歴データを取得するエンドポイント（最適化版）
 def get_store_history_optimized():
