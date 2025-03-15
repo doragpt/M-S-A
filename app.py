@@ -1472,6 +1472,7 @@ def api_hourly_analysis():
             }
         }), 200  # 統一したレスポンスコード
 
+
 # 人気店舗ランキングのAPIエンドポイント
 @app.route('/api/ranking/popular')
 @cache.memoize(timeout=600)  # キャッシュ：10分間有効
@@ -1572,11 +1573,6 @@ def api_popular_ranking():
                 "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
             }
         }), 200  # 統一したレスポンスコード
-
-                    "biz_type": biz_type,
-                    "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-                }
-            }), 200
 
     except Exception as e:
         app.logger.error(f"ジャンルランキング取得エラー: {e}")
