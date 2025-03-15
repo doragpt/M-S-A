@@ -1214,7 +1214,7 @@ def api_genre_ranking():
         # SQLiteを直接使用
         try:
             conn = get_db_connection()
-            
+
             # 全業種のジャンル別平均稼働率を計算するクエリ
             query = """
             SELECT 
@@ -1226,17 +1226,17 @@ def api_genre_ranking():
             GROUP BY genre
             ORDER BY avg_rate DESC
             """
-            
+
             cursor = conn.execute(query)
             results = cursor.fetchall()
             conn.close()
-            
+
             # 結果を整形
             data = []
             for result in results:
                 genre = result['genre'] if result['genre'] else "不明"
                 store_count = result['store_count'] if result['store_count'] else 0
-                
+
                 # avg_rate の安全な取得と変換
                 avg_rate = 0
                 try:
@@ -1244,13 +1244,13 @@ def api_genre_ranking():
                         avg_rate = float(result['avg_rate'])
                 except (ValueError, TypeError) as e:
                     app.logger.warning(f"平均値の変換エラー: {e}, genre: {genre}")
-                
+
                 data.append({
                     "genre": genre,
                     "store_count": store_count,
                     "avg_rate": round(avg_rate, 1)
                 })
-            
+
             return jsonify({
                 "data": data,
                 "meta": {
@@ -1259,11 +1259,11 @@ def api_genre_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
-            
+
         except Exception as e:
             app.logger.error(f"全業種ジャンルランキング取得エラー: {e}")
             app.logger.error(traceback.format_exc())
-            
+
             # 空のデータを返す（エラー情報付き）
             return jsonify({
                 "data": [],
@@ -1273,7 +1273,7 @@ def api_genre_ranking():
                     "current_time": now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
                 }
             }), 200
-    
+
     # 特定業種のジャンルランキングを取得
     try:
         # SQLiteを直接使用する方法に変更
@@ -1915,7 +1915,7 @@ def api_top_ranking():
             biz_types = [bt[0] for bt in biz_types if bt[0]]  # None値を除外
         except Exception as bt_err:
             app.logger.error(f"業種リスト取得エラー: {bt_err}")
-            
+
             # SQLiteを直接使用して取得を試みる
             try:
                 conn = get_db_connection()
@@ -1956,7 +1956,7 @@ def api_top_ranking():
                 ORDER BY avg_rate DESC
                 LIMIT ?
                 """
-                
+
                 cursor = conn.execute(query, [biz_type, limit])
                 subq = cursor.fetchall()
 
@@ -2039,7 +2039,7 @@ def api_top_ranking():
                 {'store_name': 'サンプル店舗3', 'avg_rate': 30.0, 'sample_count': 0, 'genre': '不明', 'area': '不明'}
             ]
         }
-        
+
         # 統一されたエラーレスポンス形式（ダミーデータ付き）
         return jsonify({
             "data": dummy_data,
