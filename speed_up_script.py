@@ -11,9 +11,10 @@ from datetime import datetime
 import pytz
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-import gc
+import gc  # ガベージコレクションモジュール
 import os
 import sys
+import psutil  # メモリ使用状況監視用にpsutilを追加
 
 # ロギング設定
 logging.basicConfig(
@@ -46,11 +47,14 @@ def get_all_store_urls():
         session.close()
 
 def bulk_insert_results(results, timestamp):
-    """スクレイピング結果を一括でデータベースに挿入"""
+    """スクレイピング結果を一括でデータベースに挿入（最適化版）"""
     session = Session()
     try:
-        # バルクインサート用のデータを準備
+        # バルクインサート用のデータを準備（分割処理で最適化）
+        BATCH_SIZE = 100  # 一回のコミットあたりの最大レコード数
         insert_values = []
+        total_inserted = 0
+        
         for record in results:
             if not record or 'store_name' not in record:
                 continue
@@ -73,21 +77,45 @@ def bulk_insert_results(results, timestamp):
                 'url': record.get('url', ''),
                 'shift_time': record.get('shift_time', '')
             })
-
-        # バルクインサートの実行
-        session.execute(text("""
-            INSERT INTO store_status 
-            (timestamp, store_name, biz_type, genre, area, 
-             total_staff, working_staff, active_staff, url, shift_time)
-            VALUES (
-                :timestamp, :store_name, :biz_type, :genre, :area,
-                :total_staff, :working_staff, :active_staff, :url, :shift_time
+            
+            # バッチサイズに達したらコミット
+            if len(insert_values) >= BATCH_SIZE:
+                # バルクインサートの実行
+                session.execute(text("""
+                    INSERT INTO store_status 
+                    (timestamp, store_name, biz_type, genre, area, 
+                     total_staff, working_staff, active_staff, url, shift_time)
+                    VALUES (
+                        :timestamp, :store_name, :biz_type, :genre, :area,
+                        :total_staff, :working_staff, :active_staff, :url, :shift_time
+                    )
+                    """),
+                    insert_values
+                )
+                session.commit()
+                total_inserted += len(insert_values)
+                # メモリを解放するため配列をクリア
+                insert_values = []
+                # 定期的にガベージコレクション実行
+                gc.collect()
+        
+        # 残りのレコードを処理
+        if insert_values:
+            session.execute(text("""
+                INSERT INTO store_status 
+                (timestamp, store_name, biz_type, genre, area, 
+                 total_staff, working_staff, active_staff, url, shift_time)
+                VALUES (
+                    :timestamp, :store_name, :biz_type, :genre, :area,
+                    :total_staff, :working_staff, :active_staff, :url, :shift_time
+                )
+                """),
+                insert_values
             )
-            """),
-            insert_values
-        )
-        session.commit()
-        return len(insert_values)
+            session.commit()
+            total_inserted += len(insert_values)
+        
+        return total_inserted
     except Exception as e:
         session.rollback()
         logger.error(f"バルクインサートエラー: {e}")
@@ -96,9 +124,14 @@ def bulk_insert_results(results, timestamp):
         session.close()
 
 def main():
-    """メイン処理"""
+    """メイン処理（メモリ管理を最適化）"""
     start_time = time.time()
     logger.info("高速スクレイピング処理を開始します")
+    
+    # 初期メモリ使用量をログ出力
+    process = psutil.Process(os.getpid())
+    initial_memory = process.memory_info().rss / 1024 / 1024
+    logger.info(f"初期メモリ使用量: {initial_memory:.1f}MB")
     
     # 店舗URL取得
     store_urls = get_all_store_urls()
@@ -106,7 +139,8 @@ def main():
         logger.error("店舗URLが見つかりません")
         return
     
-    logger.info(f"スクレイピング対象: {len(store_urls)}店舗")
+    total_stores = len(store_urls)
+    logger.info(f"スクレイピング対象: {total_stores}店舗")
     
     # スクレイピング実行
     try:
@@ -116,22 +150,36 @@ def main():
         # スクレイピング実行
         results = scrape_store_data(store_urls)
         
+        # URLリストは不要になったのでメモリ解放
+        store_urls = None
+        gc.collect()
+        
         scrape_end = time.time()
+        memory_after_scrape = process.memory_info().rss / 1024 / 1024
         logger.info(f"スクレイピング完了: {len(results)}件 ({scrape_end - scrape_start:.2f}秒)")
+        logger.info(f"スクレイピング後メモリ使用量: {memory_after_scrape:.1f}MB")
         
         # データベースに保存
         timestamp = datetime.now(pytz.timezone('Asia/Tokyo'))
         inserted = bulk_insert_results(results, timestamp)
         
+        # 結果データは不要になったのでメモリ解放
+        results = None
+        gc.collect()
+        
         store_end = time.time()
+        memory_after_store = process.memory_info().rss / 1024 / 1024
         logger.info(f"データベース保存完了: {inserted}件 ({store_end - scrape_end:.2f}秒)")
+        logger.info(f"保存後メモリ使用量: {memory_after_store:.1f}MB")
         
         # 合計処理時間
         total_time = time.time() - start_time
         logger.info(f"全処理完了: 合計{total_time:.2f}秒")
+        logger.info(f"メモリ削減量: {memory_after_scrape - memory_after_store:.1f}MB")
         
-        # メモリ解放
+        # メモリ解放の強化
         gc.collect()
+        gc.collect()  # 二回実行して確実にメモリを解放
         
     except Exception as e:
         logger.error(f"処理中にエラーが発生しました: {e}")
