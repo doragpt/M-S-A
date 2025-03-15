@@ -3213,10 +3213,14 @@
     document.addEventListener('DOMContentLoaded', function() {
       const loadRankingBtn = document.getElementById('loadRanking');
       if (loadRankingBtn) {
-        // 既存のイベントリスナーを削除して再設定
-        loadRankingBtn.removeEventListener('click', loadGenreRanking);
-        loadRankingBtn.addEventListener('click', function() {
+        // 既存のイベントリスナーを削除（既存のものがあれば）
+        const oldListeners = loadRankingBtn.cloneNode(true);
+        loadRankingBtn.parentNode.replaceChild(oldListeners, loadRankingBtn);
+        
+        // 新しいイベントリスナーを設定
+        document.getElementById('loadRanking').addEventListener('click', function() {
           const selectedType = document.getElementById('typeSelector').value;
+          console.log('ランキング表示ボタンがクリックされました:', selectedType);
           loadGenreRanking(selectedType);
         });
       }
@@ -3247,6 +3251,16 @@
       });
       
       console.log("業種選択肢を設定しました。選択肢数:", typeSelector.options.length);
+      
+      // typeSelectorのchange イベントリスナーを設定（既存のものを削除してから）
+      typeSelector.removeEventListener('change', function() {
+        loadGenreRanking(this.value);
+      });
+      
+      typeSelector.addEventListener('change', function() {
+        console.log('業種が選択されました:', this.value);
+        loadGenreRanking(this.value);
+      });
       
       // デフォルトで最初の業種を選択
       if (typeSelector.options.length > 1) {
@@ -3293,7 +3307,7 @@
     async function loadGenreRanking(selectedBizType = null) {
       try {
         // 選択された業種を取得（引数で指定された場合はそれを使用）
-        const bizType = selectedBizType || document.getElementById('typeSelector').value;
+        const bizType = typeof selectedBizType === 'string' ? selectedBizType : document.getElementById('typeSelector').value;
         
         console.log('選択された業種:', bizType); // デバッグ用
 
