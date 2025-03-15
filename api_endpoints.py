@@ -248,7 +248,7 @@ def get_store_history_optimized():
     """
     store_name = request.args.get('store_name', '')
     if not store_name:
-        return error_response("店舗名が指定されていません")
+        return error_response("店舗名が指定されていません", 400)
 
     # 日付範囲のパース
     start_date_str = request.args.get('start_date', '')
