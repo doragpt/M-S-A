@@ -926,6 +926,12 @@
       document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', event => {
           const targetId = event.target.getAttribute('href').substring(1);
+          const previousTabId = event.relatedTarget ? event.relatedTarget.getAttribute('href').substring(1) : null;
+          
+          // 前のタブからの移動をログに記録（デバッグ用）
+          console.log(`タブ切り替え: ${previousTabId || 'なし'} → ${targetId}`);
+          
+          // 初回ロードの場合
           if (!loadedTabs[targetId]) {
             switch(targetId) {
               case 'dashboard':
@@ -948,9 +954,29 @@
                 break;
             }
             loadedTabs[targetId] = true;
+          } 
+          // 店舗履歴タブに戻った場合、店舗選択や日付が変更されている可能性があるためUIを更新
+          else if (targetId === 'history' && previousTabId) {
+            // 前回の選択状態を維持したまま、UIのみリフレッシュ
+            refreshHistoryTabUI();
           }
         });
       });
+      
+    // 履歴タブのUIをリフレッシュする関数
+    function refreshHistoryTabUI() {
+      // 現在選択されている店舗名を取得
+      const currentStore = document.getElementById('historyStore').value;
+      if (currentStore) {
+        // 選択されている店舗のUIを更新（ラベルや表示を明確に）
+        const storeSelect = document.getElementById('historyStore');
+        const selectedOption = Array.from(storeSelect.options).find(opt => opt.value === currentStore);
+        if (selectedOption) {
+          // 選択中の店舗を強調表示するなどのUI更新があれば実行
+          console.log(`選択中の店舗: ${selectedOption.textContent}`);
+        }
+      }
+    }
 
       // イベントリスナーを設定
       setupEventListeners();
@@ -1067,9 +1093,71 @@
       // 履歴タブのボタン
       document.getElementById('loadHistory').addEventListener('click', loadStoreHistory);
       document.getElementById('resetHistory').addEventListener('click', resetHistoryForm);
+      
+      // 店舗選択の変更イベントも追加（ユーザーが店舗を変更した際に自動的にデータを更新）
+      document.getElementById('historyStore').addEventListener('change', function() {
+        // 店舗が変更されたので前回のパラメータをリセット（強制的に更新するため）
+        lastHistoryParams = {};
+        
+        // ロード中のUIフィードバック表示
+        const selectedStore = this.options[this.selectedIndex].text;
+        const feedbackEl = document.getElementById('historyFeedback') || document.createElement('div');
+        feedbackEl.id = 'historyFeedback';
+        feedbackEl.className = 'alert alert-info mt-2';
+        feedbackEl.textContent = `店舗「${selectedStore}」のデータを読み込んでいます...`;
+        
+        // フィードバック要素をフォームの近くに挿入
+        const buttonContainer = document.getElementById('loadHistory').parentNode;
+        if (!document.getElementById('historyFeedback')) {
+          buttonContainer.appendChild(feedbackEl);
+        }
+        
+        // 少し遅延させてからロード処理を開始（UIの更新が見えるように）
+        setTimeout(() => {
+          loadStoreHistory().then(() => {
+            // ロード完了後にフィードバックを削除
+            if (feedbackEl.parentNode) {
+              feedbackEl.parentNode.removeChild(feedbackEl);
+            }
+          });
+        }, 300);
+      });
 
       // 時間帯別分析ボタン
       document.getElementById('loadHourly').addEventListener('click', loadHourlyAnalysis);
+      
+    // 時間帯別分析の店舗選択変更時のイベント
+      document.getElementById('hourlyStore').addEventListener('change', function() {
+        // 選択された店舗名を表示するフィードバック
+        const selectedStore = this.value ? 
+          this.options[this.selectedIndex].text : 
+          '全店舗';
+        
+        const feedbackEl = document.createElement('div');
+        feedbackEl.className = 'alert alert-info mb-2 mt-2';
+        feedbackEl.id = 'hourlyFeedback';
+        feedbackEl.textContent = `「${selectedStore}」の時間帯別データを準備しています...`;
+        
+        // 既存のフィードバックを削除
+        const existingFeedback = document.getElementById('hourlyFeedback');
+        if (existingFeedback) {
+          existingFeedback.remove();
+        }
+        
+        // フィードバックを挿入
+        const formContainer = this.closest('.card-body');
+        formContainer.appendChild(feedbackEl);
+        
+        // 自動的に分析を実行（少し遅延させてUIの更新を見せる）
+        setTimeout(() => {
+          loadHourlyAnalysis().then(() => {
+            // 成功したらフィードバックを削除
+            if (feedbackEl.parentNode) {
+              feedbackEl.remove();
+            }
+          });
+        }, 300);
+      });
 
       // ジャンルランキングボタン
       document.getElementById('loadRanking').addEventListener('click', loadGenreRanking);
@@ -1546,13 +1634,29 @@
 
         // 履歴タブを選択
         const historyTab = document.querySelector('#history-tab');
+        
+        // タブ切り替え前に今から選択する店舗を保存
+        window.pendingHistoryStore = storeName;
+        
+        // タブ切り替え
         bootstrap.Tab.getInstance(historyTab).show();
-
+        
         // 店舗を選択して履歴を表示
         const storeSelect = document.getElementById('historyStore');
         if (storeSelect) {
+          // ロード中の表示を有効化
+          document.getElementById('historyLoadingIndicator').style.display = 'flex';
+          
+          // 前回のパラメータをリセットして強制更新
+          lastHistoryParams = {};
+          
+          // 店舗を選択
           storeSelect.value = storeName;
-          setTimeout(loadStoreHistory, 300);
+          
+          // カスタムイベントを発火して変更を通知
+          storeSelect.dispatchEvent(new Event('change'));
+          
+          // イベントハンドラ内でloadStoreHistoryが呼ばれるので、ここでは呼ばない
         }
       });
     }
@@ -1925,6 +2029,9 @@
       }
     }
 
+    // 前回の履歴データ取得パラメータを保存する変数
+    let lastHistoryParams = {};
+
     // 店舗履歴データの読み込み
     async function loadStoreHistory() {
       try {
@@ -1940,6 +2047,23 @@
         if (!startDate || !endDate) {
           showHistoryError('開始日と終了日を指定してください');
           return;
+        }
+
+        // 同じパラメータでの連続呼び出しをチェック（店舗切り替えの場合は常に更新）
+        const currentParams = { store: storeName, startDate, endDate };
+        const isSameParams = JSON.stringify(currentParams) === JSON.stringify(lastHistoryParams);
+        if (isSameParams && charts.history) {
+          console.log('同じパラメータでの再読み込みをスキップします');
+          return;
+        }
+
+        // 現在のパラメータを保存
+        lastHistoryParams = currentParams;
+
+        // グラフが存在する場合は先に破棄
+        if (charts.history) {
+          charts.history.destroy();
+          charts.history = null;
         }
 
         // APIのベースURL
@@ -2115,11 +2239,21 @@
           return;
         }
 
+        // ロード状態を明示的に表示
+        document.getElementById('historyLoadingIndicator').style.display = 'flex';
+        
         // 既存のチャートを破棄
         if (charts.history) {
           charts.history.destroy();
           charts.history = null;
         }
+        
+        // キャンバスをリセット（再描画問題を防止）
+        const canvas = document.getElementById('historyChart');
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'historyChart';
+        canvas.parentNode.replaceChild(newCanvas, canvas);
+        const newCtx = newCanvas.getContext('2d');
 
         // データポイントの数を制限（表示を改善するため）
         const maxPoints = 100;
@@ -2350,7 +2484,7 @@
         console.log("データサンプル:", rateData[0]);
 
         // 新しいチャートを作成
-        charts.history = new Chart(ctx, {
+        charts.history = new Chart(newCtx, {
           type: 'line',
           data: { datasets },
           options
@@ -2363,6 +2497,9 @@
         console.error('履歴チャート更新エラー:', error);
         showHistoryError(`チャート作成エラー: ${error.message}`);
         document.getElementById('historyNoData').style.display = 'block';
+      } finally {
+        // 処理完了後、ローディング表示を必ず非表示にする
+        document.getElementById('historyLoadingIndicator').style.display = 'none';
       }
     }
 
@@ -4354,6 +4491,58 @@
         return null;
       }
     }
+    
+    // グローバルエラーハンドリング
+    window.addEventListener('error', function(e) {
+      console.error('グローバルエラー:', e.error || e.message);
+      
+      // 重大なエラーの場合にユーザーに通知
+      if (!document.getElementById('globalErrorAlert')) {
+        const errorAlert = document.createElement('div');
+        errorAlert.id = 'globalErrorAlert';
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+        errorAlert.style.position = 'fixed';
+        errorAlert.style.top = '10px';
+        errorAlert.style.right = '10px';
+        errorAlert.style.zIndex = '9999';
+        errorAlert.style.maxWidth = '350px';
+        
+        errorAlert.innerHTML = `
+          <strong>エラーが発生しました</strong>
+          <p class="mb-0">${e.message || 'ページの一部機能に問題が発生しました。'}</p>
+          <p class="mb-0 small">ページを再読み込みすると解決する場合があります。</p>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(errorAlert);
+        
+        // 10秒後に自動的に閉じる
+        setTimeout(() => {
+          if (errorAlert.parentNode) {
+            errorAlert.remove();
+          }
+        }, 10000);
+      }
+    });
+    
+    // ページ読み込み完了時の最終チェック
+    window.addEventListener('load', function() {
+      console.log('ページの読み込みが完了しました。初期化プロセスを確認します。');
+      
+      // 各タブのロード状態を確認
+      if (!loadedTabs.dashboard) {
+        console.warn('ダッシュボードタブが正しく初期化されていません。');
+      }
+      
+      // URLハッシュがある場合は対応するタブを表示
+      if (window.location.hash) {
+        const tabId = window.location.hash.substring(1);
+        const tab = document.querySelector(`a[href="#${tabId}"]`);
+        if (tab) {
+          bootstrap.Tab.getInstance(tab).show();
+        }
+      }
+    });
   </script>
 </body>
 </html>
