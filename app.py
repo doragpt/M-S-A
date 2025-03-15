@@ -733,7 +733,7 @@ def api_history():
     now_jst = datetime.now(jst)
 
     try:
-        # クエリパラメータの取得
+        #        # クエリパラメータの取得
         store = request.args.get('store')
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
