@@ -132,13 +132,29 @@
     }
 
     // 初期データ取得
-    fetch('/api/history')
+    fetch('/api/store-names')
       .then(response => response.json())
       .then(data => {
-        globalHistoryData = data;
-        populateStoreDropdown(globalHistoryData);
+        populateStoreDropdown(data.data);
       })
       .catch(err => console.error(err));
+
+    // 店舗データ取得関数
+    async function fetchStoreData(storeName) {
+      const response = await fetch(`/api/history/optimized?store=${encodeURIComponent(storeName)}`);
+      const data = await response.json();
+      return data.data;
+    }
+
+    // 店舗選択時のデータ更新
+    document.getElementById('storeSelect').addEventListener('change', async function() {
+      const selectedStore = this.value;
+      if (selectedStore) {
+        const data = await fetchStoreData(selectedStore);
+        globalHistoryData = data;
+        updateHourlyAnalysis();
+      }
+    });
 
 
     // 更新ボタンのイベントリスナー(変更なし)
