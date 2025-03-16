@@ -145,15 +145,26 @@ def register_api_routes(bp):
         try:
             conn = get_db_connection()
             query = """
+            WITH latest_data AS (
+                SELECT store_name, MAX(timestamp) as max_time
+                FROM store_status
+                GROUP BY store_name
+            )
             SELECT s.*
             FROM store_status s
-            WHERE s.timestamp = (
-                SELECT MAX(timestamp)
-                FROM store_status
-                WHERE store_name = s.store_name
-            )
+            JOIN latest_data l 
+                ON s.store_name = l.store_name 
+                AND s.timestamp = l.max_time
             """
             results = conn.execute(query).fetchall()
+            
+            if not results:
+                return jsonify({
+                    'status': 'success',
+                    'data': [],
+                    'message': 'データが見つかりません'
+                })
+
             stores = [{
                 'store_name': r['store_name'],
                 'biz_type': r['biz_type'] or '',
