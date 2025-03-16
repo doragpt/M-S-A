@@ -212,9 +212,24 @@ def register_api_routes(bp):
             AND timestamp BETWEEN ? AND ?
             ORDER BY timestamp
             """
+            results = conn.execute(query, [store, start, end]).fetchall()
+
+            history = [{
+                'store_name': store,
+                'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None,
+                'working_staff': int(r['working_staff'] or 0),
+                'active_staff': int(r['active_staff'] or 0)
+            } for r in results]
+
+            return jsonify({
+                'status': 'success',
+                'data': history
+            })
+        except Exception as e:
+            return jsonify({
                 'status': 'error',
-                'message': '店舗名が必要です'
-            }), 400
+                'message': str(e)
+            }), 500
 
         try:
             jst = pytz.timezone('Asia/Tokyo')
