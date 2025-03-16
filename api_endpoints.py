@@ -280,16 +280,20 @@ def register_api_routes(bp):
             try:
                 # 現在時刻を取得してデフォルトの検索期間を設定
                 now = datetime.now(pytz.UTC)
-                default_end = now
-                default_start = now - timedelta(days=7)
-
-                # 指定された日付があればそれを使用、なければデフォルト値
+                
+                # 指定された日付があればそれを使用
                 if start_date and end_date:
                     start = datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S')
                     end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
+                    
+                    # 未来の日付が指定された場合は、現在時刻から過去7日間を使用
+                    if start > now:
+                        start = now - timedelta(days=7)
+                        end = now
                 else:
-                    start = default_start
-                    end = default_end
+                    # デフォルトは現在時刻から過去7日間
+                    end = now
+                    start = now - timedelta(days=7)
 
                 # UTCタイムゾーンを設定
                 start = pytz.UTC.localize(start)
