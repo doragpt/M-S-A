@@ -15,7 +15,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
 from models import db
-from api_routes import api_bp, register_legacy_routes
+from api_routes import api_bp
 from api_endpoints import init_cache
 from store_scraper import scrape_store_data
 from aggregated_data import AggregatedData
