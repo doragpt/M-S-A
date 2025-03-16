@@ -205,8 +205,13 @@ def register_api_routes(bp):
 
             return jsonify({
                 'status': 'success',
-                'data': stores,
-                'message': 'データを正常に取得しました'
+                'data': {
+                    'meta': {
+                        'last_updated': datetime.now(pytz.UTC).isoformat(),
+                        'total_count': len(stores)
+                    },
+                    'stores': stores
+                }
             })
         except Exception as e:
             logger.error(f"APIエラー: {str(e)}")
