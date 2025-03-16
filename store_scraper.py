@@ -257,11 +257,13 @@ async def _scrape_all(store_urls: list) -> list:
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     browser = await launch(
         headless=True,
+        executablePath='/usr/bin/chromium-browser',
+        args=['--no-sandbox', '--disable-setuid-sandbox'],
         handleSIGINT=False,
         handleSIGTERM=False,
         handleSIGHUP=False,
-        logLevel=logging.ERROR,  # ブラウザのログレベルをERRORに設定
-        dumpio=False,  # 標準出力/標準エラー出力をキャプチャしない
+        logLevel=logging.ERROR,
+        dumpio=False,
         args=[
             "--no-sandbox",
             "--disable-setuid-sandbox",
