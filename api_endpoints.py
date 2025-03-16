@@ -145,16 +145,13 @@ def register_api_routes(bp):
         try:
             conn = get_db_connection()
             query = """
-            WITH latest_data AS (
-                SELECT store_name, MAX(timestamp) as max_time
-                FROM store_status
-                GROUP BY store_name
-            )
             SELECT s.*
             FROM store_status s
-            JOIN latest_data l 
-                ON s.store_name = l.store_name 
-                AND s.timestamp = l.max_time
+            WHERE s.timestamp = (
+                SELECT MAX(timestamp)
+                FROM store_status
+                WHERE store_name = s.store_name
+            )
             """
             results = conn.execute(query).fetchall()
             stores = [{
@@ -183,18 +180,38 @@ def register_api_routes(bp):
     @bp.route('/history/optimized')
     def get_store_history():
         """店舗の履歴データを取得"""
-        store = request.args.get('store', '')
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
+        try:
+            store = request.args.get('store')
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
 
-        if not start_date or not end_date:
-            return jsonify({
-                'status': 'error',
-                'message': '開始日と終了日が必要です'
-            }), 400
+            # 必須パラメータの検証
+            if not all([store, start_date, end_date]):
+                return jsonify({
+                    'status': 'error',
+                    'message': '店舗名、開始日、終了日が必要です',
+                    'data': None
+                }), 400
 
-        if not store:
-            return jsonify({
+            # 日付形式の検証
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                end = end.replace(hour=23, minute=59, second=59)
+            except ValueError:
+                return jsonify({
+                    'status': 'error',
+                    'message': '無効な日付形式です',
+                    'data': None
+                }), 400
+
+            conn = get_db_connection()
+            query = """
+            SELECT * FROM store_status 
+            WHERE store_name = ? 
+            AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp
+            """
                 'status': 'error',
                 'message': '店舗名が必要です'
             }), 400
