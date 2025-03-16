@@ -179,6 +179,12 @@ def register_api_routes(bp):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
 
+        if not store:
+            return jsonify({
+                'status': 'error',
+                'message': '店舗名が必要です'
+            }), 400
+
         try:
             jst = pytz.timezone('Asia/Tokyo')
             if not start_date or not end_date:
@@ -208,13 +214,38 @@ def register_api_routes(bp):
                 'total_staff': int(r['total_staff'] or 0),
                 'biz_type': r['biz_type'] or '',
                 'genre': r['genre'] or '',
-                'area': r['area'] or ''
+                'area': r['area'] or '',
+                'rate': round(((int(r['working_staff'] or 0) - int(r['active_staff'] or 0)) / int(r['working_staff'] or 1)) * 100, 1) if int(r['working_staff'] or 0) > 0 else 0
             } for r in results]
 
-            if not history:
-                return jsonify({'status': 'error', 'message': 'データが見つかりませんでした'}), 404
+            response_data = {
+                'status': 'success',
+                'data': {
+                    'store': store,
+                    'records': history,
+                    'period': {
+                        'start': start_date.isoformat(),
+                        'end': end_date.isoformat()
+                    }
+                }
+            }
 
-            return jsonify({'status': 'success', 'data': history})
+            if not history:
+                response_data = {
+                    'status': 'error',
+                    'message': 'データが見つかりませんでした',
+                    'data': {
+                        'store': store,
+                        'records': [],
+                        'period': {
+                            'start': start_date.isoformat(),
+                            'end': end_date.isoformat()
+                        }
+                    }
+                }
+                return jsonify(response_data), 404
+
+            return jsonify(response_data)
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
