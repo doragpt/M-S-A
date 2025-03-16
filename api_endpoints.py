@@ -145,14 +145,10 @@ def register_api_routes(bp):
         try:
             conn = get_db_connection()
             query = """
-            SELECT s.*
-            FROM store_status s
-            INNER JOIN (
-                SELECT store_name, MAX(timestamp) as max_time
-                FROM store_status
-                GROUP BY store_name
-            ) latest ON s.store_name = latest.store_name 
-                AND s.timestamp = latest.max_time
+            SELECT store_name, biz_type, genre, area, 
+                   total_staff, working_staff, active_staff, timestamp
+            FROM store_status
+            WHERE timestamp = (SELECT MAX(timestamp) FROM store_status)
             """
             results = conn.execute(query).fetchall()
             
@@ -192,16 +188,25 @@ def register_api_routes(bp):
     def get_store_history():
         """店舗の履歴データを取得"""
         try:
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
             store = request.args.get('store', '')
-            start_date = request.args.get('start_date', '')
-            end_date = request.args.get('end_date', '')
 
-            # storeパラメータが必須の場合のみチェック
-            if store and not all([start_date, end_date]):
+            if not all([start_date, end_date]):
                 return jsonify({
                     'status': 'error',
-                    'message': 'start_dateとend_dateが必要です。',
-                    'data': None
+                    'message': '開始日と終了日を指定してください',
+                    'data': []
+                }), 400
+
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                end = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+            except ValueError:
+                return jsonify({
+                    'status': 'error',
+                    'message': '日付形式が無効です（YYYY-MM-DD）',
+                    'data': []
                 }), 400
 
             try:
