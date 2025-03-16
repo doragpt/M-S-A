@@ -542,10 +542,14 @@ def register_api_routes(bp):
             GROUP BY store_name
             HAVING weeks_count >= 1
             ORDER BY avg_rate DESC
-            LIMIT ?
             """
 
-            results = conn.execute(query, [limit]).fetchall()
+            results = conn.execute(query).fetchall()
+            data = [{
+                'store_name': r['store_name'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'weeks_count': r['weeks_count']
+            } for r in results[:limit]]
             data = [{
                 'store_name': r['store_name'],
                 'avg_rate': round(r['avg_rate'], 1),
