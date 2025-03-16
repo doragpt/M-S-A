@@ -153,11 +153,6 @@ def register_api_routes(bp):
                 GROUP BY store_name
             ) latest ON s.store_name = latest.store_name 
                 AND s.timestamp = latest.max_time
-            SELECT s.*
-            FROM store_status s
-            JOIN latest_data l 
-                ON s.store_name = l.store_name 
-                AND s.timestamp = l.max_time
             """
             results = conn.execute(query).fetchall()
             
