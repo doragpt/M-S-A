@@ -255,10 +255,10 @@ async def _scrape_all(store_urls: list) -> list:
                len(store_urls), MAX_CONCURRENT_TASKS)
     
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = '/usr/bin/chromium-browser'
+    executable_path = '/usr/bin/chromium'
     browser = await launch(
         headless=True,
-        executablePath='/usr/bin/chromium-browser',
+        executablePath='/usr/bin/chromium',
         ignoreHTTPSErrors=True,
         defaultViewport=None,
         handleSIGINT=False,
