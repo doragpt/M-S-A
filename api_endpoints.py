@@ -263,7 +263,7 @@ def register_api_routes(bp):
 
 
     @bp.route('/history/optimized')
-    def get_store_history_optimized(): #Added to avoid name collision
+    def get_store_history_optimized():
         """店舗の履歴データを取得"""
         try:
             start_date = request.args.get('start_date')
@@ -279,48 +279,13 @@ def register_api_routes(bp):
 
             try:
                 start = datetime.strptime(start_date, '%Y-%m-%d')
-                end = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                end = end.replace(hour=23, minute=59, second=59)
             except ValueError:
                 return jsonify({
                     'status': 'error',
                     'message': '日付形式が無効です（YYYY-MM-DD）',
                     'data': []
-                }), 400
-
-            try:
-                start = datetime.strptime(start_date, '%Y-%m-%d')
-                end = datetime.strptime(end_date, '%Y-%m-%d')
-                end = end.replace(hour=23, minute=59, second=59)
-            except ValueError:
-                return jsonify({
-                    'status': 'error',
-                    'message': '日付形式が無効です。YYYY-MM-DD形式で指定してください。',
-                    'data': None
-                }), 400
-
-            # クエリ構築
-            query = """
-            SELECT * FROM store_status 
-            WHERE timestamp BETWEEN ? AND ?
-            """
-            params = [start, end]
-
-            if store:
-                query += " AND store_name = ?"
-                params.append(store)
-
-            query += " ORDER BY timestamp"
-
-            # 日付形式の検証
-            try:
-                start = datetime.strptime(start_date, '%Y-%m-%d')
-                end = datetime.strptime(end_date, '%Y-%m-%d')
-                end = end.replace(hour=23, minute=59, second=59)
-            except ValueError:
-                return jsonify({
-                    'status': 'error',
-                    'message': '無効な日付形式です',
-                    'data': None
                 }), 400
 
             conn = get_db_connection()
@@ -336,7 +301,6 @@ def register_api_routes(bp):
                 area
             FROM store_status 
             WHERE timestamp BETWEEN ? AND ?
-            ORDER BY timestamp
             """
             params = [start, end]
 
@@ -344,6 +308,7 @@ def register_api_routes(bp):
                 query += " AND store_name = ?"
                 params.append(store)
 
+            query += " ORDER BY timestamp"
             results = conn.execute(query, params).fetchall()
 
             history = [{
@@ -358,17 +323,13 @@ def register_api_routes(bp):
                 'status': 'success',
                 'data': history
             })
+
         except Exception as e:
+            logger.error(f"履歴データ取得エラー: {str(e)}")
             return jsonify({
                 'status': 'error',
                 'message': str(e)
             }), 500
-
-        response_data = {
-            'status': 'success',
-            'data': history
-        }
-        return jsonify(response_data)
 
     @bp.route('/store-names')
     def get_store_names():
