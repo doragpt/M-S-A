@@ -365,12 +365,12 @@ def register_api_routes(bp):
             }), 500
 
         response_data = {
-                'status': 'success',
-                'data': history
-            }
-            return jsonify(response_data)
-        except Exception as e:
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+            'status': 'success',
+            'data': history
+        }
+        return jsonify(response_data)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
     @bp.route('/store-names')
     def get_store_names():
