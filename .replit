@@ -1,11 +1,11 @@
 modules = ["web", "python-3.12", "nodejs-20"]
-run = "uvicorn main:app --host 0.0.0.0 --port 5000"
+run = "python main.py"
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 5000"]
+run = ["sh", "-c", "python main.py"]
 
 [[ports]]
 localPort = 5000
