@@ -258,7 +258,6 @@ async def _scrape_all(store_urls: list) -> list:
     browser = await launch(
         headless=True,
         executablePath='/usr/bin/chromium-browser',
-        args=['--no-sandbox', '--disable-setuid-sandbox'],
         handleSIGINT=False,
         handleSIGTERM=False,
         handleSIGHUP=False,
