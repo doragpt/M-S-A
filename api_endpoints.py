@@ -167,24 +167,28 @@ def register_api_routes(bp):
 
             stores = []
             for r in results:
-                # 必須フィールドの存在確認
-                if not all(field in dict(r).keys() for field in ['store_name', 'area']):
-                    continue
-                    
                 r_dict = dict(r)
+                if not r_dict.get('store_name') or not r_dict.get('area'):
+                    continue
+                
                 working_staff = int(r_dict.get('working_staff', 0))
                 active_staff = int(r_dict.get('active_staff', 0))
+                total_staff = int(r_dict.get('total_staff', 0))
+                
+                rate = 0
+                if working_staff > 0:
+                    rate = round(((working_staff - active_staff) / working_staff) * 100, 1)
                 
                 store = {
                     'store_name': r_dict['store_name'],
                     'biz_type': r_dict.get('biz_type', ''),
                     'genre': r_dict.get('genre', ''),
                     'area': r_dict['area'],
-                    'total_staff': int(r_dict.get('total_staff', 0)),
+                    'total_staff': total_staff,
                     'working_staff': working_staff,
                     'active_staff': active_staff,
-                    'timestamp': r_dict['timestamp'].isoformat() + '+09:00' if r_dict.get('timestamp') else None,
-                    'rate': round(((working_staff - active_staff) / working_staff) * 100, 1) if working_staff > 0 else 0
+                    'timestamp': r_dict['timestamp'].isoformat() if r_dict.get('timestamp') else None,
+                    'rate': rate
                 }
                 stores.append(store)
 
@@ -264,18 +268,33 @@ def register_api_routes(bp):
 
             conn = get_db_connection()
             query = """
-            SELECT * FROM store_status 
-            WHERE store_name = ? 
-            AND timestamp BETWEEN ? AND ?
+            SELECT 
+                store_name,
+                timestamp,
+                working_staff,
+                active_staff,
+                total_staff,
+                biz_type,
+                genre,
+                area
+            FROM store_status 
+            WHERE timestamp BETWEEN ? AND ?
             ORDER BY timestamp
             """
-            results = conn.execute(query, [store, start, end]).fetchall()
+            params = [start, end]
+            
+            if store:
+                query += " AND store_name = ?"
+                params.append(store)
+                
+            results = conn.execute(query, params).fetchall()
 
             history = [{
                 'store_name': r['store_name'],
                 'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None,
                 'working_staff': int(r['working_staff'] or 0),
-                'active_staff': int(r['active_staff'] or 0)
+                'active_staff': int(r['active_staff'] or 0),
+                'total_staff': int(r['total_staff'] or 0)
             } for r in results]
 
             return jsonify({
