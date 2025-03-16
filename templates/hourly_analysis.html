@@ -45,8 +45,14 @@
         if (record && record.timestamp && record.working_staff !== undefined && record.active_staff !== undefined) {
           const dt = new Date(record.timestamp);
           const hour = dt.getHours();
-          const rate = record.working_staff > 0 ? ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0;
-          groups[hour].push(parseFloat(rate));
+          const workingStaff = parseInt(record.working_staff);
+          const activeStaff = parseInt(record.active_staff);
+          if (workingStaff > 0) {
+            const rate = ((workingStaff - activeStaff) / workingStaff * 100);
+            if (!isNaN(rate)) {
+              groups[hour].push(parseFloat(rate.toFixed(1)));
+            }
+          }
         }
       });
       return groups;
@@ -109,17 +115,21 @@
     async function updateHourlyAnalysis() {
       const storeName = document.getElementById('storeSelect').value;
       try {
-        const data = await fetchStoreData(storeName);
-        if (data && data.length > 0) {
+        const response = await fetchStoreData(storeName);
+        const data = response.data || response;
+        
+        if (Array.isArray(data) && data.length > 0) {
           globalHistoryData = data;
           const groups = groupByHour(data);
           const hourlyAverages = calculateHourlyAverages(groups);
           renderHourlyChart(hourlyAverages, storeName || '全店舗');
         } else {
-          console.error('時間帯別データが取得できませんでした');
+          console.error('時間帯別データが取得できませんでした', data);
+          document.getElementById('hourlyChart').innerHTML = '<div class="alert alert-warning">データが見つかりませんでした</div>';
         }
       } catch (error) {
         console.error('時間帯別データ取得エラー:', error);
+        document.getElementById('hourlyChart').innerHTML = '<div class="alert alert-danger">データ取得中にエラーが発生しました</div>';
       }
     }
 
