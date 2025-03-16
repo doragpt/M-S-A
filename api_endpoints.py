@@ -196,10 +196,11 @@ def register_api_routes(bp):
             start_date = request.args.get('start_date', '')
             end_date = request.args.get('end_date', '')
 
-            if not all([store, start_date, end_date]):
+            # storeパラメータが必須の場合のみチェック
+            if store and not all([start_date, end_date]):
                 return jsonify({
                     'status': 'error',
-                    'message': 'パラメータが不足しています。store, start_date, end_dateが必要です。',
+                    'message': 'start_dateとend_dateが必要です。',
                     'data': None
                 }), 400
 
