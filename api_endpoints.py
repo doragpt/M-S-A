@@ -171,12 +171,13 @@ def register_api_routes(bp):
                 'total_staff': int(r['total_staff'] or 0),
                 'working_staff': int(r['working_staff'] or 0),
                 'active_staff': int(r['active_staff'] or 0),
-                'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None
+                'timestamp': r['timestamp'].isoformat() + '+09:00' if r['timestamp'] else None
             } for r in results]
 
             response_data = {
                 'status': 'success',
-                'data': stores
+                'data': stores,
+                'message': 'データを正常に取得しました'
             }
             return jsonify(response_data)
         except Exception as e:
