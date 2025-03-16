@@ -83,10 +83,7 @@ with app.app_context():
     db.create_all()
 
 # API Blueprint登録
-app.register_blueprint(api_bp, url_prefix='/api/v1')
-
-# 互換性のために既存のAPIルートも登録
-register_legacy_routes(app)
+app.register_blueprint(api_bp, url_prefix='/api')
 
 # スケジューリング用の設定
 jst = pytz.timezone('Asia/Tokyo')
