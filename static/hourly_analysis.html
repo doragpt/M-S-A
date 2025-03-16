@@ -141,18 +141,30 @@
 
     // 店舗データ取得関数
     async function fetchStoreData(storeName) {
-      const response = await fetch(`/api/history/optimized?store=${encodeURIComponent(storeName)}`);
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const url = storeName === '全店舗' ? 
+        `/api/history/optimized?start_date=${startDate}&end_date=${endDate}` :
+        `/api/history/optimized?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}`;
+      
+      const response = await fetch(url);
       const data = await response.json();
       return data.data;
     }
 
     // 店舗選択時のデータ更新
     document.getElementById('storeSelect').addEventListener('change', async function() {
-      const selectedStore = this.value;
-      if (selectedStore) {
+      const selectedStore = this.value || '全店舗';
+      try {
         const data = await fetchStoreData(selectedStore);
-        globalHistoryData = data;
-        updateHourlyAnalysis();
+        if (data && data.length > 0) {
+          globalHistoryData = data;
+          updateHourlyAnalysis();
+        } else {
+          console.error('店舗データが取得できませんでした');
+        }
+      } catch (error) {
+        console.error('データ取得エラー:', error);
       }
     });
 
