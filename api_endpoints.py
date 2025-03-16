@@ -252,3 +252,89 @@ def register_api_routes(bp):
             return jsonify({'status': 'success', 'data': stats})
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    @bp.route('/ranking/genre')
+    def get_genre_ranking():
+        """ジャンル別ランキングを取得"""
+        try:
+            biz_type = request.args.get('biz_type')
+            conn = get_db_connection()
+            
+            query = """
+            WITH latest_data AS (
+                SELECT store_name, MAX(timestamp) as max_time
+                FROM store_status
+                WHERE biz_type = ?
+                GROUP BY store_name
+            )
+            SELECT 
+                genre,
+                COUNT(DISTINCT s.store_name) as store_count,
+                AVG(CASE WHEN s.working_staff > 0 
+                    THEN CAST((s.working_staff - s.active_staff) AS FLOAT) / s.working_staff * 100 
+                    ELSE 0 END) as avg_rate
+            FROM store_status s
+            JOIN latest_data l 
+                ON s.store_name = l.store_name 
+                AND s.timestamp = l.max_time
+            GROUP BY genre
+            HAVING genre IS NOT NULL
+            ORDER BY avg_rate DESC
+            """
+            results = conn.execute(query, [biz_type]).fetchall()
+            
+            data = [{
+                'genre': r['genre'],
+                'store_count': r['store_count'],
+                'avg_rate': round(r['avg_rate'], 1)
+            } for r in results]
+
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    @bp.route('/ranking/average')
+    def get_store_ranking():
+        """店舗別平均稼働率ランキングを取得"""
+        try:
+            biz_type = request.args.get('biz_type')
+            limit = request.args.get('limit', default=15, type=int)
+            
+            conn = get_db_connection()
+            
+            query = """
+            WITH store_rates AS (
+                SELECT 
+                    store_name,
+                    biz_type,
+                    genre,
+                    area,
+                    AVG(CASE WHEN working_staff > 0 
+                        THEN CAST((working_staff - active_staff) AS FLOAT) / working_staff * 100 
+                        ELSE 0 END) as avg_rate,
+                    COUNT(*) as sample_count
+                FROM store_status
+                WHERE biz_type = ?
+                GROUP BY store_name, biz_type, genre, area
+                HAVING sample_count >= 5
+            )
+            SELECT *
+            FROM store_rates
+            ORDER BY avg_rate DESC
+            LIMIT ?
+            """
+            
+            results = conn.execute(query, [biz_type, limit]).fetchall()
+            
+            data = [{
+                'store_name': r['store_name'],
+                'biz_type': r['biz_type'],
+                'genre': r['genre'],
+                'area': r['area'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'sample_count': r['sample_count']
+            } for r in results]
+
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
