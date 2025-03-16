@@ -145,11 +145,14 @@ def register_api_routes(bp):
         try:
             conn = get_db_connection()
             query = """
-            WITH latest_data AS (
+            SELECT s.*
+            FROM store_status s
+            INNER JOIN (
                 SELECT store_name, MAX(timestamp) as max_time
                 FROM store_status
                 GROUP BY store_name
-            )
+            ) latest ON s.store_name = latest.store_name 
+                AND s.timestamp = latest.max_time
             SELECT s.*
             FROM store_status s
             JOIN latest_data l 
@@ -192,9 +195,27 @@ def register_api_routes(bp):
     def get_store_history():
         """店舗の履歴データを取得"""
         try:
-            store = request.args.get('store')
-            start_date = request.args.get('start_date')
-            end_date = request.args.get('end_date')
+            store = request.args.get('store', '')
+            start_date = request.args.get('start_date', '')
+            end_date = request.args.get('end_date', '')
+
+            if not all([store, start_date, end_date]):
+                return jsonify({
+                    'status': 'error',
+                    'message': 'パラメータが不足しています。store, start_date, end_dateが必要です。',
+                    'data': None
+                }), 400
+
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                end = end.replace(hour=23, minute=59, second=59)
+            except ValueError:
+                return jsonify({
+                    'status': 'error',
+                    'message': '日付形式が無効です。YYYY-MM-DD形式で指定してください。',
+                    'data': None
+                }), 400
 
             # 必須パラメータの検証
             if not all([store, start_date, end_date]):
