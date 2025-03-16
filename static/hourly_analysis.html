@@ -106,12 +106,21 @@
     }
 
     // 店舗選択とグラフ更新処理
-    function updateHourlyAnalysis() {
+    async function updateHourlyAnalysis() {
       const storeName = document.getElementById('storeSelect').value;
-      const filteredData = globalHistoryData.filter(record => record.store_name === storeName);
-      const groups = groupByHour(filteredData);
-      const hourlyAverages = calculateHourlyAverages(groups);
-      renderHourlyChart(hourlyAverages, storeName);
+      try {
+        const data = await fetchStoreData(storeName);
+        if (data && data.length > 0) {
+          globalHistoryData = data;
+          const groups = groupByHour(data);
+          const hourlyAverages = calculateHourlyAverages(groups);
+          renderHourlyChart(hourlyAverages, storeName || '全店舗');
+        } else {
+          console.error('時間帯別データが取得できませんでした');
+        }
+      } catch (error) {
+        console.error('時間帯別データ取得エラー:', error);
+      }
     }
 
 
