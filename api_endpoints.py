@@ -171,20 +171,21 @@ def register_api_routes(bp):
                 'total_staff': int(r['total_staff'] or 0),
                 'working_staff': int(r['working_staff'] or 0),
                 'active_staff': int(r['active_staff'] or 0),
-                'timestamp': r['timestamp'].isoformat() + '+09:00' if r['timestamp'] else None
+                'timestamp': r['timestamp'].isoformat() + '+09:00' if r['timestamp'] else None,
+                'rate': round(((int(r['working_staff'] or 0) - int(r['active_staff'] or 0)) / int(r['working_staff'] or 1)) * 100, 1) if int(r['working_staff'] or 0) > 0 else 0
             } for r in results]
 
-            response_data = {
+            return jsonify({
                 'status': 'success',
                 'data': stores,
                 'message': 'データを正常に取得しました'
-            }
-            return jsonify(response_data)
+            })
         except Exception as e:
+            logger.error(f"APIエラー: {str(e)}")
             return jsonify({
                 'status': 'error',
-                'message': str(e),
-                'data': []
+                'message': 'データの取得に失敗しました',
+                'data': None
             }), 500
 
     @bp.route('/history/optimized')
