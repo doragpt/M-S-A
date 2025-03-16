@@ -1,0 +1,466 @@
+①/api/v1/stores/history/optimized
+{
+  "message": "\u5e97\u8217\u540d\u304c\u6307\u5b9a\u3055\u308c\u3066\u3044\u307e\u305b\u3093",
+  "status": "error"
+}
+
+
+②/api/v1/analysis/hourly
+{
+  "data": {
+    "days_analyzed": 7,
+    "hourly_data": [
+      {
+        "avg_active_staff": 1.2194244604316546,
+        "avg_operation_rate": 0.13280429954117745,
+        "avg_working_staff": 2.212230215827338,
+        "data_count": 834,
+        "day_count": 1,
+        "hour": 0
+      },
+      {
+        "avg_active_staff": 1.872579001019368,
+        "avg_operation_rate": 0.21916527923074544,
+        "avg_working_staff": 3.502548419979613,
+        "data_count": 981,
+        "day_count": 1,
+        "hour": 1
+      },
+      {
+        "avg_active_staff": 2.872382851445663,
+        "avg_operation_rate": 0.3448905246565139,
+        "avg_working_staff": 5.322033898305085,
+        "data_count": 1003,
+        "day_count": 1,
+        "hour": 2
+      },
+      {
+        "avg_active_staff": 3.649848637739657,
+        "avg_operation_rate": 0.4708635043528587,
+        "avg_working_staff": 6.902119071644803,
+        "data_count": 991,
+        "day_count": 1,
+        "hour": 3
+      },
+      {
+        "avg_active_staff": 4.502548419979613,
+        "avg_operation_rate": 0.5518273119080336,
+        "avg_working_staff": 8.230377166156982,
+        "data_count": 981,
+        "day_count": 1,
+        "hour": 4
+      },
+      {
+        "avg_active_staff": 5.244959677419355,
+        "avg_operation_rate": 0.6325260952367299,
+        "avg_working_staff": 9.424395161290322,
+        "data_count": 992,
+        "day_count": 1,
+        "hour": 5
+      },
+      {
+        "avg_active_staff": 5.643434343434343,
+        "avg_operation_rate": 0.6931694314766957,
+        "avg_working_staff": 10.319191919191919,
+        "data_count": 990,
+        "day_count": 1,
+        "hour": 6
+      },
+      {
+        "avg_active_staff": 5.912867274569402,
+        "avg_operation_rate": 0.7120259852525563,
+        "avg_working_staff": 10.627152988855116,
+        "data_count": 987,
+        "day_count": 1,
+        "hour": 7
+      },
+      {
+        "avg_active_staff": 6.161616161616162,
+        "avg_operation_rate": 0.7197771235403039,
+        "avg_working_staff": 10.61919191919192,
+        "data_count": 990,
+        "day_count": 1,
+        "hour": 9
+      },
+      {
+        "avg_active_staff": 6.136363636363637,
+        "avg_operation_rate": 0.7171734270640128,
+        "avg_working_staff": 10.471458773784356,
+        "data_count": 946,
+        "day_count": 1,
+        "hour": 10
+      },
+      {
+        "avg_active_staff": 5.926102502979738,
+        "avg_operation_rate": 0.688546534710135,
+        "avg_working_staff": 10.261025029797377,
+        "data_count": 839,
+        "day_count": 1,
+        "hour": 11
+      },
+      {
+        "avg_active_staff": 1.4530938123752495,
+        "avg_operation_rate": 0.09270121959882827,
+        "avg_working_staff": 2.281437125748503,
+        "data_count": 501,
+        "day_count": 1,
+        "hour": 19
+      },
+      {
+        "avg_active_staff": 0.49798792756539234,
+        "avg_operation_rate": 0.023098045629173176,
+        "avg_working_staff": 0.6317907444668008,
+        "data_count": 994,
+        "day_count": 1,
+        "hour": 20
+      },
+      {
+        "avg_active_staff": 0.2975708502024291,
+        "avg_operation_rate": 0.01957916232464473,
+        "avg_working_staff": 0.44635627530364375,
+        "data_count": 988,
+        "day_count": 1,
+        "hour": 21
+      },
+      {
+        "avg_active_staff": 0.6,
+        "avg_operation_rate": 0.046898345071229676,
+        "avg_working_staff": 0.9854922279792746,
+        "data_count": 965,
+        "day_count": 1,
+        "hour": 23
+      }
+    ],
+    "min_hour": {
+      "avg_active_staff": 0.2975708502024291,
+      "avg_operation_rate": 0.01957916232464473,
+      "avg_working_staff": 0.44635627530364375,
+      "data_count": 988,
+      "day_count": 1,
+      "hour": 21
+    },
+    "peak_hour": {
+      "avg_active_staff": 6.161616161616162,
+      "avg_operation_rate": 0.7197771235403039,
+      "avg_working_staff": 10.61919191919192,
+      "data_count": 990,
+      "day_count": 1,
+      "hour": 9
+    },
+    "store": "\u5168\u5e97\u8217"
+  },
+  "status": "success"
+}
+
+
+③/api/v1/stats/area
+{
+  "data": {
+    "area_count": 40,
+    "areas": [
+      {
+        "area": "\u6771\u4eac",
+        "avg_operation_rate": 0.5779558164060656,
+        "store_count": 188
+      },
+      {
+        "area": "\u795e\u5948\u5ddd",
+        "avg_operation_rate": 0.6178490669976738,
+        "store_count": 31
+      },
+      {
+        "area": "\u611b\u77e5",
+        "avg_operation_rate": 0.8156795226505146,
+        "store_count": 23
+      },
+      {
+        "area": "\u57fc\u7389",
+        "avg_operation_rate": 0.7256854473059334,
+        "store_count": 23
+      },
+      {
+        "area": "\u5343\u8449",
+        "avg_operation_rate": 0.7512304577478375,
+        "store_count": 22
+      },
+      {
+        "area": "\u5927\u962a",
+        "avg_operation_rate": 0.5257417387680545,
+        "store_count": 20
+      },
+      {
+        "area": "\u8328\u57ce",
+        "avg_operation_rate": 0.8135137834099772,
+        "store_count": 17
+      },
+      {
+        "area": "\u77f3\u5ddd",
+        "avg_operation_rate": 0.7849464545116719,
+        "store_count": 17
+      },
+      {
+        "area": "\u798f\u4e95",
+        "avg_operation_rate": 0.7866053118994295,
+        "store_count": 15
+      },
+      {
+        "area": "\u9577\u91ce",
+        "avg_operation_rate": 0.9004497851772288,
+        "store_count": 14
+      },
+      {
+        "area": "\u798f\u5cf6",
+        "avg_operation_rate": 0.7517875571281144,
+        "store_count": 14
+      },
+      {
+        "area": "\u798f\u5ca1",
+        "avg_operation_rate": 0.6534509766008818,
+        "store_count": 13
+      },
+      {
+        "area": "\u5bcc\u5c71",
+        "avg_operation_rate": 0.7197059884559884,
+        "store_count": 12
+      },
+      {
+        "area": "\u5e83\u5cf6",
+        "avg_operation_rate": 0.8100726174410384,
+        "store_count": 10
+      },
+      {
+        "area": "\u9999\u5ddd",
+        "avg_operation_rate": 0.853780284043442,
+        "store_count": 9
+      },
+      {
+        "area": "\u5c90\u961c",
+        "avg_operation_rate": 0.793150522317189,
+        "store_count": 9
+      },
+      {
+        "area": "\u5175\u5eab",
+        "avg_operation_rate": 0.7486230012193501,
+        "store_count": 9
+      },
+      {
+        "area": "\u9759\u5ca1",
+        "avg_operation_rate": 0.9577343981070688,
+        "store_count": 7
+      },
+      {
+        "area": "\u65b0\u6f5f",
+        "avg_operation_rate": 0.8345701917130489,
+        "store_count": 7
+      },
+      {
+        "area": "\u611b\u5a9b",
+        "avg_operation_rate": 0.8588239783092725,
+        "store_count": 6
+      },
+      {
+        "area": "\u5ca9\u624b",
+        "avg_operation_rate": 0.6203703703703703,
+        "store_count": 6
+      },
+      {
+        "area": "\u5bae\u57ce",
+        "avg_operation_rate": 0.6198039215686275,
+        "store_count": 5
+      },
+      {
+        "area": "\u5ca1\u5c71",
+        "avg_operation_rate": 0.9,
+        "store_count": 4
+      },
+      {
+        "area": "\u4e09\u91cd",
+        "avg_operation_rate": 0.8833333333333333,
+        "store_count": 4
+      },
+      {
+        "area": "\u6803\u6728",
+        "avg_operation_rate": 0.8035714285714286,
+        "store_count": 4
+      },
+      {
+        "area": "\u5c71\u68a8",
+        "avg_operation_rate": 1.0,
+        "store_count": 3
+      },
+      {
+        "area": "\u4f50\u8cc0",
+        "avg_operation_rate": 0.919047619047619,
+        "store_count": 3
+      },
+      {
+        "area": "\u5fb3\u5cf6",
+        "avg_operation_rate": 0.8523809523809524,
+        "store_count": 3
+      },
+      {
+        "area": "\u6c96\u7e04",
+        "avg_operation_rate": 0.7738095238095237,
+        "store_count": 3
+      },
+      {
+        "area": "\u5317\u6d77\u9053",
+        "avg_operation_rate": 0.7583333333333333,
+        "store_count": 3
+      },
+      {
+        "area": "\u7fa4\u99ac",
+        "avg_operation_rate": 0.7197802197802198,
+        "store_count": 3
+      },
+      {
+        "area": "\u6ecb\u8cc0",
+        "avg_operation_rate": 0.5956196581196581,
+        "store_count": 3
+      },
+      {
+        "area": "\u79cb\u7530",
+        "avg_operation_rate": 0.9583333333333333,
+        "store_count": 2
+      },
+      {
+        "area": "\u548c\u6b4c\u5c71",
+        "avg_operation_rate": 0.7840909090909092,
+        "store_count": 2
+      },
+      {
+        "area": "\u5927\u5206",
+        "avg_operation_rate": 1.0,
+        "store_count": 1
+      },
+      {
+        "area": "\u5c71\u53e3",
+        "avg_operation_rate": 1.0,
+        "store_count": 1
+      },
+      {
+        "area": "\u718a\u672c",
+        "avg_operation_rate": 1.0,
+        "store_count": 1
+      },
+      {
+        "area": "\u9ad8\u77e5",
+        "avg_operation_rate": 1.0,
+        "store_count": 1
+      },
+      {
+        "area": "\u5948\u826f",
+        "avg_operation_rate": 0.8823529411764706,
+        "store_count": 1
+      },
+      {
+        "area": "\u4eac\u90fd",
+        "avg_operation_rate": 0.8571428571428571,
+        "store_count": 1
+      }
+    ]
+  },
+  "status": "success"
+}
+
+
+④/api/v1/ranking/genre
+{
+  "message": "\u696d\u7a2e\u304c\u6307\u5b9a\u3055\u308c\u3066\u3044\u307e\u305b\u3093",
+  "status": "error"
+}
+
+
+⑤/api/v1/ranking/popular
+{
+  "data": {
+    "end_date": "2025-03-16T21:24:57.455488",
+    "limit": 10,
+    "period": "daily",
+    "start_date": "2025-03-16T00:00:00",
+    "store_count": 10,
+    "stores": [
+      {
+        "area": "\u4f50\u8cc0",
+        "avg_operation_rate": 0.7784722222222222,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 24,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "TOKIMEKI"
+      },
+      {
+        "area": "\u8328\u57ce",
+        "avg_operation_rate": 0.7775297619047619,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 28,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30bd\u30fc\u30d7"
+      },
+      {
+        "area": "\u79cb\u7530",
+        "avg_operation_rate": 0.7695924764890282,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 29,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "\u30a2\u30a4\u30c9\u30eb\u30b3\u30ec\u30af\u30b7\u30e7\u30f3"
+      },
+      {
+        "area": "\u5ca9\u624b",
+        "avg_operation_rate": 0.7672413793103449,
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "data_count": 29,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "Juicy kiss \u5317\u4e0a"
+      },
+      {
+        "area": "\u5c71\u68a8",
+        "avg_operation_rate": 0.7530864197530863,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 27,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "\u30aa\u30ec\u30f3\u30b8\u30cf\u30a6\u30b9"
+      },
+      {
+        "area": "\u6771\u4eac",
+        "avg_operation_rate": 0.75,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 12,
+        "genre": "\u9ad8\u7d1a",
+        "store_name": "\u30a8\u30eb\u30c9\u30fc\u30eb"
+      },
+      {
+        "area": "\u6771\u4eac",
+        "avg_operation_rate": 0.75,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 28,
+        "genre": "\u9ad8\u7d1a",
+        "store_name": "\u30b3\u30eb\u30c9\u30f3\u30d6\u30eb\u30fc"
+      },
+      {
+        "area": "\u5e83\u5cf6",
+        "avg_operation_rate": 0.7236467236467237,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 27,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "\u3050\u3089\u3069\u308b\u3048\u3063\u3050"
+      },
+      {
+        "area": "\u79cb\u7530",
+        "avg_operation_rate": 0.7222222222222222,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 27,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "\u30e9\u30d6\u30fb\u30a2\u30f3\u30c9\u30fb\u30e9\u30d6"
+      },
+      {
+        "area": "\u6771\u4eac",
+        "avg_operation_rate": 0.7169117647058824,
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "data_count": 17,
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "store_name": "PUZZLE"
+      }
+    ]
+  },
+  "status": "success"
+}
