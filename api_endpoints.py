@@ -278,10 +278,16 @@ def register_api_routes(bp):
                 }), 400
 
             try:
-                start = datetime.strptime(start_date, '%Y-%m-%d')
-                end = datetime.strptime(end_date, '%Y-%m-%d')
-                end = end.replace(hour=23, minute=59, second=59)
-            except ValueError:
+                start = datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S')
+                end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
+                
+                # タイムゾーンの調整（JST）
+                jst = pytz.timezone('Asia/Tokyo')
+                start = jst.localize(start)
+                end = jst.localize(end)
+                
+            except ValueError as e:
+                logger.error(f"日付変換エラー: {e}")
                 return jsonify({
                     'status': 'error',
                     'message': '日付形式が無効です（YYYY-MM-DD）',
