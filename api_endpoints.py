@@ -280,7 +280,7 @@ def register_api_routes(bp):
             try:
                 # 現在時刻を取得してデフォルトの検索期間を設定
                 now = datetime.now(pytz.UTC)
-                
+
                 # 指定された日付があればそれを使用
                 if start_date and end_date:
                     # naiveなdatetimeを作成してUTCに変換
@@ -288,12 +288,13 @@ def register_api_routes(bp):
                     end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
                     start = start.replace(tzinfo=pytz.UTC)
                     end = end.replace(tzinfo=pytz.UTC)
-                    
-                    # 未来の日付が指定された場合は、現在時刻から過去7日間を使用
-                    if end > now:
+
+                    # 未来の日付の場合は、現在のデータを返す
+                    if end > now or start > now:
                         end = now
                         start = now - timedelta(days=7)
                         logger.info(f"未来の日付が指定されたため、検索期間を調整: {start} - {end}")
+                        logger.debug(f"指定された期間: {request.args.get('start_date')} - {request.args.get('end_date')}")
                 else:
                     # デフォルトは現在時刻から過去7日間
                     end = now
@@ -302,7 +303,7 @@ def register_api_routes(bp):
                 # デバッグログ
                 logger.debug(f"検索期間: {start} - {end}")
                 logger.debug(f"現在時刻(UTC): {now}")
-                
+
             except ValueError as e:
                 logger.error(f"日付変換エラー: {e}")
                 return jsonify({
