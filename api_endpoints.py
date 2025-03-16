@@ -201,11 +201,18 @@ def register_api_routes(bp):
             results = conn.execute(query, [store, start_date, end_date]).fetchall()
 
             history = [{
-                'timestamp': r['timestamp'].isoformat(),
-                'working_staff': r['working_staff'],
-                'active_staff': r['active_staff'],
-                'total_staff': r['total_staff']
+                'store_name': store,
+                'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None,
+                'working_staff': int(r['working_staff'] or 0),
+                'active_staff': int(r['active_staff'] or 0),
+                'total_staff': int(r['total_staff'] or 0),
+                'biz_type': r['biz_type'] or '',
+                'genre': r['genre'] or '',
+                'area': r['area'] or ''
             } for r in results]
+
+            if not history:
+                return jsonify({'status': 'error', 'message': 'データが見つかりませんでした'}), 404
 
             return jsonify({'status': 'success', 'data': history})
         except Exception as e:
