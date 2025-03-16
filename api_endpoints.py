@@ -162,21 +162,22 @@ def register_api_routes(bp):
             stores = []
             for r in results:
                 # 必須フィールドの存在確認
-                if not all(field in r.keys() for field in ['store_name', 'area']):
+                if not all(field in dict(r).keys() for field in ['store_name', 'area']):
                     continue
                     
-                working_staff = int(r['working_staff'] if 'working_staff' in r else 0)
-                active_staff = int(r['active_staff'] if 'active_staff' in r else 0)
+                r_dict = dict(r)
+                working_staff = int(r_dict.get('working_staff', 0))
+                active_staff = int(r_dict.get('active_staff', 0))
                 
                 store = {
-                    'store_name': r['store_name'],
-                    'biz_type': r['biz_type'] if 'biz_type' in r else '',
-                    'genre': r['genre'] if 'genre' in r else '',
-                    'area': r['area'],
-                    'total_staff': int(r['total_staff'] if 'total_staff' in r else 0),
+                    'store_name': r_dict['store_name'],
+                    'biz_type': r_dict.get('biz_type', ''),
+                    'genre': r_dict.get('genre', ''),
+                    'area': r_dict['area'],
+                    'total_staff': int(r_dict.get('total_staff', 0)),
                     'working_staff': working_staff,
                     'active_staff': active_staff,
-                    'timestamp': r['timestamp'].isoformat() + '+09:00' if r.get('timestamp') else None,
+                    'timestamp': r_dict['timestamp'].isoformat() + '+09:00' if r_dict.get('timestamp') else None,
                     'rate': round(((working_staff - active_staff) / working_staff) * 100, 1) if working_staff > 0 else 0
                 }
                 stores.append(store)
