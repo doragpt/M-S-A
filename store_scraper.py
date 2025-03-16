@@ -255,13 +255,17 @@ async def _scrape_all(store_urls: list) -> list:
                len(store_urls), MAX_CONCURRENT_TASKS)
     
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
+    executable_path = '/usr/bin/google-chrome'
     browser = await launch(
         headless=True,
+        executablePath=executable_path,
+        ignoreHTTPSErrors=True,
+        defaultViewport=None,
         handleSIGINT=False,
         handleSIGTERM=False,
         handleSIGHUP=False,
-        logLevel=logging.ERROR,
-        dumpio=False,
+        logLevel=logging.ERROR,  # ブラウザのログレベルをERRORに設定
+        dumpio=False,  # 標準出力/標準エラー出力をキャプチャしない
         args=[
             "--no-sandbox",
             "--disable-setuid-sandbox",
@@ -275,8 +279,8 @@ async def _scrape_all(store_urls: list) -> list:
             "--disable-renderer-backgrounding",
             "--disable-infobars",
             "--js-flags=--expose-gc",
-            "--memory-pressure-off",
-            "--js-flags=--max-old-space-size=4096"
+            f"--memory-pressure-off",
+            f"--js-flags=--max-old-space-size=4096"
         ]
     )
     # 各店舗URLに対するスクレイピングタスクを作成
