@@ -159,12 +159,13 @@ def register_api_routes(bp):
             results = conn.execute(query).fetchall()
             stores = [{
                 'store_name': r['store_name'],
-                'biz_type': r['biz_type'],
-                'genre': r['genre'],
-                'area': r['area'],
-                'total_staff': r['total_staff'],
-                'working_staff': r['working_staff'],
-                'active_staff': r['active_staff']
+                'biz_type': r['biz_type'] or '',
+                'genre': r['genre'] or '',
+                'area': r['area'] or '',
+                'total_staff': int(r['total_staff'] or 0),
+                'working_staff': int(r['working_staff'] or 0),
+                'active_staff': int(r['active_staff'] or 0),
+                'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None
             } for r in results]
 
             return jsonify({'status': 'success', 'data': stores})
@@ -175,14 +176,19 @@ def register_api_routes(bp):
     def get_store_history():
         """店舗の履歴データを取得"""
         store = request.args.get('store')
-        if not store:
-            return jsonify({'status': 'error', 'message': '店舗名が必要です'}), 400
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
         try:
-            days = 7  # デフォルト7日間
             jst = pytz.timezone('Asia/Tokyo')
-            end_date = datetime.now(jst)
-            start_date = end_date - timedelta(days=days)
+            if not start_date or not end_date:
+                # デフォルト7日間
+                end_date = datetime.now(jst)
+                start_date = end_date - timedelta(days=7)
+            else:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                end_date = datetime.strptime(end_date, '%Y-%m-%d')
+                end_date = end_date.replace(hour=23, minute=59, second=59)
 
             conn = get_db_connection()
             query = """
