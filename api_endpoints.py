@@ -145,10 +145,16 @@ def register_api_routes(bp):
         try:
             conn = get_db_connection()
             query = """
-            SELECT store_name, biz_type, genre, area, 
-                   total_staff, working_staff, active_staff, timestamp
-            FROM store_status
-            WHERE timestamp = (SELECT MAX(timestamp) FROM store_status)
+            WITH latest_timestamps AS (
+                SELECT store_name, MAX(timestamp) as max_timestamp
+                FROM store_status
+                GROUP BY store_name
+            )
+            SELECT s.*
+            FROM store_status s
+            JOIN latest_timestamps lt 
+                ON s.store_name = lt.store_name 
+                AND s.timestamp = lt.max_timestamp
             """
             results = conn.execute(query).fetchall()
             
