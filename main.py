@@ -4,6 +4,11 @@ import pytz
 from datetime import datetime
 
 from flask import Flask, render_template, redirect, url_for
+
+# Monkey patch for werkzeug issue
+import werkzeug
+from urllib.parse import quote as url_quote
+werkzeug.urls.url_quote = url_quote
 from flask_caching import Cache
 from flask_socketio import SocketIO
 from apscheduler.schedulers.background import BackgroundScheduler
