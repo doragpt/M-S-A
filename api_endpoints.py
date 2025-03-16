@@ -231,13 +231,18 @@ def register_api_routes(bp):
                     'data': None
                 }), 400
 
-            # 必須パラメータの検証
-            if not all([store, start_date, end_date]):
-                return jsonify({
-                    'status': 'error',
-                    'message': '店舗名、開始日、終了日が必要です',
-                    'data': None
-                }), 400
+            # クエリ構築
+            query = """
+            SELECT * FROM store_status 
+            WHERE timestamp BETWEEN ? AND ?
+            """
+            params = [start, end]
+
+            if store:
+                query += " AND store_name = ?"
+                params.append(store)
+
+            query += " ORDER BY timestamp"
 
             # 日付形式の検証
             try:
@@ -261,7 +266,7 @@ def register_api_routes(bp):
             results = conn.execute(query, [store, start, end]).fetchall()
 
             history = [{
-                'store_name': store,
+                'store_name': r['store_name'],
                 'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None,
                 'working_staff': int(r['working_staff'] or 0),
                 'active_staff': int(r['active_staff'] or 0)
