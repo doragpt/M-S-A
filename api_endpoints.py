@@ -521,6 +521,7 @@ def register_api_routes(bp):
         """週間の平均データを取得"""
         try:
             conn = get_db_connection()
+            limit = request.args.get('limit', default=20, type=int)
             query = """
             WITH weekly_data AS (
                 SELECT 
@@ -541,10 +542,10 @@ def register_api_routes(bp):
             GROUP BY store_name
             HAVING weeks_count >= 1
             ORDER BY avg_rate DESC
-            LIMIT 20
+            LIMIT ?
             """
 
-            results = conn.execute(query).fetchall()
+            results = conn.execute(query, [limit]).fetchall()
             data = [{
                 'store_name': r['store_name'],
                 'avg_rate': round(r['avg_rate'], 1),
