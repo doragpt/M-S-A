@@ -278,17 +278,26 @@ def register_api_routes(bp):
                 }), 400
 
             try:
-                # UTC時間で日付を解析
-                utc = pytz.UTC
-                start = datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S')
-                end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
-                
+                # 現在時刻を取得してデフォルトの検索期間を設定
+                now = datetime.now(pytz.UTC)
+                default_end = now
+                default_start = now - timedelta(days=7)
+
+                # 指定された日付があればそれを使用、なければデフォルト値
+                if start_date and end_date:
+                    start = datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S')
+                    end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
+                else:
+                    start = default_start
+                    end = default_end
+
                 # UTCタイムゾーンを設定
-                start = utc.localize(start)
-                end = utc.localize(end)
-                
+                start = pytz.UTC.localize(start)
+                end = pytz.UTC.localize(end)
+
                 # デバッグログ
                 logger.debug(f"検索期間: {start} - {end}")
+                logger.debug(f"現在時刻(UTC): {now}")
                 
             except ValueError as e:
                 logger.error(f"日付変換エラー: {e}")
