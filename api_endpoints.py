@@ -158,6 +158,7 @@ def register_api_routes(bp):
             """
             results = conn.execute(query).fetchall()
             stores = [{
+                'id': str(r['id']),
                 'store_name': r['store_name'],
                 'biz_type': r['biz_type'] or '',
                 'genre': r['genre'] or '',
@@ -175,9 +176,15 @@ def register_api_routes(bp):
     @bp.route('/history/optimized')
     def get_store_history():
         """店舗の履歴データを取得"""
-        store = request.args.get('store')
+        store = request.args.get('store', '')
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
+
+        if not start_date or not end_date:
+            return jsonify({
+                'status': 'error',
+                'message': '開始日と終了日が必要です'
+            }), 400
 
         if not store:
             return jsonify({
