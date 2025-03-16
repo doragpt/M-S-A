@@ -290,9 +290,10 @@ def register_api_routes(bp):
                     end = end.replace(tzinfo=pytz.UTC)
                     
                     # 未来の日付が指定された場合は、現在時刻から過去7日間を使用
-                    if start > now:
-                        start = now - timedelta(days=7)
+                    if end > now:
                         end = now
+                        start = now - timedelta(days=7)
+                        logger.info(f"未来の日付が指定されたため、検索期間を調整: {start} - {end}")
                 else:
                     # デフォルトは現在時刻から過去7日間
                     end = now
