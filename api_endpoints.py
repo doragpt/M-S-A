@@ -150,11 +150,22 @@ def register_api_routes(bp):
                 FROM store_status
                 GROUP BY store_name
             )
-            SELECT s.*
+            SELECT 
+                s.store_name,
+                s.biz_type,
+                s.genre,
+                s.area,
+                s.total_staff,
+                s.working_staff,
+                s.active_staff,
+                s.timestamp,
+                s.url
             FROM store_status s
             JOIN latest_timestamps lt 
                 ON s.store_name = lt.store_name 
                 AND s.timestamp = lt.max_timestamp
+            WHERE s.store_name IS NOT NULL
+            AND s.area IS NOT NULL
             """
             results = conn.execute(query).fetchall()
             
