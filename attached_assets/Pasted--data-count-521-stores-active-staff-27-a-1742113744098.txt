@@ -1,0 +1,5218 @@
+{
+  "data": {
+    "count": 521,
+    "stores": [
+      {
+        "active_staff": 27,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "10\u4ee320\u4ee3\u5c02\u9580\u5e97 \u3059\u3046\u3043\uff5e\u3068\u304d\u3063\u3059",
+        "total_staff": 27,
+        "working_staff": 27
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "AQUA",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 3,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "AQUA REAL -\u30a2\u30af\u30a2\u30ec\u30a2\u30eb-",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "A\u25cb\u5973\u512a\uff06\u4eba\u6c17\u30d5\u30fc\u30c9\u30eb\u304c\u6771\u4eac\u304b\u3089\u3084\u3063\u3066\u304f\u308b\u5e97!! \u30cf\u30f3\u30d1\u3058\u3083\u306a\u3044\u4f1d\u8aac\uff5e\u9759\u5ca1\u6821",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 3,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "A\u25cb\u5973\u512a\uff06\u4eba\u6c17\u30d5\u30fc\u30c9\u30eb\u304c\u6771\u4eac\u304b\u3089\u3084\u3063\u3066\u304f\u308b\u5e97!! \u6cbc\u6d25\u30cf\u30f3\u30d1\u3058\u3083\u306a\u3044\u6771\u4eac",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 11,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 100.0,
+        "store_name": "BBW\u540d\u53e4\u5c4b\u5e97",
+        "total_staff": 15,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 1,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "BLUE BIRD \u4e0a\u8d8a",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 13,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "CLUB  CHELSEA\uff08\u30af\u30e9\u30d6  \u30c1\u30a7\u30eb\u30b7\u30fc\uff09",
+        "total_staff": 15,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 3,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "CLUB  CHELSEA\uff08\u30af\u30e9\u30d6  \u30c1\u30a7\u30eb\u30b7\u30fc\uff09",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "CLUB VENUS",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "CUORE \u30af\u30aa\u30ec",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5c71\u53e3",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Club ACE \uff5e\u30af\u30e9\u30d6\u30a8\u30fc\u30b9\uff5e\u3000\u5c71\u53e3\u5e97",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 7,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Club \u738b\u5983\u3068EVE",
+        "total_staff": 13,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 1,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Color\u5f69",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u84b2\u7530\u5e97",
+        "total_staff": 1,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Delice\uff08\u30c7\u30ea\u30b9\uff09\u897f\u8239\u6a4b\u5e97",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "FROZEN",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "Fuwa\u00d7Fuwa\u3002",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 4,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "G-SPOT",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "HUG",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Juicy kiss \u5317\u4e0a",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 3,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Lip Gloss",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u4e09\u91cd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "Mrs.DIE-SEL",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "PANTHER\uff08\u30d1\u30f3\u30b5\u30fc\uff09",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 2,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "PLAYBOY\u3000X-OVER\uff08\u30d7\u30ec\u30a4\u30dc\u30fc\u30a4 \u30af\u30ed\u30b9\u30aa\u30fc\u30d0\u30fc\uff09",
+        "total_staff": 2,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "PUZZLE",
+        "total_staff": 16,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 4,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Parfaite Luna\u2606(\u30d1\u30eb\u30d5\u30a7\u30c3\u30c8\u30eb\u30ca)",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "RICHARD\uff08\u30ea\u30b7\u30e3\u30fc\u30eb\uff09",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 2,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "RING",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 5,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "ROOKIE",
+        "total_staff": 13,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "S\u7d1a\u3057\u308d\u3046\u3068\u5a18",
+        "total_staff": 11,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 2,
+        "area": "\u4f50\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "TOKIMEKI",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 20,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "TRUMP\uff5e\u30c8\u30e9\u30f3\u30d7\uff5e\u91d1\u6ca2\u5e97",
+        "total_staff": 20,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5317\u6d77\u9053",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "Teen\u2019s Luxe \u5317\u898b\u5e97",
+        "total_staff": 1,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 2,
+        "area": "\u4e09\u91cd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "ZERO \u6d25 \u677e\u962a\u5e97",
+        "total_staff": 2,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 4,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "color\u5f69\u9577\u91ce",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 1,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "lolipop",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 3,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u2661\u30b3\u30b3\u30a4\u30af\u2661\u7f8e\u5973\u8ecd\u56e3",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u3044\u308f\u304dNo.1\u30c7\u30ea\u30d0\u30ea\u30fc\u30d8\u30eb\u30b9\u3000KiRaRi",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 100.0,
+        "store_name": "\u304b\u3044\u304b\u3093\u30a8\u30b9\u30c6",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 2,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u3068\u304d\u3081\u304d\u30d3\u30f3\u30d3\u30f3\u30ea\u30be\u30fc\u30c8\uff49\uff4e\u718a\u8c37",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 100.0,
+        "store_name": "\u307d\u3061\u3083\u304b\u308f\u30c7\u30ea\u30d0\u30ea\u30fc\u30d0\u30eb\u30fc\u30f3\u3000\u90e1\u5c71\u5e97",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 2,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a2\u30a4\u30c9\u30eb\u30bd\u30fc\u30d7\u3000\u840c\u3048\u3063\u5a18\u5b66\u5712",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 4,
+        "area": "\u9ad8\u77e5",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a2\u30e9\u30d3\u30a2\u30f3\u30ca\u30a4\u30c8",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "\u30a2\u30ea\u30b9\u30ab\u30d5\u30a7",
+        "total_staff": 13,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 5,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a4\u30c1\u30e3\u30ab\u30ef\u30af\u30e9\u30d6",
+        "total_staff": 10,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 6,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30bd\u30fc\u30d7",
+        "total_staff": 15,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30e9\u30b0\u30b8\u30e5\u30a2\u30ea\u30fc",
+        "total_staff": 1,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a8\u30b3\u30ce\u30df\u30fcDelice(\u30c7\u30ea\u30b9)\u65b0\u5bbf\u5e97",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30a8\u30de\u30fc\u30d6\u30eb",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30a8\u30eb\u30c9\u30fc\u30eb",
+        "total_staff": 12,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5c71\u68a8",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30aa\u30ec\u30f3\u30b8\u30cf\u30a6\u30b9",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30ab\u30b5\u30ce\u30f4\u30a1",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30ab\u30e2\u30df\u30fc\u30eb",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30b3\u30eb\u30c9\u30f3\u30d6\u30eb\u30fc",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30b7\u30fc\u30b6\u30fc\u30b9\u30d1\u30ec\u30b9",
+        "total_staff": 12,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 14,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30b9\u30a6\u30a3\u30fc\u30c8\u30ea\u30c3\u30d7\u30b9\u2161",
+        "total_staff": 19,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 3,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30b9\u30c8\u30ed\u30d9\u30ea\u30fc\uff08\u4e2d\u30fb\u897f\u8b83\uff09",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 2,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30bf\u30ec\u30f3\u30c8",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "\u30c7\u30ea\u30b7\u30e3\u30b9\u798f\u4e95\u5e97",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5ca1\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30c7\u30ea\u30b9\u30bf\u5009\u6577",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 6,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30c7\u30ea\u30d0\u30ea\u30fc\u30d8\u30eb\u30b9\u3000smile",
+        "total_staff": 19,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "\u30d0\u30a4\u30ad\u30f3\u30b0\u5bcc\u5c71",
+        "total_staff": 19,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 3,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30d1\u30e9\u30c0\u30a4\u30b9",
+        "total_staff": 5,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 3,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 100.0,
+        "store_name": "\u30d4\u30fc\u30c1\u30d1\u30a4\u30f3",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 100.0,
+        "store_name": "\u30d7\u30ec\u30b8\u30c7\u30f3\u30c8\u00d7\u512a\u7b49\u751f",
+        "total_staff": 10,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 9,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30d8\u30eb\u30b9\u30aa\u30ec\u30f3\u30b8BOX",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 3,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 100.0,
+        "store_name": "\u30db\u30ef\u30a4\u30c8\u30cf\u30a6\u30b9",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30df\u30cb\u30b9\u30abCandy\uff18",
+        "total_staff": 3,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30e1\u30f3\u30ba\u30bd\u30b7\u30a2\u30eb\u30af\u30e9\u30d6 \u738b\u5ba4",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 4,
+        "area": "\u79cb\u7530",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30e9\u30d6\u30fb\u30a2\u30f3\u30c9\u30fb\u30e9\u30d6",
+        "total_staff": 13,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 13,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u30eb\u30fc\u30c869\uff08\u30eb\u30fc\u30c8\u30b7\u30c3\u30af\u30b9\u30c6\u30a3\u30ca\u30a4\u30f3\uff09",
+        "total_staff": 17,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u30f4\u30a7\u30eb\u30b0",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5ca1\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u4e09\u30c4\u661f\u5036\u697d\u90e8",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 2,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "\u4eba\u59bbin\u8a98\u60d1\u30b9\u30a4\u30fc\u30c8\u30eb\u30fc\u30e0\u540d\u53e4\u5c4b\u9326\u5e97\uff5eE\uff0bGroup\uff5e",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u5168\u56fd\u304b\u3089AV\u5973\u512a\uff06\u4eba\u6c17\u30d5\u30fc\u30c9\u30eb\u304c\u3084\u3063\u3066\u304f\u308b\u3000\u30a4\u30ad\u3059\u304e\u30cf\u30a4\u30b9\u30bf\u30a4\u30eb\u5bcc\u5c71",
+        "total_staff": 15,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 1,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "\u51fa\u4f1a\u3063\u30665\u79d2\u3067\u3057\u3083\u3076\u308a\u3064\u304f\uff01\u82e5\u59bb\u30ae\u30f3\u30ae\u30f3\u82b1\u58c7",
+        "total_staff": 2,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u5948\u3005\u30b3\u30ec",
+        "total_staff": 2,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "\u5bcc\u5c71\u4eba\u59bb\u55b6\u696d\u6240",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5c71\u68a8",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u5c71\u68a8\u3000\u98a8\u4fd7\u3000\u30c7\u30ea\u30d8\u30eb\u3000\u300eS\u30b3\u30ec\u30af\u30b7\u30e7\u30f3\u300f\u3000\u7532\u5e9c",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5c71\u68a8",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 100.0,
+        "store_name": "\u5c71\u68a8\u3000\u98a8\u4fd7\u3000\u30c7\u30ea\u30d8\u30eb\u3000\u300e\u30e9\u30d6&\u30d4\u30fc\u30b9\u5b66\u5712\u300f",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u6027\u306e\u6975\u307f \u6280\u306e\u4f1d\u9053\u5e2b ver.2.0",
+        "total_staff": 2,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 1,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u696d\u754c\u672a\u7d4c\u9a13.MAX",
+        "total_staff": 1,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 10,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u6d5c\u677ePOISON\uff5e\u9032\u5316\u3059\u308b\u9802\u70b9\u304c\u4eca\u3053\u3053\u306b\uff5e",
+        "total_staff": 21,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u6e0b\u8c37FACE",
+        "total_staff": 6,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 7,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 100.0,
+        "store_name": "\u6fc0\u5b89\u30bd\u30fc\u30d7\u3000\u30dc\u30a4\u30f3\u30fb\u30db\u30fc\u30c6",
+        "total_staff": 11,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u714c\u304d-KIRAMEKI-\u3010\u714c\u304d\u30b0\u30eb\u30fc\u30d7\u3011",
+        "total_staff": 12,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u7518\u30b5\u30c9\u7f8e\u5c11\u5973\u3001\u304a\u8cb8\u3057\u3057\u307e\u3059\u3002\u540d\u53e4\u5c4b\u9326\u5e97\u301cE\uff0bGroup\u301c",
+        "total_staff": 7,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u7537\u7235",
+        "total_staff": 8,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 4,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 100.0,
+        "store_name": "\u798f\u4e95\u6027\u611f\u56de\u6625\u30a2\u30ed\u30deSpa",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 100.0,
+        "store_name": "\u79d8\u66f8\u5ba4",
+        "total_staff": 16,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 0,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 100.0,
+        "store_name": "\u9577\u91ce\u30bb\u30af\u30cf\u30e9\u7dcf\u5408\u4e8b\u52d9\u6240OL\u30d7\u30ed\u30c0\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 4,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 5,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "\u96a3\u306e\u5965\u69d8&\u96a3\u306e\u719f\u5973\u6625\u65e5\u4e95\u5e97",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 100.0,
+        "store_name": "\u96a3\u306e\u5965\u69d8\uff06\u96a3\u306e\u719f\u5973 \u591a\u6cbb\u898b\u5e97",
+        "total_staff": 9,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 96.43,
+        "store_name": "\u9759\u5ca1FINAL STAGE\uff5e\u9078\u3070\u308c\u3057\u8005\u306e\u6700\u5f8c\u306e\u30b9\u30c6\u30fc\u30b8\uff5e",
+        "total_staff": 28,
+        "working_staff": 27
+      },
+      {
+        "active_staff": 7,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 96.15,
+        "store_name": "ROSE",
+        "total_staff": 26,
+        "working_staff": 25
+      },
+      {
+        "active_staff": 22,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 95.65,
+        "store_name": "Kiss \u30df\u30f3\u30c8",
+        "total_staff": 23,
+        "working_staff": 22
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 95.24,
+        "store_name": "\u30d7\u30ec\u30b8\u30c7\u30f3\u30c8\u30af\u30e9\u30d6",
+        "total_staff": 21,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 94.74,
+        "store_name": "club OASIS",
+        "total_staff": 19,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 94.44,
+        "store_name": "A\u25cb\u5973\u512a\uff06\u4eba\u6c17\u30d5\u30fc\u30c9\u30eb\u304c\u6771\u4eac\u304b\u3089\u3084\u3063\u3066\u304f\u308b\u5e97!! \u6d5c\u677e\u30cf\u30f3\u30d1\u3058\u3083\u306a\u3044\u5b66\u5712",
+        "total_staff": 18,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 94.12,
+        "store_name": "E+\u30a2\u30a4\u30c9\u30eb\u30b9\u30af\u30fc\u30eb\u8239\u6a4b\u5e97",
+        "total_staff": 17,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 16,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 94.12,
+        "store_name": "\u30ae\u30e3\u30eb\u30ba\u30d1\u30e9\u30c0\u30a4\u30b9\u5b89\u57ce\u672c\u5e97",
+        "total_staff": 17,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 7,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 94.12,
+        "store_name": "\u30b3\u30b9\u30d7\u30ec\u5973\u5e1d\u7e54\u59eb",
+        "total_staff": 17,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 10,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 94.12,
+        "store_name": "\u5929\u4f7f\u3068\u60aa\u9b54",
+        "total_staff": 17,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 15,
+        "area": "\u6ecb\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u59c9\u7cfb,\u9ad8\u7d1a",
+        "operation_rate": 93.75,
+        "store_name": "AMAN CROSS",
+        "total_staff": 16,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 3,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u5e97\u8217\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 93.75,
+        "store_name": "\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c62nd \u6a2a\u6d5c\u5e97",
+        "total_staff": 16,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6803\u6728",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u5927\u8846",
+        "operation_rate": 93.75,
+        "store_name": "\u7d20\u4eba\u7cfb\u30a4\u30e1\u30fc\u30b8SOAP\u5f7c\u5973\u611f\u3000\u5b87\u90fd\u5bae\u672c\u9928",
+        "total_staff": 16,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 93.33,
+        "store_name": "\u30ec\u30f3\u30bf\u30eb\u7f8e\u5c11\u5973\uff5e\u5815\u3068\u3055\u308c\u305f\u512a\u7b49\u751f\u3000\u6c60\u888b",
+        "total_staff": 15,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6803\u6728",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 92.86,
+        "store_name": "sexis",
+        "total_staff": 14,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u4e2d\u7d1a",
+        "operation_rate": 92.86,
+        "store_name": "\u042f\u2019s\uff08\u30a2\u30fc\u30eb\u30ba\uff09",
+        "total_staff": 14,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 92.86,
+        "store_name": "\u4e0d\u4e8c\u5b50chan\u5c90\u961c\u5e97",
+        "total_staff": 14,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 5,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 92.86,
+        "store_name": "\u5965\u69d8\u7279\u6025\u9577\u5ca1\u5e97",
+        "total_staff": 14,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 11,
+        "area": "\u7fa4\u99ac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 92.31,
+        "store_name": "L&J \u30b7\u30b9\u30bf\u30fc\u30ba",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 7,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 92.31,
+        "store_name": "Office Love \u30aa\u30d5\u30a3\u30b9\u30e9\u30d6 \u753a\u7530\u5e97\uff08Love\u30b0\u30eb\u30fc\u30d7\uff09",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 92.31,
+        "store_name": "\u3050\u3089\u3069\u308b\u3048\u3063\u3050",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 92.31,
+        "store_name": "\u30b3\u30b9\u30d7\u30ec\u30a2\u30ab\u30c7\u30df\u30fc",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5927\u962a",
+        "biz_type": "\u5f85\u3061\u5408\u308f\u305b",
+        "genre": "\u624b\u30b3\u30ad\u30fb\u30aa\u30ca\u30af\u30e9",
+        "operation_rate": 92.31,
+        "store_name": "\u73fe\u5f79\u30ca\u30fc\u30b9\u304c\u7cbe\u6db2\u63a1\u53d6\u306b\u4f3a\u3044\u307e\u3059\u3000\u6885\u7530\u5e97",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 92.31,
+        "store_name": "\u7d20\u4eba\u3057\u304b\u52dd\u305f\u3093\uff01\u67cf\u5e97\uff08\u8d85\u604b\u4eba\u578b\u7a7a\u9593\u30c7\u30ea\u30d8\u30eb\uff09",
+        "total_staff": 13,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 4,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "G-SPOT \u571f\u6d66\u5e97",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 7,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30d5\u30a7\u30c1\u7cfb,\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "L\uff06J\u30d6\u30e9\u30b6\u30fc\u30ba",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 8,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "Smile \u90e1\u5c71\u5e97",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 7,
+        "area": "\u79cb\u7530",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "\u30a2\u30a4\u30c9\u30eb\u30b3\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 10,
+        "area": "\u5927\u5206",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "\u30a8\u30af\u30bb\u30ec\u30f3\u30c8",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 3,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "\u30d4\u30e5\u30a2\u30b3\u30b9\u5b66\u5712",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "\u30eb\u30fc\u30d5\u5bcc\u5c71",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 7,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 91.67,
+        "store_name": "\u79c1\u7acb\u90e1\u5c71\u5b66\u5712",
+        "total_staff": 12,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 4,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.91,
+        "store_name": "\u30a2\u30af\u30c8\u30ec\u30b9",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 90.91,
+        "store_name": "\u30cf\u30fc\u30eb\u30d6\u30eb\u30af(HARBURG)",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 1,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.91,
+        "store_name": "\u5168\u529b\uff01\uff01\u4e59\u5973\u574246",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 90.91,
+        "store_name": "\u5927\u5bae\u767a!\u51c4\u3044\u3088\u30d3\u30f3\u30d3\u30f3\u30d1\u30e9\u30c0\u30a4\u30b9",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 6,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.91,
+        "store_name": "\u6c34\u6238\u30bd\u30fc\u30d7\u30e9\u30f3\u30c9\u3000\u6c34\u6238\u30b9\u30ea\u30fc\u30ca\u30a4\u30f3(9990)",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 90.91,
+        "store_name": "\u767d\u3044\u307d\u3063\u3061\u3083\u308a\u3055\u3093 \u9326\u7cf8\u753a\u5e97",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u548c\u6b4c\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 90.91,
+        "store_name": "\u96a3\u306e\u5965\u69d8\u548c\u6b4c\u5c71\u5e97",
+        "total_staff": 11,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 6,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 90.0,
+        "store_name": "BBW\u6a2a\u6d5c\u5e97",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "CLUB  CHELSEA\uff08\u30af\u30e9\u30d6  \u30c1\u30a7\u30eb\u30b7\u30fc\uff09",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u9326\u7cf8\u753a\u5e97",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 90.0,
+        "store_name": "TI AMO \u30c6\u30a3\u30a2\u30e2",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5fb3\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "TOKUSHIMA PREMIUM ENZO",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 90.0,
+        "store_name": "\u3059\u3050\u8210\u3081\u305f\u304f\u3066\u5b66\u5712\u7acb\u5ddd\u6821\uff5e\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "\u30a4\u30f3\u30da\u30ea\u30a2\u30eb\u3000\u30bf\u30a4\u30da\u30a4",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "\u30d3\u30c3\u30b0\u30de\u30f3",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 1,
+        "area": "\u4f50\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "\u30ef\u30f3\u30d4\u30fc\u30b9",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "\u59eb\u30ea\u30af\u30eb\u30fc\u30c8",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 90.0,
+        "store_name": "\u604b\u305b\u3088\u4e59\u5973",
+        "total_staff": 10,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 14,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 89.47,
+        "store_name": "EIGHT\uff08\u30a8\u30a4\u30c8\uff09\u3000\uff5e8\u3064\u306e\u304a\u7d04\u675f\u3068\u7121\u9650\u306e\u53ef\u80fd\u6027\uff5e",
+        "total_staff": 19,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 9,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 89.47,
+        "store_name": "\u840c\u3048\u30e9\u30d6\u30b9\u30af\u30fc\u30eb",
+        "total_staff": 19,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 8,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 88.89,
+        "store_name": "ELLE(\u30a8\u30eb)",
+        "total_staff": 9,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 14,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.89,
+        "store_name": "LIGHT\uff08\u30e9\u30a4\u30c8\uff09\uff5e\u5149\u304c\u5c0e\u304f\u7121\u9650\u306e\u53ef\u80fd\u6027\uff5e",
+        "total_staff": 18,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 0,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.89,
+        "store_name": "PALCO",
+        "total_staff": 18,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.89,
+        "store_name": "\u304b\u308f\u3044\u3044\u7d20\u4eba\u5973\u5b50TOP100(\u5730\u65b9\u51fa\u8eab\u8005\u7de8)",
+        "total_staff": 9,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30a4\u30e1\u30af\u30e9",
+        "operation_rate": 88.89,
+        "store_name": "\u3057\u3053\u305f\u307e\u30c3\uff01\uff5e\u30b3\u30b9\u30d7\u30ec\u00d7\u604b\u611b\uff5e",
+        "total_staff": 9,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 8,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 88.89,
+        "store_name": "\u3082\u3048\u305f\u304f",
+        "total_staff": 9,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 13,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.89,
+        "store_name": "\u4e2d\u6d32\u7814\u7a76\u6240",
+        "total_staff": 18,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 29,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.57,
+        "store_name": "\u30eb\u30fc\u30d5\u91d1\u6ca2",
+        "total_staff": 35,
+        "working_staff": 31
+      },
+      {
+        "active_staff": 15,
+        "area": "\u5317\u6d77\u9053",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.24,
+        "store_name": "Teen\u2019s Luxe",
+        "total_staff": 17,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 88.24,
+        "store_name": "\u6027\u306e\u6975\u307f \u6280\u306e\u4f1d\u9053\u5e2b ver. \u5320",
+        "total_staff": 34,
+        "working_staff": 30
+      },
+      {
+        "active_staff": 7,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 87.5,
+        "store_name": "\u30af\u30e9\u30d6\u30a2\u30c3\u30b7\u30e5",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 7,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 87.5,
+        "store_name": "\u30de\u30c0\u30e0\u5948\u3005",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 3,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 87.5,
+        "store_name": "\u535a\u591a\u30c7\u30ea\u30d8\u30ebOcean",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 87.5,
+        "store_name": "\u59eb\u8def\u30c7\u30ea\u30d8\u30eb \u30af\u30ea\u30b9\u30bf\u30eb",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 87.5,
+        "store_name": "\u5bcc\u5c71\u6027\u611f\u56de\u6625\u30a2\u30ed\u30deSpa",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 13,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 87.5,
+        "store_name": "\u5feb\u611f\u5965\u69d8\u8276\u7f8e",
+        "total_staff": 16,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 13,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 87.5,
+        "store_name": "\u5feb\u611f\u5965\u69d8\u8276\u7f8e \u5c90\u961c\u5e97",
+        "total_staff": 16,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 87.5,
+        "store_name": "\u7518\u30b5\u30c9\u7f8e\u5c11\u5973\u3001\u304a\u8cb8\u3057\u3057\u307e\u3059\u3002",
+        "total_staff": 8,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 12,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 86.67,
+        "store_name": "GELATO\uff08\u30b8\u30a7\u30e9\u30fc\u30c8\uff09\uff5e\u5f7c\u5973\u8da3\u5473\u30ec\u30fc\u30b7\u30e7\u30f3\uff5e",
+        "total_staff": 15,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 30,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 86.49,
+        "store_name": "IRIS\u4e00\u5bae",
+        "total_staff": 37,
+        "working_staff": 32
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 85.71,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u4e0a\u91ce\u5e97",
+        "total_staff": 14,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5bae\u57ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "Juicy kiss \u53e4\u5ddd",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 3,
+        "area": "\u7fa4\u99ac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb,\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "Minette\uff5e\u30df\u30cd\u30c3\u30c8\uff5e\u9ad8\u5d0e\u5e97",
+        "total_staff": 14,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5fb3\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "SCREEN\u3000\u30b9\u30af\u30ea\u30a3\u30fc\u30f3",
+        "total_staff": 14,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 85.71,
+        "store_name": "\u30a2\u30ed\u30de\uff06\u30a2\u30ed\u30de\u90e1\u5c71\u5e97",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 85.71,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30c9\u30ea\u30fc\u30e0",
+        "total_staff": 14,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "\u30ae\u30e3\u30eb\u30b3\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6803\u6728",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 85.71,
+        "store_name": "\u30bf\u30ec\u30f3\u30c8",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u4f50\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "\u30d5\u30fc\u30bf\u30fc\u30ba\u30a8\u30f3\u30b8\u30a7\u30eb",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6c96\u7e04",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "\u30d7\u30ed\u30dd\u30fc\u30b7\u30e7\u30f3 \u30aa\u30ad\u30ca\u30ef",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 85.71,
+        "store_name": "\u30da\u30da\u30d4\u30a3\u30fc\u30ce",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 85.71,
+        "store_name": "\u5409\u539fUSAGI\u3000\u30d0\u30cb\u30fc\u30e9\u30d0\u30fc",
+        "total_staff": 21,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 4,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 85.71,
+        "store_name": "\u548c\u697d",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 9,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 85.71,
+        "store_name": "\u604b\u3059\u308b\u4eba\u59bb\u5036\u697d\u90e8",
+        "total_staff": 14,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 14,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 85.71,
+        "store_name": "\u6c60\u888b\u30d1\u30e9\u30c0\u30a4\u30b9",
+        "total_staff": 35,
+        "working_staff": 30
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 85.71,
+        "store_name": "\u9326\u7cf8\u753a\u6843\u8272\u30af\u30ea\u30b9\u30bf\u30eb",
+        "total_staff": 7,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 84.62,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u6c60\u888b\u5e97",
+        "total_staff": 13,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 6,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 84.62,
+        "store_name": "GLOSS MATSUYAMA",
+        "total_staff": 13,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 10,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 84.62,
+        "store_name": "Lovin\u2019\u91d1\u6ca2(\u30e9\u30f4\u30a3\u30f3\u91d1\u6ca2)",
+        "total_staff": 13,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 8,
+        "area": "\u7fa4\u99ac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 84.62,
+        "store_name": "\u9ad8\u5d0e\u4eba\u59bb\u57ce",
+        "total_staff": 13,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 84.21,
+        "store_name": "SEASONS 369\u3000sP",
+        "total_staff": 19,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 5,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 83.33,
+        "store_name": "Delivery ELLE",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 83.33,
+        "store_name": "Fuwa\u00d7Fuwa\u304b\u306a\u3056\u308f\u3002",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "Mecca",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "PaleTTe",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "aQua",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 83.33,
+        "store_name": "club MARIA~\u30af\u30e9\u30d6\u30de\u30ea\u30a2~",
+        "total_staff": 18,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 9,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 83.33,
+        "store_name": "okini\u3000\u6240\u6ca2",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "smile",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 4,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "\u201cB\u201dORDERLESS",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 2,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 83.33,
+        "store_name": "\u306f\u30fc\u308c\u3080\u5b66\u5712",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u5e97\u8217\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 83.33,
+        "store_name": "\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c6\u5343\u8449\u6804\u753a\u5e97",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 5,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "\u30eb\u30fc\u30d5\u798f\u4e95",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 83.33,
+        "store_name": "\u4e94\u53cd\u7530\u3000\u30d1\u30a4\u30ba\u30ea\u631f\u5c04\u5c02\u9580\u5e97\u3082\u3048\u308a\u3093",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 9,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 83.33,
+        "store_name": "\u5ddd\u5d0e\u4eba\u59bb\u57ce",
+        "total_staff": 24,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5927\u962a",
+        "biz_type": "\u5f85\u3061\u5408\u308f\u305b",
+        "genre": "\u624b\u30b3\u30ad\u30fb\u30aa\u30ca\u30af\u30e9",
+        "operation_rate": 83.33,
+        "store_name": "\u624b\u30b3\u30ad\u3060\u3051\u3063\u3066\u8a00\u3063\u305f\u3058\u3083\u3093\uff01\u6885\u7530\u5e97",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 4,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 83.33,
+        "store_name": "\u79d8\u66f8\u306b\u304a\u4efb\u305b\uff01\uff5e\u3053\u308c\u3082\u304a\u4ed5\u4e8b\u3067\u3059\u306e\u3067\uff5e",
+        "total_staff": 6,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 9,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 83.33,
+        "store_name": "\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e\u541b\u3068\u30e4\u30ea\u30b9\u30ae\u5b66\u5712\uff5e\u753a\u7530\u6821",
+        "total_staff": 12,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 5,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 82.35,
+        "store_name": "CLUB\u3000MECCA",
+        "total_staff": 17,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 14,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 82.35,
+        "store_name": "\u540d\u53e4\u5c4b\u540d\u99c5\u30fb\u6804\u30b5\u30f3\u30ad\u30e5\u30fc",
+        "total_staff": 17,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 82.35,
+        "store_name": "\u7acb\u5ddd\u4eba\u59bb\u30c7\u30ea\u30d8\u30eb\u3000\u5965\u69d8\u306f\u30a8\u30f3\u30b8\u30a7\u30eb\u3000\u6d17\u4f53\u00d7\u30d8\u30eb\u30b9",
+        "total_staff": 17,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 0,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 81.82,
+        "store_name": "\u30d0\u30cb\u30fc\u6771\u4eac",
+        "total_staff": 11,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 2,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 81.82,
+        "store_name": "\u5de8\u4e73\u5c02\u9580E\uff0dBODY\uff08\u30a4\u30fc\u30dc\u30c7\u30a3\uff09\u540d\u53e4\u5c4b\u9326\u5e97\uff5eE\uff0bGroup\uff5e",
+        "total_staff": 11,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 5,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 81.82,
+        "store_name": "\u798f\u4e95\u4eba\u59bb\u55b6\u696d\u6240",
+        "total_staff": 11,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 81.25,
+        "store_name": "\u3077\u308b\u308b\u3093\u30ae\u30e3\u30f3\u30b0",
+        "total_staff": 32,
+        "working_staff": 26
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 81.25,
+        "store_name": "\u307f\u305b\u3044\u3058\u3085\u304f",
+        "total_staff": 16,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 81.25,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30db\u30ef\u30a4\u30c8",
+        "total_staff": 16,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 81.25,
+        "store_name": "\u30b9\u30a6\u30a3\u30fc\u30c8\u30ea\u30c3\u30d7\u30b9",
+        "total_staff": 16,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.95,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u65b0\u5bbf\u5e97",
+        "total_staff": 21,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5fb3\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "Beppin house",
+        "total_staff": 15,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "La tour",
+        "total_staff": 5,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 80.0,
+        "store_name": "MARIA\u5973\u5b66\u9928",
+        "total_staff": 20,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "eros\uff5e\u30a8\u30ed\u30b9\uff5e",
+        "total_staff": 10,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "M\u6027\u611f",
+        "operation_rate": 80.0,
+        "store_name": "\u30a2\u30ca\u30e9\u30fc\u30c9\u30e9\u30a4",
+        "total_staff": 15,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5927\u962a",
+        "biz_type": "\u5f85\u3061\u5408\u308f\u305b",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 80.0,
+        "store_name": "\u30ce\u30fc\u30d6\u30e9\u3067\u8a98\u60d1\u3059\u308b\u5965\u3055\u3093\u8c37\u4e5d\u30fb\u65e5\u672c\u6a4b",
+        "total_staff": 15,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "\u30e9\u30d6\u30c1\u30e3\u30f3\u30b9 \u5c0f\u5009\u5e97",
+        "total_staff": 5,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "\u5409\u539f\u7f8e\u5973\u9769\u547d",
+        "total_staff": 25,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 14,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 80.0,
+        "store_name": "\u6e0b\u8c37\u30e1\u30f3\u30ba\u30a8\u30b9\u30c6&\u30a2\u30ed\u30de\u30b9\u30d1 ALLAMANDA-\u30a2\u30e9\u30de\u30f3\u30c0",
+        "total_staff": 20,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5317\u6d77\u9053",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 80.0,
+        "store_name": "\u7981\u65ad\u306e\u59bb\u305f\u3061",
+        "total_staff": 5,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 8,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 80.0,
+        "store_name": "\u9006\u00d7BUNNY\u5b66\u5712 \u6a2a\u6d5c\u6821",
+        "total_staff": 10,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 6,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 80.0,
+        "store_name": "\uff36\uff29\uff30\u6771\u4eac\uff12\uff15\u6642\u3000\u9326\u672c\u5e97",
+        "total_staff": 15,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 79.17,
+        "store_name": "\u30d5\u30a1\u30a4\u30f3\u30e2\u30fc\u30b7\u30e7\u30f3",
+        "total_staff": 24,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 8,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 78.95,
+        "store_name": "\u57fc\u7389\u3061\u3085\u3063\u3071\u5927\u5bae\u5e97",
+        "total_staff": 19,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 78.57,
+        "store_name": "\u30ec\u30f3\u30bf\u30eb\u7f8e\u5c11\u5973\uff5e\u5815\u3068\u3055\u308c\u305f\u512a\u7b49\u751f\u3000\u4e94\u53cd\u7530",
+        "total_staff": 14,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 3,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 78.57,
+        "store_name": "\u5927\u4eba\u306e\u30b4\u30b7\u30e3\u30fc\u30eb",
+        "total_staff": 14,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30a4\u30e1\u30af\u30e9",
+        "operation_rate": 78.57,
+        "store_name": "\u6c34\u7740\u591c\u9019\u3044\u5c02\u9580\u5e97\u30b3\u30fc\u30c1\u3068\u79c1\u3068\u30d3\u30fc\u30c8\u677f",
+        "total_staff": 14,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 78.26,
+        "store_name": "\u4ffa\u306eKiss\u30ea\u30d5\u30ec",
+        "total_staff": 23,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 78.26,
+        "store_name": "\u5409\u539f\u304b\u307e\u304f\u3089\u5fa1\u6bbf",
+        "total_staff": 23,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 77.78,
+        "store_name": "Juicy kiss \u76db\u5ca1",
+        "total_staff": 9,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 12,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 77.78,
+        "store_name": "\u4e0b\u95a2\u3000\u30b9\u30bf\u30a4\u30ea\u30c3\u30b7\u30e5\u79d8\u66f8",
+        "total_staff": 18,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 77.78,
+        "store_name": "\u5965\u69d8\u9244\u905369 \u6771\u4eac\u5e97",
+        "total_staff": 9,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 77.78,
+        "store_name": "\u6c34\u8272\u308a\u307c\u3093",
+        "total_staff": 18,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 1,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 77.78,
+        "store_name": "\u7121\u6575(MUTEKI\u6a2a\u6d5c)",
+        "total_staff": 9,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 77.78,
+        "store_name": "\u79c1\u7acbZERO\u5b66\u5712 \u5c90\u961c\u6821",
+        "total_staff": 9,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 5,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 77.78,
+        "store_name": "\u91d1\u6ca2\u6027\u611f\u56de\u6625\u30a2\u30ed\u30deSpa",
+        "total_staff": 9,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 24,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 77.42,
+        "store_name": "\u5168\u88f8\u7f8e\u5973\u304b\u3089\u306e\u30ab\u30b2\u30ad\u306a\u8a98\u60d1",
+        "total_staff": 31,
+        "working_staff": 24
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "M\u6027\u611f",
+        "operation_rate": 76.92,
+        "store_name": "\u5909\u614b\u306a\u3093\u3067\u3082\u9451\u5b9a\u56e3",
+        "total_staff": 39,
+        "working_staff": 30
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 76.47,
+        "store_name": "\u30b5\u30c6\u30a3\u30a2\u30f3\u307e\u30fc\u3068",
+        "total_staff": 17,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 76.47,
+        "store_name": "\u4eba\u59bb\u5036\u697d\u90e8\u3000\u82b1\u693f\u5317\u4e0a\u5e97",
+        "total_staff": 17,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 16,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 76.47,
+        "store_name": "\u6fc3\u539a\u3000\u537319\u59bb",
+        "total_staff": 34,
+        "working_staff": 26
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u5927\u8846",
+        "operation_rate": 76.47,
+        "store_name": "\u938c\u5009\u5fa1\u6bbf",
+        "total_staff": 17,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 76.19,
+        "store_name": "LOVE Sweet\u30df\u30ca\u30df\u8c37\u4e5d\u5e97",
+        "total_staff": 21,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 76.19,
+        "store_name": "\u65b0\u5bbf\u30e1\u30f3\u30a8\u30b9\u3000\u30a2\u30ed\u30de&\u30b9\u30a4\u30fc\u30c8ALLAMANDA(\u30a2\u30e9\u30de\u30f3\u30c0)",
+        "total_staff": 21,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 10,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 76.0,
+        "store_name": "\u91d1\u6ca2\u306e20\u4ee330\u4ee340\u4ee350\u4ee3\u304c\u96c6\u3046\u4eba\u59bb\u5036\u697d\u90e8",
+        "total_staff": 25,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 54,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.89,
+        "store_name": "\u5965\u9244\u30aa\u30af\u30c6\u30c4\u6771\u4eac\u5e97\uff08\u30c7\u30ea\u30d8\u30eb\u5e02\u5834\uff09",
+        "total_staff": 112,
+        "working_staff": 85
+      },
+      {
+        "active_staff": 15,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 75.0,
+        "store_name": "BLUE BIRD(\u30d6\u30eb\u30fc\u30d0\u30fc\u30c9)\u6a2a\u6d5c",
+        "total_staff": 20,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.0,
+        "store_name": "I Love \u5965\u69d8",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 3,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 75.0,
+        "store_name": "LOVE\u6a2a\u6d5c\u5e97(I\u30b0\u30eb\u30fc\u30d7)",
+        "total_staff": 12,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 75.0,
+        "store_name": "Okini\u6771\u4eac",
+        "total_staff": 36,
+        "working_staff": 27
+      },
+      {
+        "active_staff": 1,
+        "area": "\u718a\u672c",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u5e97\u8217\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 75.0,
+        "store_name": "\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c62nd\u718a\u672c\u5e97",
+        "total_staff": 4,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "M\u6027\u611f",
+        "operation_rate": 75.0,
+        "store_name": "\u30b5\u30ad\u30e5\u30d0\u30b9TOKYO",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.0,
+        "store_name": "\u30df\u30e9\u30fc",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.0,
+        "store_name": "\u4e0d\u502b\u5546\u4e8b\u3000\u591a\u6cbb\u898b\u672c\u5e97",
+        "total_staff": 4,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.0,
+        "store_name": "\u4e2d\u6d32\u904a\u90ed",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6803\u6728",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 75.0,
+        "store_name": "\u5b87\u90fd\u5bae\u767a\uff5e\u6b63\u7d71\u6d3e\u6e05\u695a\u7cfb\u30c7\u30ea\u30d8\u30eb\uff01 \uff23\uff28\uff25\uff32\uff29\uff2d\uff2f\uff08\u30b7\u30a7\u30ea\u30e2\uff09",
+        "total_staff": 12,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 1,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 75.0,
+        "store_name": "\u5bc6\u7740\u30cc\u30eb\u30cc\u30eb\u9ad8\u7d1a\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c6\u539a\u6728\u5e97",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 75.0,
+        "store_name": "\u6975\u59bb\uff5e\u6975\u4e0a\u306a\u4eba\u59bb\u9054\uff5e",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 75.0,
+        "store_name": "\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e\u305d\u308c\u3044\u3051\u30e4\u30ea\u30b9\u30ae\u5b66\u5712\uff5e\u6a2a\u6d5c\u6821",
+        "total_staff": 8,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 3,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb,\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 75.0,
+        "store_name": "\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e\u541b\u3068\u30b5\u30d7\u30e9\u30a4\u30ba\u5b66\u5712\uff5e\u8d8a\u8c37\u6821",
+        "total_staff": 12,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 74.19,
+        "store_name": "\u7d20\u4eba\u59bb\u9054\u2606\u30de\u30a4\u3075\u3047\u3089\u30ec\u30c7\u30a3\u30fc",
+        "total_staff": 31,
+        "working_staff": 23
+      },
+      {
+        "active_staff": 6,
+        "area": "\u9759\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 73.91,
+        "store_name": "\uff06\u3000\uff25ssence\uff08\u30a2\u30f3\u30c9\u30a8\u30c3\u30bb\u30f3\u30b9\uff09",
+        "total_staff": 23,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 8,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 73.68,
+        "store_name": "Crest",
+        "total_staff": 19,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 73.68,
+        "store_name": "\u30d7\u30ea\u30f3\u30bb\u30b9\u30bb\u30ec\u30af\u30b7\u30e7\u30f3\u8328\u6728\u30fb\u679a\u65b9\u5e97",
+        "total_staff": 19,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 73.68,
+        "store_name": "\u6771\u4eac\u30ea\u30c3\u30d7 \u4e0a\u91ce\u30fb\u9daf\u8c37\u30fb\u6d45\u8349\u5e97",
+        "total_staff": 19,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 73.68,
+        "store_name": "\u6771\u4eac\u30ea\u30c3\u30d7\u79cb\u8449\u539f\u5e97",
+        "total_staff": 19,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 3,
+        "area": "\u4e09\u91cd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 73.33,
+        "store_name": "L\u30fbI\u30fbN\u30fbK\u3000Smile Delivery Entertainment",
+        "total_staff": 15,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 3,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 73.33,
+        "store_name": "\u5965\u69d8\u7279\u6025\u65b0\u6f5f\u5e97",
+        "total_staff": 15,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 73.33,
+        "store_name": "\u767d\u3044\u5de8\u4e73",
+        "total_staff": 15,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 73.08,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7 \u304a\u59c9\u4eac\u90fd \u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 26,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 8,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 72.73,
+        "store_name": "HILLS WEST",
+        "total_staff": 11,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 23,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 72.73,
+        "store_name": "S\u7d1a\u7f8e\u5973\u5c02\u9580\u3000\u30ed\u30a4\u30e4\u30eb\u30ea\u30f3\u30b0\u54c1\u5ddd",
+        "total_staff": 33,
+        "working_staff": 24
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 72.73,
+        "store_name": "\u5bcc\u5c71\u306e20\u4ee330\u4ee340\u4ee350\u4ee3\u304c\u96c6\u3046\u4eba\u59bb\u5036\u697d\u90e8",
+        "total_staff": 11,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 16,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 72.73,
+        "store_name": "\uff33\uff2f\uff30\uff28\uff29\uff21",
+        "total_staff": 22,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 72.41,
+        "store_name": "\u30a2\u30d0\u30f3\u30c1\u30e5\u30fc\u30eb",
+        "total_staff": 29,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 26,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u6fc0\u5b89",
+        "operation_rate": 72.34,
+        "store_name": "\u30cb\u30e5\u30fc\u30eb\u30d3\u30fc",
+        "total_staff": 47,
+        "working_staff": 34
+      },
+      {
+        "active_staff": 7,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 72.22,
+        "store_name": "GLOSS \u65b0\u5c45\u6d5c\u30fb\u897f\u6761\u30fb\u4eca\u6cbb",
+        "total_staff": 18,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 4,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 72.22,
+        "store_name": "\u3075\u308f\u3075\u308f\u30b3\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 18,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 72.22,
+        "store_name": "\u4eba\u59bb\u5036\u697d\u90e8\u3000\u82b1\u693f\u76db\u5ca1\u5e97",
+        "total_staff": 18,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u53d7\u4ed8\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 72.22,
+        "store_name": "\u6c60\u888b\u30e1\u30f3\u30a8\u30b9\u30a2\u30ed\u30de\uff06\u30b9\u30a4\u30fc\u30c8-ALLAMANDA\uff08\u30a2\u30e9\u30de\u30f3\u30c0\uff09",
+        "total_staff": 18,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 72.0,
+        "store_name": "Anemone \u6e0b\u8c37\u5e97",
+        "total_staff": 25,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 72.0,
+        "store_name": "\u5bc6\u7740\u6307\u5c0e\uff01\u30d0\u30ab\u30f3\u30b9\u5b66\u5712 \u5c3c\u5d0e\u6821",
+        "total_staff": 25,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6c96\u7e04",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 71.43,
+        "store_name": "\u30af\u30e9\u30d6\u3000\u30cf\u30f3\u30bf\u30fc",
+        "total_staff": 7,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 71.43,
+        "store_name": "\u4ead\u4e3b\u95a2\u767d\u8c37\u4e5d\u5e97",
+        "total_staff": 14,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30a4\u30e1\u30af\u30e9",
+        "operation_rate": 71.43,
+        "store_name": "\u51e6\u5973\u30fb\u7537\u6027\u7d4c\u9a13\u5c11\u306a\u3044\u7d20\u4eba\u30a4\u30e1\u30af\u30e9\u672a\u7d4c\u9a13",
+        "total_staff": 7,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 23,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 71.43,
+        "store_name": "\u6771\u4eac\u30c7\u30b6\u30a4\u30f3\u30ea\u30f3\u30b0\u9326\u7cf8\u753a\u5e97",
+        "total_staff": 35,
+        "working_staff": 25
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 71.43,
+        "store_name": "\u767d\u591c",
+        "total_staff": 14,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u9577\u91ce",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 71.43,
+        "store_name": "\u9577\u91ce\u56de\u6625\u6027\u611f\u30e1\u30f3\u30ba\u30a8\u30b9\u30c6 ASIAN SPA",
+        "total_staff": 7,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 70.59,
+        "store_name": "LOVE\u30df\u30ca\u30df\u8c37\u4e5d\u5e97",
+        "total_staff": 17,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 36,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 70.59,
+        "store_name": "\u30e9\u30d5\u30ec\u30b7\u30a2",
+        "total_staff": 51,
+        "working_staff": 36
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 70.37,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30cf\u30d4\u30cd\u30b9",
+        "total_staff": 27,
+        "working_staff": 19
+      },
+      {
+        "active_staff": 21,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 70.0,
+        "store_name": "THE\u75f4\u6f22\u96fb\u8eca.com",
+        "total_staff": 30,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 70.0,
+        "store_name": "\u5973\u306e\u5b50\u304c\u30bb\u30eb\u30d5\u3067\u64ae\u5f71\u3059\u308b\u5e97\uff01\uff01\u6210\u7530\u30c7\u30ea\u30d8\u30eb\u300e\u751f\u30d1\u30cd\u30eb\u300f\u4f1d\u8aac",
+        "total_staff": 10,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 70.0,
+        "store_name": "\u6027\u611f\u30a8\u30b9\u30c6 BELL GROW \u2010\u30d9\u30eb\u30b0\u30ed\u30fc\u2010",
+        "total_staff": 10,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 69.23,
+        "store_name": "10\u4ee3\u300120\u4ee3\u5c02\u9580\uff01\u30cf\u30ec\u30f3\u30c1\u5036\u697d\u90e8 \u59eb\u8def\u5e97",
+        "total_staff": 13,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6ecb\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u5927\u8846",
+        "operation_rate": 69.23,
+        "store_name": "\u30ac\u30fc\u30eb\u30ba\u30d5\u30a1\u30f3\u30bf\u30b8\u30fc(GIRLS FANTASY)",
+        "total_staff": 13,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 69.23,
+        "store_name": "\u30b8\u30e5\u30ea\u30a2\u30f3\u4e09\u591a\u6469\u3000\u7f8e\u5c11\u5973\u7f8e\u5973\uff06\u4eba\u59bb\u5c02\u9580\u30c7\u30ea\u30d8\u30eb",
+        "total_staff": 26,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 11,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 68.75,
+        "store_name": "\u30de\u30c0\u30e0\u5948\u3005\uff5e\u91d1\u6ca2\u5e97\uff5e",
+        "total_staff": 16,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 68.57,
+        "store_name": "THE ESUTE \u6e0b\u8c37\u5e97",
+        "total_staff": 35,
+        "working_staff": 24
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 68.57,
+        "store_name": "\u98a8\u795e\u4f1a\u9928",
+        "total_staff": 35,
+        "working_staff": 24
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 68.42,
+        "store_name": "\u9326\u7cf8\u753a\u30fb\u65b0\u5c0f\u5ca9\u30fb\u5c0f\u5ca9\u30e9\u30d6\u30bb\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 19,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 68.09,
+        "store_name": "THE ESUTE \u4e94\u53cd\u7530\u5e97",
+        "total_staff": 47,
+        "working_staff": 32
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 66.67,
+        "store_name": "Attrait Tokyo",
+        "total_staff": 6,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 4,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "Cutie Bunny",
+        "total_staff": 6,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "Juicy kiss \u4e00\u95a2",
+        "total_staff": 3,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 66.67,
+        "store_name": "One More \u5965\u69d8 \u4e94\u53cd\u7530\u5e97",
+        "total_staff": 9,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30ed\u30a4\u30e4\u30eb",
+        "total_staff": 24,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 3,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u30c9\u30eb\u30c1\u30a7\u4e00\u5bae\u5e97",
+        "total_staff": 6,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u30d7\u30ea\u30f3\u30bb\u30b9\u59eb\u8def\u5e97",
+        "total_staff": 3,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 6,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u30e9\u30d6\u30ea\u30c3\u30d7\u5ddd\u8d8a",
+        "total_staff": 15,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u4e94\u53cd\u7530 Rosa-\u30ed\u30c3\u30b5-",
+        "total_staff": 18,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5bae\u57ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 66.67,
+        "store_name": "\u4eba\u59bb\u5036\u697d\u90e8\u3000\u82b1\u693f\u77f3\u5dfb\u5e97",
+        "total_staff": 15,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 0,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u5c0f\u6885\u30af\u30e9\u30d6",
+        "total_staff": 6,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 66.67,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30afTMBC\u7acb\u5ddd\u5e97",
+        "total_staff": 15,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6ecb\u8cc0",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30d5\u30a7\u30c1\u7cfb,\u4e2d\u7d1a",
+        "operation_rate": 66.67,
+        "store_name": "\u79d8\u66f8\u30b3\u30ec\u30af\u30b7\u30e7\u30f3\u96c4\u7434\u5e97(\u3072\u3057\u3087\u3053\u308c\u304f\u3057\u3087\u3093\u304a\u3054\u3068\u3066\u3093)",
+        "total_staff": 12,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 4,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u7dba\u9e97\u306a\u304a\u59c9\u69d8\u5c02\u9580 \u65b0\u6a2a\u6d5c\u30ea\u30f3\u30b04C",
+        "total_staff": 6,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 7,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 66.67,
+        "store_name": "\u897f\u5ddd\u53e3\u98a8\u4fd7\u30c9\u6deb\u4e71\u30f3\u30c9",
+        "total_staff": 18,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 18,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 65.63,
+        "store_name": "E+\u30a2\u30a4\u30c9\u30eb\u30b9\u30af\u30fc\u30eb \u9326\u7cf8\u753a\u672c\u5e97",
+        "total_staff": 32,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 21,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 65.12,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30b0\u30ec\u30a4\u30b924",
+        "total_staff": 43,
+        "working_staff": 28
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 64.71,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30af TMBC \u4e0a\u91ce\u30fb\u9daf\u8c37\u30fb\u6d45\u8349\u5e97",
+        "total_staff": 17,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u53d7\u4ed8\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 64.71,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30afTMBC\u79cb\u8449\u539f\u5e97",
+        "total_staff": 17,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 5,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 64.71,
+        "store_name": "\u719f\u5973\u30d0\u30f3\u30af",
+        "total_staff": 17,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 64.29,
+        "store_name": "\u30de\u30c0\u30e0\u30d0\u30f3\u30af\u5bcc\u5c71\u672c\u5e97",
+        "total_staff": 14,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 7,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 64.29,
+        "store_name": "\u6027\u306e\u6975\u307f\u6280\u306e\u4f1d\u9053\u5e2bVer.\u65b0\u6a2a\u6d5c\u5e97",
+        "total_staff": 14,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 63.64,
+        "store_name": "E+\u30a2\u30a4\u30c9\u30eb\u30b9\u30af\u30fc\u30eb\u6c60\u888b\u5e97",
+        "total_staff": 33,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 63.64,
+        "store_name": "E+\u9326\u7cf8\u753a\u5e97",
+        "total_staff": 22,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 5,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 63.64,
+        "store_name": "\u30a2\u30a4\u30c9\u30eb\u30aa\u30fc\u30c7\u30a3\u30b7\u30e7\u30f3",
+        "total_staff": 11,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u4e2d\u7d1a",
+        "operation_rate": 63.64,
+        "store_name": "\u30b7\u30eb\u30af\u30cf\u30c3\u30c8",
+        "total_staff": 11,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 63.16,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7\u3000\u30af\u30e9\u30d6KG\u3000\u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 19,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 9,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 62.96,
+        "store_name": "\u540d\u53e4\u5c4b\u3057\u308d\u3046\u3068\u9769\u547d",
+        "total_staff": 27,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 62.5,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u6e0b\u8c37\u5e97",
+        "total_staff": 16,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 3,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb,\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 62.5,
+        "store_name": "\u304d\u3089\u3081\u3051\uff01\u306b\u3083\u3093\u306b\u3083\u3093\u5b66\u5712in\u5927\u5bae",
+        "total_staff": 16,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 1,
+        "area": "\u9999\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 62.5,
+        "store_name": "\u3057\u308d\u3046\u3068collection\uff5e\u9ad8\u677e\u5e97\uff5e",
+        "total_staff": 8,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 62.5,
+        "store_name": "\u30a8\u30d4\u30bd\u30fc\u30c9",
+        "total_staff": 40,
+        "working_staff": 25
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 62.5,
+        "store_name": "\u30af\u30e9\u30d6\u30d6\u30ec\u30f3\u30c0\u6771\u4eac\u65b0\u5bbf\u30fb\u6b4c\u821e\u4f0e\u753a\u5e97",
+        "total_staff": 8,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 62.5,
+        "store_name": "\u5343\u8449\u5973\u5b66\u5712",
+        "total_staff": 8,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u53d7\u4ed8\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 62.5,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30afTMBC\u6c60\u888b\u5e97",
+        "total_staff": 16,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 62.07,
+        "store_name": "Aroma Dione\u5927\u962a\u5e97",
+        "total_staff": 29,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 61.54,
+        "store_name": "\u3057\u308d\u3046\u3068\u5a18in\u79cb\u8449\u539f",
+        "total_staff": 13,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 4,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 61.54,
+        "store_name": "\u307d\u3063\u3061\u3083\u308a\u7cfb\u2661\u3077\u3088\u3077\u3088\u2661",
+        "total_staff": 13,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 61.54,
+        "store_name": "\u30c1\u30a7\u30c3\u30af\u30a4\u30f3\u7d20\u4eba\u5c02\u9580\u5927\u4eba\u5973\u5b50",
+        "total_staff": 13,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 61.54,
+        "store_name": "\u7f8e\u4eba\u7814\u7a76\u6240",
+        "total_staff": 26,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 6,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 61.54,
+        "store_name": "\u8c4a\u6a4bPOISON\uff5e\u65b0\u305f\u306a\u308b\u4f1d\u8aac\u306e\u59cb\u307e\u308a\uff5e",
+        "total_staff": 13,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 5,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 61.11,
+        "store_name": "\u30de\u30ea\u30a2\u30fc\u30b8\u30e5\u718a\u8c37\u5e97",
+        "total_staff": 18,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 61.11,
+        "store_name": "\u660e\u65e5\u306b\u3068\u304d\u3081\u3051\uff01\u306b\u3083\u3093\u306b\u3083\u3093\u5b66\u5712in\u5343\u8449",
+        "total_staff": 18,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 60.87,
+        "store_name": "\u30c9\u30f3 \u30d5\u30a1\u30f3",
+        "total_staff": 23,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 8,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u6fc0\u5b89",
+        "operation_rate": 60.78,
+        "store_name": "\u30d5\u30a1\u30fc\u30b9\u30c8\u30af\u30e9\u30b9\u30eb\u30d3\u30fc",
+        "total_staff": 51,
+        "working_staff": 31
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 60.0,
+        "store_name": "\u3077\u308b\u308a\u3093\u30af\u30a8\u30b9\u30c8\u4e0a\u91ce\u6d45\u8349\u9daf\u8c37\u79cb\u8449\u539f\u30c7\u30ea\u30d8\u30eb\u738b\u56fd",
+        "total_staff": 15,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u5927\u8846",
+        "operation_rate": 60.0,
+        "store_name": "\u30a2\u30af\u30a2\u30de\u30ea\u30f3",
+        "total_staff": 15,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 7,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 60.0,
+        "store_name": "\u30af\u30e9\u30d6\u30d6\u30ec\u30f3\u30c0\u5c3c\u5d0e",
+        "total_staff": 30,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 60.0,
+        "store_name": "\u4eba\u59bb\u306e\u871c\u3000\u897f\u8239\u6a4b\u5e97",
+        "total_staff": 10,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 60.0,
+        "store_name": "\u5b66\u5712\uff43\uff4f\uff4c\uff4c\uff45\uff43\uff54\uff49\uff4f\uff4e",
+        "total_staff": 10,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 60.0,
+        "store_name": "\u6771\u4eac\u30ea\u30c3\u30d7\u6c60\u888b\u5e97",
+        "total_staff": 20,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 60.0,
+        "store_name": "\u6ce1\u306e\u4f1d\u9053\u5e2b",
+        "total_staff": 5,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5bae\u57ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 60.0,
+        "store_name": "\u767d\u3044\u307d\u3063\u3061\u3083\u308a\u3055\u3093 \u4ed9\u53f0\u5e97",
+        "total_staff": 15,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30cb\u30e5\u30fc\u30cf\u30fc\u30d5",
+        "operation_rate": 60.0,
+        "store_name": "\u90fd\u5185\u6700\u5927\u7d1a\u30cb\u30e5\u30fc\u30cf\u30fc\u30d5\uff06AF\u5c02\u9580\u30c7\u30ea\u30d8\u30ebN-STYLE",
+        "total_staff": 5,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 59.09,
+        "store_name": "\u4eba\u59bb\u30fb\u82e5\u59bb\u30c7\u30ea\u30d8\u30eb \u30ec\u30c7\u30a3\u30d7\u30ec\u30a4\u30b9",
+        "total_staff": 22,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5948\u826f",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 58.82,
+        "store_name": "\u30af\u30e9\u30d6\u3000\u30d6\u30ec\u30f3\u30c0\u5948\u826f\u5e97",
+        "total_staff": 17,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 58.82,
+        "store_name": "\u30b6\u30a4\u30aa\u30f3 \u4f1a\u54e1\u5236\u30a2\u30ed\u30de\u30a8\u30b9\u30c6",
+        "total_staff": 17,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5bae\u57ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 58.82,
+        "store_name": "\u4eba\u59bb\u5036\u697d\u90e8\u3000\u82b1\u693f\u5927\u5d0e\u5e97",
+        "total_staff": 17,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 15,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 58.82,
+        "store_name": "\u5168\u88f8\u306e\u5973\u795eor\u3044\u305f\u305a\u3089\u75f4\u6f22\u96fb\u8eca",
+        "total_staff": 34,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 14,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 58.82,
+        "store_name": "\u5168\u88f8\u9769\u547dor\u304a\u3082\u3044\u3063\u304d\u308a\u75f4\u6f22\u96fb\u8eca",
+        "total_staff": 34,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 20,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 58.82,
+        "store_name": "\u7f8e\u5c11\u5973\u5236\u670d\u5b66\u5712\uff23\uff2c\uff21\uff33\uff33 \uff2d\uff21\uff34\uff25\uff08\u30af\u30e9\u30b9\u30e1\u30a4\u30c8\uff09",
+        "total_staff": 51,
+        "working_staff": 30
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 58.33,
+        "store_name": "\u307e\u3060\u8210\u3081\u305f\u304f\u3066\u5b66\u5712\u6e0b\u8c37\u6821\uff5e\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e",
+        "total_staff": 36,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 18,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 58.33,
+        "store_name": "\u7f8e\u5c11\u5973\u5236\u670d\u5b66\u5712\uff23\uff2c\uff21\uff33\uff33 \uff2d\uff21\uff34\uff25\uff08\u30af\u30e9\u30b9\u30e1\u30a4\u30c8\uff09\u3000\u4e94\u53cd\u7530\u6821",
+        "total_staff": 48,
+        "working_staff": 28
+      },
+      {
+        "active_staff": 15,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 58.06,
+        "store_name": "\u91d1\u59bb",
+        "total_staff": 31,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 11,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 57.89,
+        "store_name": "\u3073\u304f\u3073\u304f\u30b5\u30fc\u30af\u30eb\u4e94\u53cd\u7530\u5e97",
+        "total_staff": 19,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 57.89,
+        "store_name": "\u30af\u30e9\u30d6\u3000\u30d6\u30ec\u30f3\u30c0\u6885\u7530\u5317\u5e97",
+        "total_staff": 38,
+        "working_staff": 22
+      },
+      {
+        "active_staff": 11,
+        "area": "\u5ca1\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 57.89,
+        "store_name": "\u30c9M\u5036\u697d\u90e8\u3000\u5ca1\u5c71\u5e97",
+        "total_staff": 19,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 22,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.58,
+        "store_name": "STELLA TOKYO(\u30b9\u30c6\u30e9\u6771\u4eac)",
+        "total_staff": 66,
+        "working_staff": 38
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 57.14,
+        "store_name": "E+\u30a2\u30a4\u30c9\u30eb\u30b9\u30af\u30fc\u30eb \u4e94\u53cd\u7530\u5e97",
+        "total_staff": 21,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 2,
+        "area": "\u548c\u6b4c\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.14,
+        "store_name": "PINK PLANET -\u30d4\u30f3\u30af\u30d7\u30e9\u30cd\u30c3\u30c8",
+        "total_staff": 7,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 57.14,
+        "store_name": "\u3057\u308d\u3046\u3068\u5a18",
+        "total_staff": 14,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.14,
+        "store_name": "\u3057\u308d\u3046\u3068\u5a18in\u65b0\u5bbf",
+        "total_staff": 7,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 3,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.14,
+        "store_name": "\u30d5\u30a3\u30fc\u30ea\u30f3\u30b0in\u6a2a\u6d5c\uff08FG\u7cfb\u5217\uff09",
+        "total_staff": 14,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5e83\u5cf6",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.14,
+        "store_name": "\u30ed\u30a4\u30e4\u30eb\u5973\u5b50\u5bee",
+        "total_staff": 14,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 57.14,
+        "store_name": "\u4ead\u4e3b\u95a2\u767d\u3000\u65e5\u672c\u6a4b\u5e97",
+        "total_staff": 21,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 57.14,
+        "store_name": "\u6771\u4eac\u30ea\u30c3\u30d7\u6e0b\u8c37\u5e97",
+        "total_staff": 21,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 4,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 57.14,
+        "store_name": "\u798f\u4e95\u306e20\u4ee330\u4ee340\u4ee350\u4ee3\u304c\u96c6\u3046\u4eba\u59bb\u5036\u697d\u90e8",
+        "total_staff": 7,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 57.14,
+        "store_name": "\u8d05\u6ca2\u306a\u3072\u3068\u6642",
+        "total_staff": 7,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 6,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 56.82,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7 \u30af\u30ea\u30b9\u30bf\u30eb\u4eac\u90fd \u5357\u753a \u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 44,
+        "working_staff": 25
+      },
+      {
+        "active_staff": 7,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 56.76,
+        "store_name": "\u611b\u3089\u3076\u5b66\u5712",
+        "total_staff": 37,
+        "working_staff": 21
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 56.52,
+        "store_name": "E+\u30a2\u30a4\u30c9\u30eb\u30b9\u30af\u30fc\u30eb\u65b0\u5bbf\u5e97",
+        "total_staff": 23,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 56.25,
+        "store_name": "\u6771\u4eac\u8cb4\u697c\u9928",
+        "total_staff": 16,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 56.25,
+        "store_name": "\u8239\u6a4b\u3068\u304d\u3081\u304d\u5973\u5b66\u5712",
+        "total_staff": 16,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 8,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 56.0,
+        "store_name": "\u30df\u30bb\u30b9\u3000\u30d5\u30a1\u30fc\u30b9\u30c8\u30fc\u304a\u59c9\u3055\u3093\u30fb\u82e5\u59bb\u5c02\u9580\u5e97\u30fc",
+        "total_staff": 25,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 6,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb,\u4eba\u59bb\u5f85\u3061\u5408\u308f\u305b",
+        "operation_rate": 56.0,
+        "store_name": "\u51fa\u4f1a\u3044\u7cfb\u4eba\u59bb\u30cd\u30c3\u30c8\u30ef\u30fc\u30af \u3055\u3044\u305f\u307e\uff5e\u5927\u5bae\u7de8",
+        "total_staff": 25,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 56.0,
+        "store_name": "\u5bc6\u7740\u6307\u5c0e\uff01\u30d0\u30ab\u30f3\u30b9\u5b66\u5712 \u8c37\u4e5d\u6821",
+        "total_staff": 25,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 55.56,
+        "store_name": "\u3082\u3082\u5c3b \u672c\u5e97",
+        "total_staff": 9,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30a4\u30e1\u30af\u30e9",
+        "operation_rate": 55.56,
+        "store_name": "\u30cc\u30eb\u30c6\u30ab",
+        "total_staff": 18,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 55.56,
+        "store_name": "\u30cf\u30a4\u30d6\u30ea\u30c3\u30c9\u30d8\u30eb\u30b9\u5c0f\u5ca9\u4e2d\u592e",
+        "total_staff": 18,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 7,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 55.56,
+        "store_name": "\u30de\u30ea\u30a2\u30fc\u30b8\u30e5\u5927\u5bae",
+        "total_staff": 18,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 55.56,
+        "store_name": "\u611b\u306e\u304b\u305f\u307e\u308a",
+        "total_staff": 9,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 55.56,
+        "store_name": "\u6771\u4eac\u30ea\u30c3\u30d7\u7acb\u5ddd\u5e97",
+        "total_staff": 18,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 55.56,
+        "store_name": "\u8210\u3081\u305f\u304f\u3066\u30b0\u30eb\u30fc\u30d7\uff5e\u30da\u30ed\u30f3\u30c1\u30e7\u5b66\u5712\uff5e\u516b\u738b\u5b50\u6821",
+        "total_staff": 9,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 8,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 55.17,
+        "store_name": "\u7537\u306e\u697d\u5712\u3000eden.",
+        "total_staff": 29,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 6,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 55.0,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7 \u30a8\u30c7\u30f3 \u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 20,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 55.0,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7\u3000\u6771\u4eac\u59bbnext\u3000 \u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 20,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 54.84,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30d7\u30e9\u30c1\u30ca\u30e0",
+        "total_staff": 31,
+        "working_staff": 17
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 54.55,
+        "store_name": "One More \u5965\u69d8 \u9326\u7cf8\u753a\u5e97",
+        "total_staff": 33,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 54.55,
+        "store_name": "\u307b\u3093\u3064\u307e \u5343\u8449\u5e97\uff08FG\u7cfb\u5217\uff09",
+        "total_staff": 11,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 54.55,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30ae\u30e3\u30e9\u30af\u30b7\u30fc",
+        "total_staff": 22,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 5,
+        "area": "\u611b\u5a9b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 54.55,
+        "store_name": "\u677e\u5c71 \u4eba\u59bb Madonna-\u30de\u30c9\u30f3\u30ca-",
+        "total_staff": 11,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 6,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 54.55,
+        "store_name": "\u91d1\u6ca2\u82e5\u59bb",
+        "total_staff": 11,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 54.05,
+        "store_name": "HYPER TOKYO",
+        "total_staff": 37,
+        "working_staff": 20
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 53.85,
+        "store_name": "\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c6\u9326\u7cf8\u753a\u5e97",
+        "total_staff": 13,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 53.85,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30d6\u30ec\u30a4\u30ba",
+        "total_staff": 13,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 53.57,
+        "store_name": "\u5168\u88f8\u306b\u3055\u308c\u305f\u5973\u305f\u3061or\u6b32\u3057\u304c\u308a\u75f4\u6f22\u96fb\u8eca",
+        "total_staff": 28,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u4e2d\u7d1a",
+        "operation_rate": 53.33,
+        "store_name": "\u042f`s EVOL",
+        "total_staff": 15,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 5,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u4eba\u59bb,\u6fc0\u5b89",
+        "operation_rate": 52.94,
+        "store_name": "\uff38\uff33\uff34\uff21\uff33\uff39\u3000\u30a8\u30af\u30b9\u30bf\u30b7\u30fc",
+        "total_staff": 17,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5bae\u57ce",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 52.63,
+        "store_name": "\u79cb\u8449\u539f\u30b3\u30b9\u30d7\u30ec\u5b66\u5712in\u4ed9\u53f0",
+        "total_staff": 19,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 42,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 52.5,
+        "store_name": "\u73fe\u5f79\u5973\u5b50\u5927\u751f\u30b3\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 80,
+        "working_staff": 42
+      },
+      {
+        "active_staff": 9,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 52.38,
+        "store_name": "YUDEN\u301c\u6cb9\u6bbf\u301c",
+        "total_staff": 21,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 52.0,
+        "store_name": "One More \u5965\u69d8 \u84b2\u7530\u5e97",
+        "total_staff": 25,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 4,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 52.0,
+        "store_name": "\u3084\u3093\u3061\u3083\u306a\u5b50\u732b\u65e5\u672c\u6a4b\u5e97",
+        "total_staff": 25,
+        "working_staff": 13
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 51.85,
+        "store_name": "Pink Collection \u5c3c\u5d0e\u5e97\uff5e\u30d4\u30f3\u30af\u30b3\u30ec\u30af\u30b7\u30e7\u30f3\uff5e",
+        "total_staff": 54,
+        "working_staff": 28
+      },
+      {
+        "active_staff": 29,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 51.79,
+        "store_name": "\u3068\u3042\u308b\u98a8\u4fd7\u5e97\u2661\u3084\u308a\u3059\u304e\u3055\u30fc\u304f\u308b\u65b0\u5bbf\u5927\u4e45\u4fdd\u5e97\u2661\u3067\u8272\u3093\u306a\u7121\u6599\u30aa\u30d7\u30b7\u30e7\u30f3\u3057\u3066\u307f\u307e\u3057\u305f",
+        "total_staff": 56,
+        "working_staff": 29
+      },
+      {
+        "active_staff": 15,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 51.61,
+        "store_name": "4REVE(\u30d5\u30a9\u30fc\u30ec\u30fc\u30f4)",
+        "total_staff": 31,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 50.0,
+        "store_name": "Club \u9e97\u82b1",
+        "total_staff": 18,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5ca1\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 50.0,
+        "store_name": "Club\u3000Dear",
+        "total_staff": 8,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 50.0,
+        "store_name": "Delice(\u30c7\u30ea\u30b9)\u6a2a\u6d5c\u5e97",
+        "total_staff": 4,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 50.0,
+        "store_name": "Fuwa\u00d7Fuwa\u3068\u3084\u307e\u3002",
+        "total_staff": 4,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 1,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u4e2d\u7d1a",
+        "operation_rate": 50.0,
+        "store_name": "NEO\u4e0d\u591c\u57ce",
+        "total_staff": 4,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 50.0,
+        "store_name": "e\u5973\u5546\u4e8b",
+        "total_staff": 12,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u5b66\u5712\u7cfb",
+        "operation_rate": 50.0,
+        "store_name": "\u3068\u304d\u3081\u304d\u7d14\u60c5\u30ed\u30ea\u5b66\u5712\uff5e\u6771\u4eac\u4e59\u5973\u7d44\u3000\u65b0\u5bbf\u6821",
+        "total_staff": 16,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 50.0,
+        "store_name": "\u30b3\u30b9\u30d7\u30ec\u6226\u968a\u30cc\u30b1\u30eb\u30f3\u30b8\u30e3\u30fc",
+        "total_staff": 14,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 50.0,
+        "store_name": "\u30ca\u30a4\u30c8\u30f4\u30a3\u30fc\u30ca\u30b9",
+        "total_staff": 10,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 50.0,
+        "store_name": "\u30d7\u30ea\u30f3\u30bb\u30b9\u30bb\u30ec\u30af\u30b7\u30e7\u30f3\u8c379",
+        "total_staff": 20,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 9,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b3\u30b9\u30d7\u30ec",
+        "operation_rate": 50.0,
+        "store_name": "\u4e94\u53cd\u7530\u30a6\u30eb\u30c8\u30e9\u30d5\u30a1\u30f3\u30bf\u30b8\u30fc",
+        "total_staff": 28,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 1,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 50.0,
+        "store_name": "\u5973\u5b50\u4f1a\u00d7\u30d7\u30ec\u30df\u30a2\u30e0",
+        "total_staff": 2,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 8,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 50.0,
+        "store_name": "\u59eb\u8def\u30de\u30c0\u30e0\u3000\u5927\u5965",
+        "total_staff": 16,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 50.0,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30afTMBC\u4e94\u53cd\u7530\u5e97",
+        "total_staff": 12,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 50.0,
+        "store_name": "\u6c60\u888b\u30ae\u30e3\u30eb\u30c7\u30ea",
+        "total_staff": 18,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6c96\u7e04",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 50.0,
+        "store_name": "\u6c96\u7e04\u30cf\u30a4\u30d6\u30ea\u30c3\u30c9\u30a8\u30b9\u30c6",
+        "total_staff": 4,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 35,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 49.3,
+        "store_name": "\u6e0b\u8c37\u521d\uff01\u7d20\u4eba\u5973\u5b50\u5927\u751f\u5c02\u9580\u5e97\u3000\u73fe\u5f79\u5973\u5b50\u5927\u751f\u56f3\u9451",
+        "total_staff": 71,
+        "working_staff": 35
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30a4\u30e1\u30af\u30e9",
+        "operation_rate": 48.48,
+        "store_name": "\u79cb\u8449\u539f\u30b3\u30b9\u30d7\u30ec\u5b66\u5712",
+        "total_staff": 33,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 14,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 48.28,
+        "store_name": "\u6e0b\u8c37\u30a8\u30aa\u30b9",
+        "total_staff": 29,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 47.83,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30bb\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 23,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u53d7\u4ed8\u578b\u30a8\u30b9\u30c6",
+        "operation_rate": 47.83,
+        "store_name": "\u6771\u4eac\u30e1\u30f3\u30ba\u30dc\u30c7\u30a3\u30af\u30ea\u30cb\u30c3\u30afTMBC\u6e0b\u8c37\u5e97",
+        "total_staff": 23,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 47.62,
+        "store_name": "\u6e0b\u8c37\u3068\u3042\u308b\u98a8\u4fd7\u5e97\u2661\u3084\u308a\u3059\u304e\u30b3\u30ec\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 21,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 46.67,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7 \u6771\u4eac\u59bb \u4eac\u90fd\u30b0\u30eb\u30fc\u30d7",
+        "total_staff": 15,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 46.67,
+        "store_name": "\u7fe1\u7fe0\u306e\u5922",
+        "total_staff": 15,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 46.67,
+        "store_name": "\u9e97\u5948 TOKYO",
+        "total_staff": 15,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 4,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 46.15,
+        "store_name": "\u611b\uff21\uff2e\uff27\uff25\uff2c",
+        "total_staff": 13,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 45.83,
+        "store_name": "MIRAI-TOKYO\u516d\u672c\u6728\u5e97",
+        "total_staff": 24,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 4,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 45.83,
+        "store_name": "\u9e97\u3057\u3044\u4eba\u59bb\u65b0\u5bbf\u672c\u5e97",
+        "total_staff": 24,
+        "working_staff": 11
+      },
+      {
+        "active_staff": 36,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 45.57,
+        "store_name": "\u30cf\u30a4\u30af\u30e9\u30b9\u30c9\u7d20\u4eba\u5036\u697d\u90e8",
+        "total_staff": 79,
+        "working_staff": 36
+      },
+      {
+        "active_staff": 5,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 45.45,
+        "store_name": "\u30d5\u30a1\u30c3\u30b7\u30e7\u30f3\u30d8\u30eb\u30b9 \u30d1\u30d4\u30e8\u30f3",
+        "total_staff": 11,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 45.0,
+        "store_name": "Claris Tokyo\uff5e\u30af\u30e9\u30ea\u30b9\u6771\u4eac\uff5e",
+        "total_staff": 20,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 7,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 44.44,
+        "store_name": "GINGIRA\u2606TOKYO\u3000\uff5e\u30ae\u30f3\u30ae\u30e9\u6771\u4eac\uff5e",
+        "total_staff": 36,
+        "working_staff": 16
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 44.44,
+        "store_name": "\u30a6\u30eb\u30c8\u30e9\u30bb\u30ec\u30d6\u30ea\u30c6\u30a3",
+        "total_staff": 18,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 8,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u624b\u30b3\u30ad\u30fb\u30aa\u30ca\u30af\u30e9",
+        "operation_rate": 44.44,
+        "store_name": "\u6e0b\u8c37\u30df\u30eb\u30af",
+        "total_staff": 18,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 1,
+        "area": "\u798f\u4e95",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 44.44,
+        "store_name": "\u88cf\u57a2\u59bb",
+        "total_staff": 9,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 44.12,
+        "store_name": "\u5965\u69d8\u7279\u6025\u3000\u6c60\u888b\u30fb\u5927\u585a\u5e97",
+        "total_staff": 34,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 43.75,
+        "store_name": "\u3084\u307f\u3064\u304d\u30a8\u30b9\u30c6\u3000\u6e0b\u8c37\u5e97",
+        "total_staff": 16,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 3,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 42.86,
+        "store_name": "AQUA REAL -\u30a2\u30af\u30a2\u30ec\u30a2\u30eb\u91d1\u6ca2\u5e97-",
+        "total_staff": 7,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 42.86,
+        "store_name": "CLUB\u864e\u306e\u7a74\u9752\u5c71\u5e97",
+        "total_staff": 42,
+        "working_staff": 18
+      },
+      {
+        "active_staff": 2,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 42.86,
+        "store_name": "FIRST CLASS",
+        "total_staff": 7,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9,\u30a8\u30b9\u30c6\uff06\u30d8\u30eb\u30b9",
+        "operation_rate": 42.86,
+        "store_name": "\u30cf\u30a4\u30d6\u30ea\u30c3\u30c9\u30d8\u30eb\u30b9\u897f\u5ddd\u53e3",
+        "total_staff": 14,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 42.86,
+        "store_name": "\u30df\u30bb\u30b9\u864e\u306e\u7a74\uff5e\u8272\u60c5\u3068\u611b\u6b32\u306b\u307e\u307f\u308c\u308b\u6dd1\u5973\u306e\u96c6\u3044\uff5e",
+        "total_staff": 14,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 42.86,
+        "store_name": "\u30ed\u30d9\u30eb\u30bf",
+        "total_staff": 7,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 10,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 41.67,
+        "store_name": "\u6e0b\u8c37\u30ac\u30fc\u30c7\u30f3",
+        "total_staff": 24,
+        "working_staff": 10
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 41.18,
+        "store_name": "\u6771\u4eac\u5de8\u4e73\u30c7\u30ea\u30d8\u30eb\u304a\u3063\u3071\u3044\u30de\u30fc\u30c8",
+        "total_staff": 17,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 13,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 41.18,
+        "store_name": "\u6c60\u888b\u3000\u306b\u3083\u3093\u3060\u2606FULL\u2606MIX",
+        "total_staff": 34,
+        "working_staff": 14
+      },
+      {
+        "active_staff": 5,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 41.18,
+        "store_name": "\u82e5\u59bb\u6deb\u4e71\u5036\u697d\u90e8\u3000\u6625\u65e5\u90e8\u5e97",
+        "total_staff": 17,
+        "working_staff": 7
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 40.91,
+        "store_name": "\u9752\u5c71PRINCESS",
+        "total_staff": 22,
+        "working_staff": 9
+      },
+      {
+        "active_staff": 6,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 40.0,
+        "store_name": "ASHANTI",
+        "total_staff": 15,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 40.0,
+        "store_name": "\u304a\u5ba2\u69d8\u6e80\u8db3\u5ea6NO1\u30c7\u30ea\u30d8\u30eb \u79d8\u5bc6\u5036\u697d\u90e8 \u51db \u9326\u7cf8\u753a\u5e97",
+        "total_staff": 15,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 1,
+        "area": "\u8328\u57ce",
+        "biz_type": "\u30d8\u30eb\u30b9",
+        "genre": "\u30a8\u30b9\u30c6\uff06\u30d8\u30eb\u30b9",
+        "operation_rate": 40.0,
+        "store_name": "\u30a8\u30f3\u30b8\u30a7\u30eb\u30cf\u30f3\u30ba",
+        "total_staff": 5,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 2,
+        "area": "\u798f\u5cf6",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 40.0,
+        "store_name": "\u30d7\u30ec\u30df\u30a2\u30ea\u30fc\u30b0\u90e1\u5c71",
+        "total_staff": 10,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 6,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 40.0,
+        "store_name": "\u67cfOL\u59d4\u54e1\u4f1a",
+        "total_staff": 15,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u65b0\u6f5f",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 40.0,
+        "store_name": "\u6e6f\u623f\u30a2\u30e9\u30d3\u30a2\u30f3\u30ca\u30a4\u30c8",
+        "total_staff": 10,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 38.46,
+        "store_name": "AROMA TIGER \u6075\u6bd4\u5bff\u5e97",
+        "total_staff": 13,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 38.46,
+        "store_name": "\u30af\u30e9\u30d6\u30d6\u30ec\u30f3\u30c0\u8328\u6728\u30fb\u679a\u65b9\u5e97",
+        "total_staff": 13,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 38.46,
+        "store_name": "\u30db\u30c6\u30d8\u30eb \u864e\u306e\u7a74 \u6e0b\u8c37\u5e97",
+        "total_staff": 39,
+        "working_staff": 15
+      },
+      {
+        "active_staff": 2,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 38.46,
+        "store_name": "\u5ddd\u5d0e\u30bd\u30fc\u30d7\u30e9\u30f3\u30c9\u3000\u3042\u3068\u308a\u3048\uff08ATELIER\uff09",
+        "total_staff": 13,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 37.5,
+        "store_name": "BLENDA VIP\u6771\u4eac\u5e97",
+        "total_staff": 16,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 37.5,
+        "store_name": "TOKYO IDOL ACADEMY \uff5e\u30dc\u30af\u3060\u3051\u306e\u63a8\u3057\u6d3b\u30e9\u30a4\u30d5\uff5e",
+        "total_staff": 16,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 6,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 37.5,
+        "store_name": "\u4e38\u306e\u5185\u30b3\u30cd\u30af\u30b7\u30e7\u30f3",
+        "total_staff": 16,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 36.36,
+        "store_name": "CLUB\u864e\u306e\u7a74\u3000\u96e3\u6ce2\u5e97",
+        "total_staff": 11,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 8,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 36.36,
+        "store_name": "\u307b\u3093\u3064\u307e \u6a2a\u6d5c\u672c\u5e97(FG\u7cfb\u5217)",
+        "total_staff": 22,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 36.36,
+        "store_name": "\u3082\u307f\u3082\u307f\u30ef\u30f3\u30c0\u30fc\u30e9\u30f3\u30c9",
+        "total_staff": 11,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 8,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 34.78,
+        "store_name": "\u30e9\u30d6\u30c1\u30e3\u30f3\u30b9\u535a\u591a\u5e97",
+        "total_staff": 23,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 0,
+        "area": "\u4e09\u91cd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 33.33,
+        "store_name": "DIE-SEL",
+        "total_staff": 3,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 2,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 33.33,
+        "store_name": "E+\u54c1\u5ddd\u5e97",
+        "total_staff": 6,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5c90\u961c",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 33.33,
+        "store_name": "\u4e0d\u502b \u5546\u4e8b\u3010\u53ef\u5150\u30fb\u7f8e\u6fc3\u52a0\u8302\u30fb\u95a2\u5e97\u3011",
+        "total_staff": 3,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 3,
+        "area": "\u5ca9\u624b",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 33.33,
+        "store_name": "\u4eba\u59bb\u5036\u697d\u90e8\u3000\u82b1\u693f\u4e00\u95a2\u5e97",
+        "total_staff": 15,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 2,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 33.33,
+        "store_name": "\u539a\u6728OL\u59d4\u54e1\u4f1a",
+        "total_staff": 9,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 2,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u4eba\u59bb",
+        "operation_rate": 33.33,
+        "store_name": "\u6843\u6e90\u90f7\u30af\u30e9\u30d6\u30ad\u30bf\u514e\u6211\u91ce\u5e97",
+        "total_staff": 6,
+        "working_staff": 2
+      },
+      {
+        "active_staff": 3,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30db\u30c6\u30d8\u30eb\uff06\u30c7\u30ea\u30d8\u30eb",
+        "operation_rate": 31.58,
+        "store_name": "\u30ec\u30c3\u30c9\u30d9\u30ea\u30eb",
+        "total_staff": 19,
+        "working_staff": 6
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30db\u30c6\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 31.25,
+        "store_name": "\u6e0b\u8c37\u308f\u3093\u308f\u3093",
+        "total_staff": 16,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 5,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 29.63,
+        "store_name": "My Essentials \u6c60\u888b",
+        "total_staff": 27,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 3,
+        "area": "\u57fc\u7389",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 29.41,
+        "store_name": "\u751f\u30a4\u30ad\u30c3\u5a18\uff01",
+        "total_staff": 17,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 22,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 27.85,
+        "store_name": "Mrs.Dandy",
+        "total_staff": 79,
+        "working_staff": 22
+      },
+      {
+        "active_staff": 5,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 26.67,
+        "store_name": "\u30af\u30e9\u30d6\u30d6\u30ec\u30f3\u30c0\u96e3\u6ce2\u5e97",
+        "total_staff": 30,
+        "working_staff": 8
+      },
+      {
+        "active_staff": 5,
+        "area": "\u611b\u77e5",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 25.0,
+        "store_name": "POP\u30fbONE\u30fc\u30dd\u30c3\u30d7\u30ef\u30f3\u30fc",
+        "total_staff": 20,
+        "working_staff": 5
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 25.0,
+        "store_name": "\u30c6\u30ec\u30b8\u30a2\u6771\u4eac \u521d\u3081\u3066\u51fa\u4f1a\u3046\u3001\u7d14\u7c8b\u306a\u8f1d\u304d",
+        "total_staff": 4,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 1,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 25.0,
+        "store_name": "\u7dba\u9e97\u306a\u304a\u59c9\u69d8\u5c02\u9580 \u753a\u7530\u30ea\u30f3\u30b04C",
+        "total_staff": 4,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 4,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 23.53,
+        "store_name": "White Rabbit \u6a2a\u6d5c",
+        "total_staff": 17,
+        "working_staff": 4
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5927\u962a",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 23.08,
+        "store_name": "\u3068\u308d\u3068\u308d\u306a\u5973\u795e\u305f\u3061",
+        "total_staff": 13,
+        "working_staff": 3
+      },
+      {
+        "active_staff": 0,
+        "area": "\u77f3\u5ddd",
+        "biz_type": "\u30a8\u30b9\u30c6\u30fb\u30a2\u30ed\u30de",
+        "genre": "\u51fa\u5f35\u30a8\u30b9\u30c6",
+        "operation_rate": 20.0,
+        "store_name": "\u6027\u611f\u30a8\u30b9\u30c6BELLGROW-\u30d9\u30eb\u30b0\u30ed\u30fc\u91d1\u6ca2\u5e97-",
+        "total_staff": 5,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 12,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 19.35,
+        "store_name": "\u7d20\u4eba\u5973\u5b50\u5927\u751f\u3068\u306e\u30ea\u30a2\u30eb\u306a\u51fa\u4f1a\u3044\u3000\u54c1\u5ddd\u5973\u5b50\u5927\u751f\u30ad\u30e3\u30f3\u30d1\u30b9",
+        "total_staff": 62,
+        "working_staff": 12
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 16.67,
+        "store_name": "OKINI Tokyo in \u84b2\u7530",
+        "total_staff": 6,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 1,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 16.67,
+        "store_name": "gossip girl \u5c0f\u5ca9\u5e97",
+        "total_staff": 6,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 1,
+        "area": "\u5175\u5eab",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 12.5,
+        "store_name": "\u30cf\u30ec\u30f3\u30c1\u5036\u697d\u90e8 \u795e\u6238\u5e97",
+        "total_staff": 8,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 10.0,
+        "store_name": "\u30aa\u30c8\u30ca\u3081E+",
+        "total_staff": 10,
+        "working_staff": 1
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 0.0,
+        "store_name": "CLUB\u30af\u30e9\u30a6\u30f3\u6771\u4eac\u3000\u53f2\u4e0a\u6700\u9ad8\u30ec\u30d9\u30eb\uff01\u6771\u4eacNO1\u30c7\u30ea\u30d8\u30eb",
+        "total_staff": 38,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u9ad8\u7d1a",
+        "operation_rate": 0.0,
+        "store_name": "CLUB\u864e\u306e\u7a74\u3000\u798f\u5ca1\u5e97",
+        "total_staff": 4,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5bcc\u5c71",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 0.0,
+        "store_name": "WATER POLE(\u30a6\u30a9\u30fc\u30bf\u30fc\u30dd\u30fc\u30eb)",
+        "total_staff": 2,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u5343\u8449",
+        "biz_type": "\u30bd\u30fc\u30d7",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 0.0,
+        "store_name": "\u3075\u3058",
+        "total_staff": 0,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u307d\u3063\u3061\u3083\u308a",
+        "operation_rate": 0.0,
+        "store_name": "\u3077\u306b\u3077\u306b\u30ef\u30f3\u30c0\u30fc\u30e9\u30f3\u30c9",
+        "total_staff": 7,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u795e\u5948\u5ddd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u6fc0\u5b89",
+        "operation_rate": 0.0,
+        "store_name": "\u30a8\u30b3\u30ce\u30df\u30fcDelice(\u30c7\u30ea\u30b9)\u6a2a\u6d5c\u5e97",
+        "total_staff": 1,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 0.0,
+        "store_name": "\u30b5\u30af\u30c3\u3068\u30cc\u3044\u3066\u30d0\u30a4\u30d0\u30a4",
+        "total_staff": 1,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u798f\u5ca1",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 0.0,
+        "store_name": "\u30bb\u30fc\u30e9\u30fc\u30df\u30e5\u30a6",
+        "total_staff": 1,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u4eac\u90fd",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 0.0,
+        "store_name": "\u30c7\u30ea\u30d8\u30eb\u30e9\u30dc\u30fb\u30af\u30ec\u30fc\u30b8\u30e5",
+        "total_staff": 15,
+        "working_staff": 0
+      },
+      {
+        "active_staff": 0,
+        "area": "\u6771\u4eac",
+        "biz_type": "\u30c7\u30ea\u30d8\u30eb",
+        "genre": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",
+        "operation_rate": 0.0,
+        "store_name": "\u9326\u7cf8\u753a\u30c7\u30ea\u30d8\u30ebPureSeleClub \uff5e\u30d4\u30e5\u30a2\u30bb\u30ec\u30af\u30e9\u30d6\uff5e",
+        "total_staff": 11,
+        "working_staff": 0
+      }
+    ]
+  },
+  "status": "success"
+}
