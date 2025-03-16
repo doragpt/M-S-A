@@ -223,6 +223,11 @@ def index():
     """統合ダッシュボードを表示"""
     return render_template('integrated_dashboard.html')
 
+@app.route('/hourly')
+def hourly_analysis():
+    """時間帯別分析を表示"""
+    return render_template('hourly_analysis.html')
+
 @app.route('/admin')
 def admin():
     """管理画面へリダイレクト"""
