@@ -293,6 +293,45 @@ def register_api_routes(bp):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
+    @bp.route('/averages/weekly')
+    def get_weekly_averages():
+        """週間の平均データを取得"""
+        try:
+            conn = get_db_connection()
+            query = """
+            WITH weekly_data AS (
+                SELECT 
+                    store_name,
+                    strftime('%Y-%W', timestamp) as week,
+                    AVG(CASE WHEN working_staff > 0 
+                        THEN CAST((working_staff - active_staff) AS FLOAT) / working_staff * 100 
+                        ELSE 0 END) as weekly_rate
+                FROM store_status
+                GROUP BY store_name, week
+                HAVING week IS NOT NULL
+            )
+            SELECT 
+                store_name,
+                AVG(weekly_rate) as avg_rate,
+                COUNT(DISTINCT week) as weeks_count
+            FROM weekly_data
+            GROUP BY store_name
+            HAVING weeks_count >= 1
+            ORDER BY avg_rate DESC
+            LIMIT 20
+            """
+            
+            results = conn.execute(query).fetchall()
+            data = [{
+                'store_name': r['store_name'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'weeks_count': r['weeks_count']
+            } for r in results]
+            
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
     @bp.route('/ranking/average')
     def get_store_ranking():
         """店舗別平均稼働率ランキングを取得"""
