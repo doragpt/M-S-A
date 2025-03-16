@@ -392,16 +392,31 @@ if __name__ == '__main__':
     # 初期データのスクレイピングを実行
     with app.app_context():
         try:
-            # 既存データがあるかチェック
-            from models import StoreStatus
-            count = StoreStatus.query.count()
-            if count == 0:
-                print("初期データがありません。スクレイピングを実行します...")
+            # 既存データとURLの確認
+            from models import StoreStatus, StoreURL
+            status_count = StoreStatus.query.count()
+            url_count = StoreURL.query.count()
+            
+            print(f"データベース状態確認: ステータス={status_count}件, URL={url_count}件")
+            
+            if url_count == 0:
+                # サンプルURLを追加
+                sample_urls = [
+                    "https://example1.com/store1",
+                    "https://example2.com/store2"
+                ]
+                for url in sample_urls:
+                    new_url = StoreURL(store_url=url)
+                    db.session.add(new_url)
+                db.session.commit()
+                print("サンプルURLを追加しました")
+                
+            if status_count == 0:
+                print("初期データ収集を開始します...")
                 scheduled_scrape()
-            else:
-                print(f"既存データ: {count}件")
+            
         except Exception as e:
-            print(f"初期データチェックエラー: {e}")
+            print(f"初期化エラー: {e}")
 
     # サーバー起動
     socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)

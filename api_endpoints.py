@@ -171,10 +171,11 @@ def register_api_routes(bp):
 
             if not results:
                 return jsonify({
-                    'status': 'success',
-                    'data': [],
-                    'message': 'データが見つかりません'
-                })
+                    'status': 'error',
+                    'message': 'データが見つかりません',
+                    'error_code': 'NO_DATA',
+                    'data': []
+                }), 404
 
             stores = []
             for r in results:
