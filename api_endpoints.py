@@ -278,15 +278,14 @@ def register_api_routes(bp):
                 }), 400
 
             try:
-                # UTCでパースしてからJSTに変換
-                utc = pytz.UTC
+                # JSTで日付を解析
                 jst = pytz.timezone('Asia/Tokyo')
+                start = jst.localize(datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S'))
+                end = jst.localize(datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S'))
                 
-                start = datetime.strptime(f"{start_date} 00:00:00", '%Y-%m-%d %H:%M:%S')
-                end = datetime.strptime(f"{end_date} 23:59:59", '%Y-%m-%d %H:%M:%S')
-                
-                start = utc.localize(start).astimezone(jst)
-                end = utc.localize(end).astimezone(jst)
+                # データベースのタイムスタンプはUTCなので、検索用にUTCに変換
+                start = start.astimezone(pytz.UTC)
+                end = end.astimezone(pytz.UTC)
                 
             except ValueError as e:
                 logger.error(f"日付変換エラー: {e}")
