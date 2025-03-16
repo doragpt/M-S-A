@@ -364,66 +364,10 @@ def register_api_routes(bp):
                 'message': str(e)
             }), 500
 
-        try:
-            jst = pytz.timezone('Asia/Tokyo')
-            if not start_date or not end_date:
-                # デフォルト7日間
-                end_date = datetime.now(jst)
-                start_date = end_date - timedelta(days=7)
-            else:
-                start_date = datetime.strptime(start_date, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date, '%Y-%m-%d')
-                end_date = end_date.replace(hour=23, minute=59, second=59)
-
-            conn = get_db_connection()
-            query = """
-            SELECT *
-            FROM store_status
-            WHERE store_name = ?
-            AND timestamp BETWEEN ? AND ?
-            ORDER BY timestamp
-            """
-            results = conn.execute(query, [store, start_date, end_date]).fetchall()
-
-            history = [{
-                'store_name': store,
-                'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None,
-                'working_staff': int(r['working_staff'] or 0),
-                'active_staff': int(r['active_staff'] or 0),
-                'total_staff': int(r['total_staff'] or 0),
-                'biz_type': r['biz_type'] or '',
-                'genre': r['genre'] or '',
-                'area': r['area'] or '',
-                'rate': round(((int(r['working_staff'] or 0) - int(r['active_staff'] or 0)) / int(r['working_staff'] or 1)) * 100, 1) if int(r['working_staff'] or 0) > 0 else 0
-            } for r in results]
-
-            response_data = {
+        response_data = {
                 'status': 'success',
-                'data': {
-                    'store': store,
-                    'records': history,
-                    'period': {
-                        'start': start_date.isoformat(),
-                        'end': end_date.isoformat()
-                    }
-                }
+                'data': history
             }
-
-            if not history:
-                response_data = {
-                    'status': 'error',
-                    'message': 'データが見つかりませんでした',
-                    'data': {
-                        'store': store,
-                        'records': [],
-                        'period': {
-                            'start': start_date.isoformat(),
-                            'end': end_date.isoformat()
-                        }
-                    }
-                }
-                return jsonify(response_data), 404
-
             return jsonify(response_data)
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
