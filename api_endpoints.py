@@ -159,17 +159,27 @@ def register_api_routes(bp):
                     'message': 'データが見つかりません'
                 })
 
-            stores = [{
-                'store_name': r['store_name'],
-                'biz_type': r['biz_type'] or '',
-                'genre': r['genre'] or '',
-                'area': r['area'] or '',
-                'total_staff': int(r['total_staff'] or 0),
-                'working_staff': int(r['working_staff'] or 0),
-                'active_staff': int(r['active_staff'] or 0),
-                'timestamp': r['timestamp'].isoformat() + '+09:00' if r['timestamp'] else None,
-                'rate': round(((int(r['working_staff'] or 0) - int(r['active_staff'] or 0)) / int(r['working_staff'] or 1)) * 100, 1) if int(r['working_staff'] or 0) > 0 else 0
-            } for r in results]
+            stores = []
+            for r in results:
+                # 必須フィールドの存在確認
+                if not all(r.get(field) for field in ['store_name', 'area']):
+                    continue
+                    
+                working_staff = int(r.get('working_staff') or 0)
+                active_staff = int(r.get('active_staff') or 0)
+                
+                store = {
+                    'store_name': r['store_name'],
+                    'biz_type': r.get('biz_type') or '',
+                    'genre': r.get('genre') or '',
+                    'area': r['area'],
+                    'total_staff': int(r.get('total_staff') or 0),
+                    'working_staff': working_staff,
+                    'active_staff': active_staff,
+                    'timestamp': r['timestamp'].isoformat() + '+09:00' if r.get('timestamp') else None,
+                    'rate': round(((working_staff - active_staff) / working_staff) * 100, 1) if working_staff > 0 else 0
+                }
+                stores.append(store)
 
             return jsonify({
                 'status': 'success',
