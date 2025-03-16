@@ -1,0 +1,50 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-17 02:09:48,920 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:09:48,925 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:09:48,925 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-17 02:09:48,925 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-17 02:09:48,925 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-17 02:09:48,926 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-17 02:09:48 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+2025-03-17 02:09:48,931 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-17 03:00:00+09:00 (in 3011.069061 seconds)
+既存データ: 2942件
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Serving Flask app 'main'
+ * Debug mode: on
+2025-03-17 02:09:48,947 - werkzeug - INFO -  * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:5000
+ * Running on http://160.251.196.100:5000 (Press CTRL+C to quit)
+2025-03-17 02:09:48,947 - werkzeug - INFO -  * Restarting with stat
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-17 02:09:49,922 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:09:49,929 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:09:49,929 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-17 02:09:49,929 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-17 02:09:49,929 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-17 02:09:49,930 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-03-17 02:09:49,936 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-17 03:00:00+09:00 (in 3010.063788 seconds)
+サーバー起動時刻（JST）: 2025-03-17 02:09:49 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+既存データ: 2942件
+2025-03-17 02:09:49,957 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 02:09:49,962 - werkzeug - INFO -  * Debugger PIN: 452-729-233
+2025-03-17 02:09:51,376 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:51] "GET / HTTP/1.1" 200 -
+2025-03-17 02:09:51,538 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:51,580 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:51] "GET /api/data HTTP/1.1" 200 -
+2025-03-17 02:09:52,578 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:52,608 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:52] "GET /api/area-stats HTTP/1.1" 200 -
+2025-03-17 02:09:53,772 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:53,774 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:53,780 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:53] "GET /api/ranking/average?biz_type=エステ・アロマ&limit=15 HTTP/1.1" 200 -
+2025-03-17 02:09:53,784 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:53] "GET /api/ranking/genre?biz_type= エステ・アロマ HTTP/1.1" 200 -
+2025-03-17 02:09:54,378 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:54,711 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:54] "GET /api/history/optimized?start_date=2025-03-09&end_date=2025-03-16 HTTP/1.1" 200 -
+2025-03-17 02:09:57,564 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:09:57,837 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:09:57] "GET /api/history/optimized?store=AQUA&start_date=2025-03-09&end_date=2025-03-16 HTTP/1.1" 200 -
+2025-03-17 02:10:01,005 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:10:01,315 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:10:01] "GET /api/history/optimized?store=ASHANTI&start_date=2025-03-09&end_date=2025-03-16 HTTP/1.1" 200 -
