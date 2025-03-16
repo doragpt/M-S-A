@@ -258,7 +258,7 @@ async def _scrape_all(store_urls: list) -> list:
     executable_path = '/usr/bin/chromium-browser'
     browser = await launch(
         headless=True,
-        executablePath=executable_path,
+        executablePath='/usr/bin/chromium-browser',
         ignoreHTTPSErrors=True,
         defaultViewport=None,
         handleSIGINT=False,
