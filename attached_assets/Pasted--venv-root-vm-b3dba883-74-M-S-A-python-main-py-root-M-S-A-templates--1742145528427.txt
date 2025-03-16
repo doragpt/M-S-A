@@ -1,0 +1,40 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-17 02:18:15,794 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:18:15,799 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:18:15,800 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-17 02:18:15,800 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-17 02:18:15,800 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-17 02:18:15,800 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-17 02:18:15 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+2025-03-17 02:18:15,809 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-17 03:00:00+09:00 (in 2504.190171 seconds)
+既存データ: 2942件
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Serving Flask app 'main'
+ * Debug mode: on
+2025-03-17 02:18:15,823 - werkzeug - INFO -  * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:5000
+ * Running on http://160.251.196.100:5000 (Press CTRL+C to quit)
+2025-03-17 02:18:15,824 - werkzeug - INFO -  * Restarting with stat
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-17 02:18:16,664 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:18:16,670 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-17 02:18:16,670 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-17 02:18:16,671 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-17 02:18:16,671 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-17 02:18:16,671 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-17 02:18:16 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+2025-03-17 02:18:16,677 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-17 03:00:00+09:00 (in 2503.323145 seconds)
+既存データ: 2942件
+2025-03-17 02:18:16,692 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 02:18:16,696 - werkzeug - INFO -  * Debugger PIN: 452-729-233
+2025-03-17 02:18:18,703 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:18:18] "GET / HTTP/1.1" 200 -
+2025-03-17 02:18:20,040 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:18:20,406 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:18:20] "GET /api/history/optimized?start_date=2025-03-09&end_date=2025-03-16 HTTP/1.1" 200 -
+2025-03-17 02:18:24,211 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 13982
+2025-03-17 02:18:24,525 - werkzeug - INFO - 182.171.40.172 - - [17/Mar/2025 02:18:24] "GET /api/history/optimized?store=A○女優＆人気フードルが東京からやってくる店!!%20ハンパじゃない伝説～静岡校&start_date=2025-03-09&end_date=2025-03-16 HTTP/1.1" 200 -
