@@ -257,7 +257,6 @@ async def _scrape_all(store_urls: list) -> list:
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     browser = await launch(
         headless=True,
-        args=['--no-sandbox', '--disable-setuid-sandbox'],
         handleSIGINT=False,
         handleSIGTERM=False,
         handleSIGHUP=False,
@@ -276,8 +275,8 @@ async def _scrape_all(store_urls: list) -> list:
             "--disable-renderer-backgrounding",
             "--disable-infobars",
             "--js-flags=--expose-gc",
-            f"--memory-pressure-off",
-            f"--js-flags=--max-old-space-size=4096"
+            "--memory-pressure-off",
+            "--js-flags=--max-old-space-size=4096"
         ]
     )
     # 各店舗URLに対するスクレイピングタスクを作成
