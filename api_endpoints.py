@@ -168,7 +168,7 @@ def register_api_routes(bp):
             AND s.area IS NOT NULL
             """
             results = conn.execute(query).fetchall()
-            
+
             if not results:
                 return jsonify({
                     'status': 'success',
@@ -181,15 +181,15 @@ def register_api_routes(bp):
                 r_dict = dict(r)
                 if not r_dict.get('store_name') or not r_dict.get('area'):
                     continue
-                
+
                 working_staff = int(r_dict.get('working_staff', 0))
                 active_staff = int(r_dict.get('active_staff', 0))
                 total_staff = int(r_dict.get('total_staff', 0))
-                
+
                 rate = 0
                 if working_staff > 0:
                     rate = round(((working_staff - active_staff) / working_staff) * 100, 1)
-                
+
                 store = {
                     'store_name': r_dict['store_name'],
                     'biz_type': r_dict.get('biz_type', ''),
@@ -221,8 +221,49 @@ def register_api_routes(bp):
                 'data': None
             }), 500
 
-    @bp.route('/history/optimized')
+    @bp.route('/history')
     def get_store_history():
+        """店舗の履歴データを取得"""
+        try:
+            store = request.args.get('store')
+            conn = get_db_connection()
+
+            if store:
+                query = """
+                SELECT * FROM store_status 
+                WHERE store_name = ?
+                ORDER BY timestamp DESC
+                LIMIT 500
+                """
+                results = conn.execute(query, [store]).fetchall()
+            else:
+                query = """
+                SELECT * FROM store_status 
+                ORDER BY timestamp DESC
+                LIMIT 500
+                """
+                results = conn.execute(query).fetchall()
+
+            history = [{
+                'store_name': r['store_name'],
+                'timestamp': r['timestamp'],
+                'working_staff': int(r['working_staff'] or 0),
+                'active_staff': int(r['active_staff'] or 0)
+            } for r in results]
+
+            return jsonify({
+                'status': 'success',
+                'data': history
+            })
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': str(e)
+            }), 500
+
+
+    @bp.route('/history/optimized')
+    def get_store_history_optimized(): #Added to avoid name collision
         """店舗の履歴データを取得"""
         try:
             start_date = request.args.get('start_date')
@@ -298,11 +339,11 @@ def register_api_routes(bp):
             ORDER BY timestamp
             """
             params = [start, end]
-            
+
             if store:
                 query += " AND store_name = ?"
                 params.append(store)
-                
+
             results = conn.execute(query, params).fetchall()
 
             history = [{
@@ -441,7 +482,7 @@ def register_api_routes(bp):
         try:
             biz_type = request.args.get('biz_type')
             conn = get_db_connection()
-            
+
             query = """
             WITH latest_data AS (
                 SELECT store_name, MAX(timestamp) as max_time
@@ -464,7 +505,7 @@ def register_api_routes(bp):
             ORDER BY avg_rate DESC
             """
             results = conn.execute(query, [biz_type]).fetchall()
-            
+
             data = [{
                 'genre': r['genre'],
                 'store_count': r['store_count'],
@@ -502,14 +543,14 @@ def register_api_routes(bp):
             ORDER BY avg_rate DESC
             LIMIT 20
             """
-            
+
             results = conn.execute(query).fetchall()
             data = [{
                 'store_name': r['store_name'],
                 'avg_rate': round(r['avg_rate'], 1),
                 'weeks_count': r['weeks_count']
             } for r in results]
-            
+
             return jsonify({'status': 'success', 'data': data})
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -520,9 +561,9 @@ def register_api_routes(bp):
         try:
             biz_type = request.args.get('biz_type')
             limit = request.args.get('limit', default=15, type=int)
-            
+
             conn = get_db_connection()
-            
+
             query = """
             WITH store_rates AS (
                 SELECT 
@@ -544,9 +585,9 @@ def register_api_routes(bp):
             ORDER BY avg_rate DESC
             LIMIT ?
             """
-            
+
             results = conn.execute(query, [biz_type, limit]).fetchall()
-            
+
             data = [{
                 'store_name': r['store_name'],
                 'biz_type': r['biz_type'],
