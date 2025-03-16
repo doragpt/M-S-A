@@ -158,7 +158,6 @@ def register_api_routes(bp):
             """
             results = conn.execute(query).fetchall()
             stores = [{
-                'id': str(r['id']),
                 'store_name': r['store_name'],
                 'biz_type': r['biz_type'] or '',
                 'genre': r['genre'] or '',
@@ -169,9 +168,17 @@ def register_api_routes(bp):
                 'timestamp': r['timestamp'].isoformat() if r['timestamp'] else None
             } for r in results]
 
-            return jsonify({'status': 'success', 'data': stores})
+            response_data = {
+                'status': 'success',
+                'data': stores
+            }
+            return jsonify(response_data)
         except Exception as e:
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+            return jsonify({
+                'status': 'error',
+                'message': str(e),
+                'data': []
+            }), 500
 
     @bp.route('/history/optimized')
     def get_store_history():
