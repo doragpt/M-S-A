@@ -1,0 +1,120 @@
+エラーの核心的な原因
+1. APIルートとフロントエンドのデータ構造不一致
+api_routes.py と aggregated_data.py で生成されるデータ構造が
+
+フロントエンドの loadDashboardData 関数の期待値と一致していない
+
+2. データベーススキーマの問題
+models.py で定義されたデータモデルと
+
+store_data.db の実際のテーブル構造に差異がある可能性
+
+3. 日付フォーマットの不整合
+データベースの日付形式（例: 2025-03-17 01:04:00）と
+
+フロントエンドが要求するISO形式（例: 2025-03-17T01:04:00Z）の不一致
+
+具体的な修正手順
+バックエンド側の修正 (Python)
+python
+# api_routes.py の修正例
+@app.route('/api/dashboard')
+def get_dashboard_data():
+    try:
+        data = get_aggregated_data()  # aggregated_data.py の関数
+        return jsonify({
+            "status": "success",
+            "data": {
+                "timestamps": [d.isoformat() for d in data['dates']],  # ISO形式変換
+                "values": data['values'],
+                "metadata": {
+                    "source": "store_data.db",
+                    "last_updated": datetime.now().isoformat()
+                }
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+フロントエンド側の修正 (JavaScript)
+javascript
+// データ取得処理の改良
+async function loadDashboardData() {
+  try {
+    const response = await fetch('/api/dashboard');
+    const result = await response.json();
+    
+    if (result.status !== 'success') {
+      throw new Error(`API Error: ${result.message}`);
+    }
+
+    // データ構造の厳密なチェック
+    if (!result.data?.timestamps || !result.data?.values) {
+      throw new Error('Invalid data structure from API');
+    }
+
+    // 日付データの変換処理
+    const chartData = {
+      labels: result.data.timestamps.map(t => new Date(t)),
+      datasets: [{
+        data: result.data.values,
+        borderColor: '#3e95cd'
+      }]
+    };
+    
+    updateChart(chartData);
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+    showErrorToast(`データ読み込み失敗: ${error.message}`);
+  }
+}
+追加で確認すべきポイント
+データベース接続確認
+
+bash
+sqlite3 store_data.db
+.tables
+PRAGMA table_info(measurements);  # テーブル構造確認
+APIレスポンスの直接確認
+
+bash
+curl http://localhost:5000/api/dashboard | jq
+依存関係の整合性
+
+bash
+pip freeze | grep -E 'flask|sqlalchemy'
+# 期待されるバージョン: Flask==2.0.3, SQLAlchemy==1.4.35
+根本解決のための改善提案
+型ヒントの導入
+
+python
+# models.py に追加
+from datetime import datetime
+from typing import TypedDict
+
+class MeasurementData(TypedDict):
+    timestamp: datetime
+    value: float
+    sensor_id: str
+APIスキーマの定義
+
+python
+from pydantic import BaseModel
+
+class DashboardResponse(BaseModel):
+    timestamps: list[datetime]
+    values: list[float]
+    metadata: dict
+エラーログの強化
+
+python
+# database.py に追加
+import logging
+logger = logging.getLogger(__name__)
+
+def query_data():
+    try:
+        # DB操作
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+        raise
+この修正により、データフォーマット関連のエラーを根本的に解決できる可能性が高いです。実装後、python main.py でサーバーを再起動し、ブラウザの開発者ツールでネットワークレスポンスを確認してください。
