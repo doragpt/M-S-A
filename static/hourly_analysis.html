@@ -42,10 +42,12 @@
     function groupByHour(data) {
       const groups = Array.from({length: 24}, () => []);
       data.forEach(record => {
-        const dt = new Date(record.timestamp);
-        const hour = dt.getHours();
-        const rate = record.working_staff > 0 ? ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0;
-        groups[hour].push(parseFloat(rate));
+        if (record && record.timestamp && record.working_staff !== undefined && record.active_staff !== undefined) {
+          const dt = new Date(record.timestamp);
+          const hour = dt.getHours();
+          const rate = record.working_staff > 0 ? ((record.working_staff - record.active_staff) / record.working_staff * 100) : 0;
+          groups[hour].push(parseFloat(rate));
+        }
       });
       return groups;
     }
@@ -146,7 +148,7 @@
       const url = storeName === '全店舗' ? 
         `/api/history/optimized?start_date=${startDate}&end_date=${endDate}` :
         `/api/history/optimized?store=${encodeURIComponent(storeName)}&start_date=${startDate}&end_date=${endDate}`;
-      
+
       const response = await fetch(url);
       const data = await response.json();
       return data.data;
