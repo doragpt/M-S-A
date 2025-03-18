@@ -208,8 +208,8 @@ class ReportGenerator:
 
         return output_path
 
-    except Exception as e:
-        raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
+        except Exception as e:
+            raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
 
     def _apply_sheet_styling(self, ws, df):
         """シートの基本スタイル適用"""
