@@ -562,9 +562,9 @@ def register_api_routes(bp):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-    @bp.route('/report/all-stores/pdf', methods=['GET'])
-    def generate_all_stores_pdf_report():
-        """全店舗のPDFレポートを生成して返す"""
+    @bp.route('/report/all-stores/excel', methods=['GET'])
+    def generate_all_stores_excel_report():
+        """全店舗のExcelレポートを生成して返す"""
         try:
             # 全店舗データの取得
             conn = get_db_connection()
@@ -601,22 +601,22 @@ def register_api_routes(bp):
                 # レポート生成
                 from report_generator import ReportGenerator
                 generator = ReportGenerator()
-                report_path = "/tmp/all_stores_report.pdf"
+                report_path = "/tmp/all_stores_report.xlsx"
                 
                 # レポートディレクトリの存在確認
                 os.makedirs(os.path.dirname(report_path), exist_ok=True)
                 
-                generator.generate_all_stores_report(stores_list, report_path)
+                generated_path = generator.generate_all_stores_report(stores_list, report_path)
 
-                if not os.path.exists(report_path):
-                    raise FileNotFoundError("PDFファイルの生成に失敗しました")
+                if not os.path.exists(generated_path):
+                    raise FileNotFoundError("Excelファイルの生成に失敗しました")
 
                 # レポートの送信
                 return send_file(
-                    report_path,
-                    mimetype='application/pdf',
+                    generated_path,
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     as_attachment=True,
-                    download_name=f"all_stores_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                    download_name=f"all_stores_report_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                 )
             except Exception as e:
                 logger.error(f"PDFレポート生成エラー: {str(e)}")
