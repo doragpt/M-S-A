@@ -205,7 +205,7 @@ class ReportGenerator:
         ws = writer.sheets['ジャンル分析']
 
             return output_path
-            
+        
         except Exception as e:
             raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
 
