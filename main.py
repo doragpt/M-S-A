@@ -43,8 +43,15 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=timedelta(days=31),
-    SESSION_TYPE='filesystem'
+    SESSION_TYPE='filesystem',
+    SESSION_FILE_DIR='./flask_session',
+    SESSION_FILE_THRESHOLD=500,
+    SESSION_FILE_MODE=384,  # 0o600
+    SESSION_COOKIE_PATH='/'
 )
+
+# セッションディレクトリの作成
+os.makedirs('./flask_session', exist_ok=True)
 
 # データベース設定
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')

@@ -18,6 +18,9 @@ def get_db_connection():
     """データベース接続を取得する関数"""
     import logging
     logger = logging.getLogger('app')
+    import sqlite3.dbapi2 as sqlite
+    sqlite.encode = lambda x: x.encode('utf-8', 'ignore')
+    sqlite.decode = lambda x: x.decode('utf-8', 'ignore')
 
     try:
         conn = sqlite3.connect(
