@@ -541,7 +541,9 @@
                         <th>ジャンル</th>
                         <th>エリア</th>
                         <th id="sortRate">稼働率 <i class="bi bi-arrow-down-up"></i></th>
-                        <th>勤務中/総数</th>
+                        <th>総出勤</th>
+              <th>勤務時間内</th>
+              <th>即ヒメ</th>
                         <th>詳細</th>
                       </tr>
                     </thead>
@@ -1409,7 +1411,9 @@
           <td>${store.genre || '-'}</td>
           <td>${store.area || '-'}</td>
           <td><span class="badge ${rateBadgeClass}">${rate.toFixed(1)}%</span></td>
-          <td>${store.working_staff - store.active_staff}/${store.working_staff}</td>
+          <td>${store.total_staff || 0}</td>
+              <td>${store.working_staff || 0}</td>
+              <td>${store.active_staff || 0}</td>
           <td>
             <button class="icon-button view-details" data-store="${store.store_name}">
               <i class="bi bi-info-circle"></i>
