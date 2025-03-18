@@ -1,0 +1,175 @@
+(venv) root@vm-b3dba883-74:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-19 03:30:31,067 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:30:31,071 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:30:31,072 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-19 03:30:31,072 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-19 03:30:31,072 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-19 03:30:31,072 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-19 03:30:31 JST+0900
+2025-03-19 03:30:31,078 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-19 04:30:31.067266+09:00 (in 3599.989374 seconds)
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=2942件, URL=647件
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Serving Flask app 'main'
+ * Debug mode: on
+2025-03-19 03:30:31,095 - werkzeug - INFO -  * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:5000
+ * Running on http://160.251.196.100:5000 (Press CTRL+C to quit)
+2025-03-19 03:30:31,095 - werkzeug - INFO -  * Restarting with stat
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-19 03:30:31,910 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:30:31,915 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:30:31,915 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-19 03:30:31,916 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-19 03:30:31,916 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-19 03:30:31,916 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-03-19 03:30:31,922 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-19 04:30:31.910678+09:00 (in 3599.988685 seconds)
+サーバー起動時刻（JST）: 2025-03-19 03:30:31 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=2942件, URL=647件
+2025-03-19 03:30:31,939 - werkzeug - WARNING -  * Debugger is active!
+2025-03-19 03:30:31,943 - werkzeug - INFO -  * Debugger PIN: 452-729-233
+2025-03-19 03:30:34,722 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:34] "POST /admin/manage HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2486, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2466, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2463, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1761, in full_dispatch_request
+    return self.finalize_request(rv)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1782, in finalize_request
+    response = self.process_response(response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2278, in process_response
+    self.session_interface.save_session(self, ctx.session, response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/sessions.py", line 410, in save_session
+    response.set_cookie(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/sansio/response.py", line 234, in set_cookie
+    dump_cookie(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/http.py", line 1212, in dump_cookie
+    path = iri_to_uri(path, charset)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/urls.py", line 813, in iri_to_uri
+    path = url_quote(iri.path, charset, errors, _to_uri_safe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: patched_url_quote() takes from 1 to 3 positional arguments but 4 were given
+2025-03-19 03:30:34,778 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:34] "GET /admin/manage?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+2025-03-19 03:30:34,806 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:34] "GET /admin/manage?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+2025-03-19 03:30:34,890 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:34] "GET /admin/manage?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+2025-03-19 03:30:34,979 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:34] "GET /admin/manage?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+2025-03-19 03:30:37,528 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:37] "GET /admin/manage HTTP/1.1" 200 -
+2025-03-19 03:30:39,316 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:39] "POST /admin/manage HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2486, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2466, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2463, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1761, in full_dispatch_request
+    return self.finalize_request(rv)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1782, in finalize_request
+    response = self.process_response(response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2278, in process_response
+    self.session_interface.save_session(self, ctx.session, response)
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/sessions.py", line 410, in save_session
+    response.set_cookie(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/sansio/response.py", line 234, in set_cookie
+    dump_cookie(
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/http.py", line 1212, in dump_cookie
+    path = iri_to_uri(path, charset)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/urls.py", line 813, in iri_to_uri
+    path = url_quote(iri.path, charset, errors, _to_uri_safe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: patched_url_quote() takes from 1 to 3 positional arguments but 4 were given
+2025-03-19 03:30:39,398 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:39] "GET /admin/manage?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
+2025-03-19 03:30:39,428 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:39] "GET /admin/manage?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+2025-03-19 03:30:39,500 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:39] "GET /admin/manage?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+2025-03-19 03:30:39,577 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:30:39] "GET /admin/manage?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 304 -
+^Z
+[10]+  Stopped                 python main.py
+(venv) root@vm-b3dba883-74:~/M-S-A# kill -9 $(lsof -t -i:5000)
+(venv) root@vm-b3dba883-74:~/M-S-A#
+[10]+  Killed                  python main.py
+(venv) root@vm-b3dba883-74:~/M-S-A#
+(venv) root@vm-b3dba883-74:~/M-S-A# git fetch origin main
+yremote: Enumerating objects: 9, done.
+remote: Counting objects: 100% (9/9), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 7 (delta 3), reused 7 (delta 3), pack-reused 0 (from 0)
+Unpacking objects: 100% (7/7), 1.58 KiB | 269.00 KiB/s, done.
+From https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+   619cbb1..383af65  main       -> origin/main
+(venv) root@vm-b3dba883-74:~/M-S-A# git checkout origin/main -- main.py
+(venv) root@vm-b3dba883-74:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-19 03:32:44,749 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:32:44,754 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:32:44,754 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-19 03:32:44,755 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-19 03:32:44,755 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-19 03:32:44,755 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-19 03:32:44 JST+0900
+2025-03-19 03:32:44,760 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-19 04:32:44.749657+09:00 (in 3599.988885 seconds)
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=2942件, URL=647件
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Serving Flask app 'main'
+ * Debug mode: on
+2025-03-19 03:32:44,780 - werkzeug - INFO -  * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:5000
+ * Running on http://160.251.196.100:5000 (Press CTRL+C to quit)
+2025-03-19 03:32:44,780 - werkzeug - INFO -  * Restarting with stat
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-19 03:32:45,671 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:32:45,676 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-19 03:32:45,676 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-19 03:32:45,676 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-19 03:32:45,676 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-19 03:32:45,677 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-03-19 03:32:45,682 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-19 04:32:45.671074+09:00 (in 3599.988231 seconds)
+サーバー起動時刻（JST）: 2025-03-19 03:32:45 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=2942件, URL=647件
+2025-03-19 03:32:45,701 - werkzeug - WARNING -  * Debugger is active!
+2025-03-19 03:32:45,705 - werkzeug - INFO -  * Debugger PIN: 452-729-233
+2025-03-19 03:32:49,765 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:32:49] "GET /admin/manage HTTP/1.1" 200 -
+2025-03-19 03:32:51,664 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:32:51] "POST /admin/manage HTTP/1.1" 302 -
+2025-03-19 03:32:51,730 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:32:51] "GET /admin/manage HTTP/1.1" 200 -
+2025-03-19 03:33:00,491 - app - INFO - データベース接続成功: store_statusテーブルのレコード数 = 42775
+2025-03-19 03:33:00,601 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:33:00] "GET /api/data HTTP/1.1" 200 -
+2025-03-19 03:33:23,553 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:33:23] "GET /api/averages/daily HTTP/1.1" 404 -
+2025-03-19 03:33:28,917 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:33:28] "GET /api/averages/monthly HTTP/1.1" 404 -
+2025-03-19 03:33:31,916 - werkzeug - INFO - 182.171.40.172 - - [19/Mar/2025 03:33:31] "GET /api/averages/stores HTTP/1.1" 404 -
