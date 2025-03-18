@@ -1,0 +1,180 @@
+LookupError
+LookupError: unknown encoding: strict
+
+Traceback (most recent call last)
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2486, in __call__
+    def __call__(self, environ: dict, start_response: t.Callable) -> t.Any:
+        """The WSGI server calls the Flask application object as the
+        WSGI application. This calls :meth:`wsgi_app`, which can be
+        wrapped to apply middleware.
+        """
+        return self.wsgi_app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+                                                  socketio_path=socketio_path)
+ 
+    def __call__(self, environ, start_response):
+        environ = environ.copy()
+        environ['flask.app'] = self.flask_app
+        return super(_SocketIOMiddleware, self).__call__(environ,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                         start_response)
+ 
+ 
+class _ManagedSession(dict, SessionMixin):
+    """This class is used for user sessions that are managed by
+File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+                    '200 OK',
+                    [('Content-Type', static_file['content_type'])])
+                with open(static_file['filename'], 'rb') as f:
+                    return [f.read()]
+            elif self.wsgi_app is not None:
+                return self.wsgi_app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        return self.not_found(start_response)
+ 
+    def not_found(self, start_response):
+        start_response("404 Not Found", [('Content-Type', 'text/plain')])
+        return [b'Not Found']
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2466, in wsgi_app
+            try:
+                ctx.push()
+                response = self.full_dispatch_request()
+            except Exception as e:
+                error = e
+                response = self.handle_exception(e)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^
+            except:  # noqa: B001
+                error = sys.exc_info()[1]
+                raise
+            return response(environ, start_response)
+        finally:
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2463, in wsgi_app
+        ctx = self.request_context(environ)
+        error: t.Optional[BaseException] = None
+        try:
+            try:
+                ctx.push()
+                response = self.full_dispatch_request()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            except Exception as e:
+                error = e
+                response = self.handle_exception(e)
+            except:  # noqa: B001
+                error = sys.exc_info()[1]
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1761, in full_dispatch_request
+            rv = self.preprocess_request()
+            if rv is None:
+                rv = self.dispatch_request()
+        except Exception as e:
+            rv = self.handle_user_exception(e)
+        return self.finalize_request(rv)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 
+    def finalize_request(
+        self,
+        rv: t.Union[ft.ResponseReturnValue, HTTPException],
+        from_error_handler: bool = False,
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1782, in finalize_request
+ 
+        :internal:
+        """
+        response = self.make_response(rv)
+        try:
+            response = self.process_response(response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            request_finished.send(self, response=response)
+        except Exception:
+            if not from_error_handler:
+                raise
+            self.logger.exception(
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2278, in process_response
+            if name in self.after_request_funcs:
+                for func in reversed(self.after_request_funcs[name]):
+                    response = self.ensure_sync(func)(response)
+ 
+        if not self.session_interface.is_null_session(ctx.session):
+            self.session_interface.save_session(self, ctx.session, response)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 
+        return response
+ 
+    def do_teardown_request(
+        self, exc: t.Optional[BaseException] = _sentinel  # type: ignore
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/sessions.py", line 410, in save_session
+        if not self.should_set_cookie(app, session):
+            return
+ 
+        expires = self.get_expiration_time(app, session)
+        val = self.get_signing_serializer(app).dumps(dict(session))  # type: ignore
+        response.set_cookie(
+        ^
+            name,
+            val,  # type: ignore
+            expires=expires,
+            httponly=httponly,
+            domain=domain,
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/sansio/response.py", line 234, in set_cookie
+        :param samesite: Limit the scope of the cookie to only be
+            attached to requests that are "same-site".
+        """
+        self.headers.add(
+            "Set-Cookie",
+            dump_cookie(
+            ^
+                key,
+                value=value,
+                max_age=max_age,
+                expires=expires,
+                path=path,
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/http.py", line 1212, in dump_cookie
+    value = _to_bytes(value, charset)
+ 
+    if path is not None:
+        from .urls import iri_to_uri
+ 
+        path = iri_to_uri(path, charset)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 
+    domain = _make_cookie_domain(domain)
+ 
+    if isinstance(max_age, timedelta):
+        max_age = int(max_age.total_seconds())
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/urls.py", line 813, in iri_to_uri
+                return native_iri
+        except UnicodeError:
+            pass
+ 
+    iri = url_parse(_to_str(iri, charset, errors))
+    path = url_quote(iri.path, charset, errors, _to_uri_safe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    query = url_quote(iri.query, charset, errors, _to_uri_safe)
+    fragment = url_quote(iri.fragment, charset, errors, _to_uri_safe)
+    return url_unparse((iri.scheme, iri.encode_netloc(), path, query, fragment))
+ 
+ 
+File "/root/M-S-A/main.py", line 61, in patched_url_quote
+return quote(string, *args, **kwargs)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/usr/lib/python3.12/urllib/parse.py", line 917, in quote
+            return stringOpen an interactive python shell in this frame
+        if encoding is None:
+            encoding = 'utf-8'
+        if errors is None:
+            errors = 'strict'
+        string = string.encode(encoding, errors)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    else:
+        if encoding is not None:
+            raise TypeError("quote() doesn't support 'encoding' for bytes")
+        if errors is not None:
+            raise TypeError("quote() doesn't support 'errors' for bytes")
+LookupError: unknown encoding: strict
+The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it. For code execution mouse-over the frame you want to debug and click on the console icon on the right side.
+
+You can execute arbitrary Python code in the stack frames and there are some extra helpers available for introspection:
+
+dump() shows all variables in the frame
+dump(obj) dumps all that's known about the object
+Brought to you by DON'T PANIC, your friendly Werkzeug powered traceback interpreter.
