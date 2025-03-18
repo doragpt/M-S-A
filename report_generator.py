@@ -3,6 +3,12 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+# 日本語フォントの登録
+pdfmetrics.registerFont(UnicodeCIDFont('HeiseiKakuGo-W5'))
 from datetime import datetime
 import pytz
 
@@ -28,7 +34,8 @@ class ReportGenerator:
             'CustomTitle',
             parent=self.styles['Heading1'],
             fontSize=24,
-            spaceAfter=30
+            spaceAfter=30,
+            fontName='HeiseiKakuGo-W5'
         )
         elements.append(Paragraph("全店舗稼働状況レポート", title_style))
 
@@ -60,7 +67,7 @@ class ReportGenerator:
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a73e8')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 0), (-1, -1), 'HeiseiKakuGo-W5'),
                 ('FONTSIZE', (0, 0), (-1, 0), 14),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#e8f0fe')),
