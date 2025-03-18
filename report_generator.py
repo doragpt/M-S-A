@@ -206,10 +206,20 @@ class ReportGenerator:
         genre_stats.to_excel(writer, sheet_name='ジャンル分析', index=False)
         ws = writer.sheets['ジャンル分析']
 
-        return output_path
+        # グラフの追加
+        chart = BarChart()
+        chart.title = "業種・ジャンル別平均稼働率"
+        chart.y_axis.title = '稼働率 (%)'
+        chart.x_axis.title = 'ジャンル'
 
-        except Exception as e:
-            raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
+        data = Reference(ws, min_col=4, min_row=1, max_row=len(genre_stats)+1)
+        cats = Reference(ws, min_col=2, min_row=2, max_row=len(genre_stats)+1)
+
+        chart.add_data(data, titles_from_data=True)
+        chart.set_categories(cats)
+        chart.style = 2
+
+        ws.add_chart(chart, "J2")
 
     def _apply_sheet_styling(self, ws, df):
         """シートの基本スタイル適用"""
