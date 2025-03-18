@@ -54,9 +54,11 @@ app.config.update(
 )
 
 # Werkzeugのエンコーディング設定を上書き
-from werkzeug.urls import url_quote
-def patched_url_quote(string, charset='utf-8', *args, **kwargs):
-    return url_quote(string, charset=charset, *args, **kwargs)
+from urllib.parse import quote
+def patched_url_quote(string, *args, **kwargs):
+    if isinstance(string, bytes):
+        string = string.decode('utf-8')
+    return quote(string, *args, **kwargs)
 werkzeug.urls.url_quote = patched_url_quote
 
 # セッションディレクトリの作成
