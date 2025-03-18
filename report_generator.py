@@ -5,7 +5,7 @@ import os
 
 class ReportGenerator:
     def __init__(self):
-        self.styles = getSampleStyleSheet()
+        pass
 
     def generate_all_stores_report(self, stores_data, output_path):
         """全店舗の詳細Excelレポートを生成"""
