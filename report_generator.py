@@ -20,11 +20,12 @@ class ReportGenerator:
         """全店舗の詳細PDFレポートを生成"""
         doc = SimpleDocTemplate(
             output_path,
-            pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
+            pagesize=landscape(A4),
+            rightMargin=36,
+            leftMargin=36,
+            topMargin=36,
+            bottomMargin=36,
+            encoding='utf-8'
         )
 
         elements = []
@@ -84,23 +85,41 @@ class ReportGenerator:
         elements.append(summary_table)
         elements.append(Spacer(1, 30))
 
-        # 店舗別詳細
+        # 店舗別詳細（2カラムレイアウト）
         stores_data.sort(key=lambda x: x.get('rate', 0), reverse=True)
-
-        for store in stores_data:
-            # 店舗名
-            elements.append(Paragraph(f"店舗名: {store.get('store_name', '')}", self.styles['Heading2']))
-
-            # 店舗詳細テーブル
-            store_detail = [
-                ["業種", "ジャンル", "エリア", "稼働率"],
-                [
-                    store.get('biz_type', ''),
-                    store.get('genre', ''),
-                    store.get('area', ''),
-                    f"{store.get('rate', 0)}%"
-                ]
-            ]
+        
+        store_tables = []
+        for i in range(0, len(stores_data), 2):
+            row = []
+            for j in range(2):
+                if i + j < len(stores_data):
+                    store = stores_data[i + j]
+                    store_detail = Table([
+                        [Paragraph(f"店舗名: {store.get('store_name', '')}", self.styles['Heading3'])],
+                        [Table([
+                            ["業種", "ジャンル", "エリア", "稼働率"],
+                            [
+                                store.get('biz_type', ''),
+                                store.get('genre', ''),
+                                store.get('area', ''),
+                                f"{store.get('rate', 0)}%"
+                            ]
+                        ], colWidths=[80, 80, 80, 60])]
+                    ])
+                    store_detail.setStyle(TableStyle([
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, -1), 'HeiseiKakuGo-W5'),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dadce0')),
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+                    ]))
+                    row.append(store_detail)
+                    row.append(Spacer(20, 20))
+            if row:
+                store_tables.append(row)
+                store_tables.append(Spacer(1, 20))
+        
+        for table_row in store_tables:
+            elements.append(Table([table_row], colWidths=[280, 20, 280]))
 
             detail_table = Table(store_detail)
             detail_table.setStyle(TableStyle([
