@@ -34,13 +34,27 @@
     
     <div class="tab-content" id="entryTabsContent">
       <div class="tab-pane fade show active" id="single-entry" role="tabpanel" aria-labelledby="single-tab">
-        <form method="post" action="{{ url_for('manage_store_urls') }}">
+        <form method="post" action="{{ url_for('manage_store_urls') }}" id="addUrlForm">
           <div class="mb-3">
             <label for="store_url" class="form-label">店舗URL</label>
-            <input type="text" class="form-control" id="store_url" name="store_url" required>
+            <input type="url" class="form-control" id="store_url" name="store_url" required pattern="https?://.+" title="有効なURLを入力してください（http:// または https:// から始まる必要があります）">
           </div>
           <button type="submit" class="btn btn-primary">追加</button>
         </form>
+        
+        <script>
+          document.getElementById('addUrlForm').addEventListener('submit', function(e) {
+            const urlInput = this.querySelector('input[name="store_url"]');
+            if (urlInput) {
+              try {
+                new URL(urlInput.value);
+              } catch (_) {
+                e.preventDefault();
+                alert('有効なURLを入力してください');
+              }
+            }
+          });
+        </script>
       </div>
       
       <div class="tab-pane fade" id="bulk-entry" role="tabpanel" aria-labelledby="bulk-tab">
