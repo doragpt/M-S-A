@@ -562,6 +562,58 @@ def register_api_routes(bp):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
+    @bp.route('/report/all-stores/pdf', methods=['GET'])
+    def generate_all_stores_pdf_report():
+        """全店舗のPDFレポートを生成して返す"""
+        try:
+            # 全店舗データの取得
+            conn = get_db_connection()
+            stores_data = conn.execute("""
+                WITH latest_data AS (
+                    SELECT store_name, MAX(timestamp) as max_time
+                    FROM store_status
+                    GROUP BY store_name
+                )
+                SELECT s.* 
+                FROM store_status s
+                JOIN latest_data l 
+                    ON s.store_name = l.store_name 
+                    AND s.timestamp = l.max_time
+                ORDER BY s.store_name
+            """).fetchall()
+
+            if not stores_data:
+                return jsonify({'status': 'error', 'message': '店舗データが見つかりません'}), 404
+
+            # データの整形
+            stores_list = []
+            for store in stores_data:
+                store_dict = dict(store)
+                working_staff = int(store_dict.get('working_staff', 0))
+                active_staff = int(store_dict.get('active_staff', 0))
+                rate = 0
+                if working_staff > 0:
+                    rate = round(((working_staff - active_staff) / working_staff) * 100, 1)
+                store_dict['rate'] = rate
+                stores_list.append(store_dict)
+
+            # レポート生成
+            from report_generator import ReportGenerator
+            generator = ReportGenerator()
+            report_path = "/tmp/all_stores_report.pdf"
+            generator.generate_all_stores_report(stores_list, report_path)
+
+            # レポートの送信
+            return send_file(
+                report_path,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f"all_stores_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+            )
+
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
     @bp.route('/ranking/average')
     def get_store_ranking():
         """店舗別平均稼働率ランキングを取得"""
