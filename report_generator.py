@@ -121,17 +121,6 @@ class ReportGenerator:
         for table_row in store_tables:
             elements.append(Table([table_row], colWidths=[280, 20, 280]))
 
-            detail_table = Table(store_detail)
-            detail_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-
-            elements.append(detail_table)
-            elements.append(Spacer(1, 20))
-
         # レポートの生成
         doc.build(elements)
         return output_path
