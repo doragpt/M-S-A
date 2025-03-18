@@ -116,7 +116,6 @@ class ReportGenerator:
                     row.append(Spacer(20, 20))
             if row:
                 store_tables.append(row)
-                store_tables.append(Spacer(1, 20))
         
         for table_row in store_tables:
             elements.append(Table([table_row], colWidths=[280, 20, 280]))
