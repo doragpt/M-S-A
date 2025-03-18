@@ -483,6 +483,85 @@ def register_api_routes(bp):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
+    @bp.route('/averages/daily')
+    def get_daily_averages():
+        """日次平均データを取得"""
+        try:
+            conn = get_db_connection()
+            query = """
+            SELECT date(timestamp) as date,
+                   AVG(CASE WHEN working_staff > 0 
+                       THEN CAST((working_staff - active_staff) AS FLOAT) / working_staff * 100 
+                       ELSE 0 END) as avg_rate,
+                   COUNT(DISTINCT store_name) as store_count
+            FROM store_status
+            GROUP BY date(timestamp)
+            ORDER BY date DESC
+            LIMIT 30
+            """
+            results = conn.execute(query).fetchall()
+            data = [{
+                'date': r['date'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'store_count': r['store_count']
+            } for r in results]
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    @bp.route('/averages/monthly')
+    def get_monthly_averages():
+        """月次平均データを取得"""
+        try:
+            conn = get_db_connection()
+            query = """
+            SELECT strftime('%Y-%m', timestamp) as month,
+                   AVG(CASE WHEN working_staff > 0 
+                       THEN CAST((working_staff - active_staff) AS FLOAT) / working_staff * 100 
+                       ELSE 0 END) as avg_rate,
+                   COUNT(DISTINCT store_name) as store_count
+            FROM store_status
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month DESC
+            LIMIT 12
+            """
+            results = conn.execute(query).fetchall()
+            data = [{
+                'month': r['month'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'store_count': r['store_count']
+            } for r in results]
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    @bp.route('/averages/stores')
+    def get_store_averages():
+        """店舗ごとの平均データを取得"""
+        try:
+            conn = get_db_connection()
+            query = """
+            SELECT store_name,
+                   AVG(CASE WHEN working_staff > 0 
+                       THEN CAST((working_staff - active_staff) AS FLOAT) / working_staff * 100 
+                       ELSE 0 END) as avg_rate,
+                   COUNT(*) as sample_count
+            FROM store_status
+            GROUP BY store_name
+            HAVING sample_count >= 5
+            ORDER BY avg_rate DESC
+            LIMIT 50
+            """
+            results = conn.execute(query).fetchall()
+            data = [{
+                'store_name': r['store_name'],
+                'avg_rate': round(r['avg_rate'], 1),
+                'sample_count': r['sample_count']
+            } for r in results]
+            return jsonify({'status': 'success', 'data': data})
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
     @bp.route('/ranking/average')
     def get_store_ranking():
         """店舗別平均稼働率ランキングを取得"""
