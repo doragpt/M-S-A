@@ -1,4 +1,3 @@
-
 import pandas as pd
 from datetime import datetime
 import pytz
@@ -30,13 +29,13 @@ class ReportGenerator:
             raise ValueError("店舗データが空です")
 
         output_path = output_path.replace('.pdf', '.xlsx')
-        
+
         try:
             # 期間情報の取得
             dates = [store.get('timestamp') for store in stores_data if store.get('timestamp')]
             start_date = min(dates).strftime('%Y/%m/%d %H:%M') if dates else 'N/A'
             end_date = max(dates).strftime('%Y/%m/%d %H:%M') if dates else 'N/A'
-            
+
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
                 # サマリーシート
                 total_stores = len(stores_data)
@@ -70,11 +69,11 @@ class ReportGenerator:
                 }
                 summary_df = pd.DataFrame(summary_data)
                 summary_df.to_excel(writer, sheet_name='サマリー', index=False)
-                
+
                 # サマリーシートのスタイル設定
                 ws = writer.sheets['サマリー']
                 self._apply_sheet_styling(ws, summary_df)
-                
+
                 # 店舗詳細シート
                 store_details = []
                 for store in stores_data:
@@ -87,46 +86,49 @@ class ReportGenerator:
                         '勤務人数': store.get('working_staff', 0),
                         '即ヒメ数': store.get('active_staff', 0)
                     })
-                
+
                 details_df = pd.DataFrame(store_details)
                 details_df.to_excel(writer, sheet_name='店舗詳細', index=False)
-                
+
                 # 店舗詳細シートのスタイル設定
                 ws = writer.sheets['店舗詳細']
                 self._apply_sheet_styling(ws, details_df)
-                
+
                 # 稼働率の条件付き書式
                 self._apply_conditional_formatting(ws, details_df)
-                
+
                 # エリア分析シートの追加
                 self._create_area_analysis_sheet(writer, store_details)
-                
+
                 # 時間帯別分析シートの追加
                 self._create_time_analysis_sheet(writer, stores_data)
-                
+
                 # ジャンル分析シートの追加
                 self._create_genre_analysis_sheet(writer, store_details)
-                
+
                 # 全シートの幅調整と体裁整理
                 for sheet_name in writer.sheets:
                     ws = writer.sheets[sheet_name]
                     self._adjust_column_widths(ws)
                     self._apply_sheet_styling(ws, pd.DataFrame())  # 基本スタイルを適用
-                
-            return output_path
+
+                return output_path #Corrected Indentation
+
+        except Exception as e:
+            raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
 
     def _create_time_analysis_sheet(self, writer, stores_data):
         """時間帯別分析シートを作成"""
         if not stores_data:
             return
-            
+
         # 時間帯別にデータを集計
         time_stats = {}
         for store in stores_data:
             timestamp = store.get('timestamp')
             if not timestamp:
                 continue
-                
+
             hour = timestamp.hour
             if hour not in time_stats:
                 time_stats[hour] = {
@@ -135,12 +137,12 @@ class ReportGenerator:
                     'working_staff': 0,
                     'active_staff': 0
                 }
-            
+
             time_stats[hour]['store_count'] += 1
             time_stats[hour]['total_rate'] += store.get('rate', 0)
             time_stats[hour]['working_staff'] += store.get('working_staff', 0)
             time_stats[hour]['active_staff'] += store.get('active_staff', 0)
-        
+
         # データフレームに変換
         time_df = pd.DataFrame([
             {
@@ -153,30 +155,30 @@ class ReportGenerator:
             }
             for hour, stats in sorted(time_stats.items())
         ])
-        
+
         # 時間帯別シートに出力
         time_df.to_excel(writer, sheet_name='時間帯別分析', index=False)
         ws = writer.sheets['時間帯別分析']
-        
+
         # グラフの追加
         chart = BarChart()
         chart.title = "時間帯別平均稼働率"
         chart.y_axis.title = '稼働率 (%)'
         chart.x_axis.title = '時間帯'
-        
+
         data = Reference(ws, min_col=3, min_row=1, max_row=len(time_df)+1)
         cats = Reference(ws, min_col=1, min_row=2, max_row=len(time_df)+1)
-        
+
         chart.add_data(data, titles_from_data=True)
         chart.set_categories(cats)
         chart.style = 2
-        
+
         ws.add_chart(chart, "H2")
-        
+
     def _create_genre_analysis_sheet(self, writer, store_details):
         """ジャンル分析シートを作成"""
         df = pd.DataFrame(store_details)
-        
+
         # ジャンル別の集計
         genre_stats = df.groupby(['業種', 'ジャンル']).agg({
             '店舗名': 'count',
@@ -184,7 +186,7 @@ class ReportGenerator:
             '勤務人数': 'sum',
             '即ヒメ数': 'sum'
         }).round(1).reset_index()
-        
+
         # 列名を整理
         genre_stats.columns = [
             '業種',
@@ -196,37 +198,37 @@ class ReportGenerator:
             '総勤務人数',
             '総即ヒメ数'
         ]
-        
+
         # 稼働率でソート
         genre_stats = genre_stats.sort_values(['業種', '平均稼働率'], ascending=[True, False])
-        
+
         # シートに出力
         genre_stats.to_excel(writer, sheet_name='ジャンル分析', index=False)
         ws = writer.sheets['ジャンル分析']
 
-            return output_path
-        
-        except Exception as e:
-            raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
+        return output_path
+
+    except Exception as e:
+        raise Exception(f"レポート生成中にエラーが発生しました: {str(e)}")
 
     def _apply_sheet_styling(self, ws, df):
         """シートの基本スタイル適用"""
         # ヘッダー行の高さを調整
         ws.row_dimensions[1].height = 25
-        
+
         for col in range(1, len(df.columns) + 1):
             cell = ws.cell(row=1, column=col)
             cell.fill = self.header_fill
             cell.font = self.header_font
             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-            
+
             # 列幅の自動調整（最小幅15、最大幅40）
             column_letter = cell.column_letter
             max_length = max([len(str(cell.value))] + 
                            [len(str(r[col-1])) if r[col-1] else 0 for r in df.values])
             adjusted_width = min(max(15, (max_length + 2)), 40)
             ws.column_dimensions[column_letter].width = adjusted_width
-            
+
         for row in ws.iter_rows(min_row=2):
             for cell in row:
                 cell.border = self.border
@@ -246,7 +248,7 @@ class ReportGenerator:
     def _create_area_analysis_sheet(self, writer, store_details):
         """エリア分析シートを作成"""
         df = pd.DataFrame(store_details)
-        
+
         # エリア分析の集計
         area_stats = df.groupby('エリア').agg({
             '店舗名': 'count',
@@ -254,7 +256,7 @@ class ReportGenerator:
             '勤務人数': ['sum', 'mean'],
             '即ヒメ数': ['sum', 'mean']
         }).round(1).reset_index()
-        
+
         # 列名を分かりやすく変更
         area_stats.columns = [
             'エリア',
@@ -267,14 +269,14 @@ class ReportGenerator:
             '総即ヒメ数',
             '平均即ヒメ数'
         ]
-        
+
         # 稼働率でソート
         area_stats = area_stats.sort_values('平均稼働率', ascending=False)
-        
+
         # エリア分析シートに出力
         area_stats.to_excel(writer, sheet_name='エリア分析', index=False)
         ws = writer.sheets['エリア分析']
-        
+
         # 条件付き書式の追加（稼働率の列に色付け）
         rate_columns = ['平均稼働率', '最小稼働率', '最大稼働率']
         for col_idx, col_name in enumerate(rate_columns, start=3):
@@ -284,20 +286,20 @@ class ReportGenerator:
                 end_type='num', end_value=100, end_color='6BCB77'
             )
             ws.conditional_formatting.add(f"{chr(64+col_idx)}2:{chr(64+col_idx)}{len(area_stats)+1}", color_scale)
-        
+
         # グラフの追加
         chart = BarChart()
         chart.title = "エリア別平均稼働率"
         chart.y_axis.title = '稼働率 (%)'
         chart.x_axis.title = 'エリア'
-        
+
         data = Reference(ws, min_col=3, min_row=1, max_row=len(area_stats)+1)
         cats = Reference(ws, min_col=1, min_row=2, max_row=len(area_stats)+1)
-        
+
         chart.add_data(data, titles_from_data=True)
         chart.set_categories(cats)
         chart.style = 2
-        
+
         ws.add_chart(chart, "E2")
 
     def _adjust_column_widths(self, ws):
