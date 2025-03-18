@@ -8,7 +8,18 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
 # 日本語フォントの登録
-pdfmetrics.registerFont(UnicodeCIDFont('HeiseiKakuGo-W5'))
+from reportlab.pdfbase.ttfonts import TTFont
+import os
+
+FONT_PATH = "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf"
+if os.path.exists(FONT_PATH):
+    pdfmetrics.registerFont(TTFont('Japanese', FONT_PATH))
+else:
+    # フォールバック: 組み込みのHeiseiフォントを使用
+    pdfmetrics.registerFont(UnicodeCIDFont('HeiseiKakuGo-W5'))
+    
+# デフォルトエンコーディングをUTF-8に設定
+defaultEncoding = 'UTF-8'
 from datetime import datetime
 import pytz
 
