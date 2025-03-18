@@ -1,7 +1,7 @@
 import os
 import logging
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template, redirect, url_for
 
@@ -404,9 +404,9 @@ if __name__ == '__main__':
             from models import StoreStatus, StoreURL
             status_count = StoreStatus.query.count()
             url_count = StoreURL.query.count()
-            
+
             print(f"データベース状態確認: ステータス={status_count}件, URL={url_count}件")
-            
+
             if url_count == 0:
                 # サンプルURLを追加
                 sample_urls = [
@@ -418,11 +418,11 @@ if __name__ == '__main__':
                     db.session.add(new_url)
                 db.session.commit()
                 print("サンプルURLを追加しました")
-                
+
             if status_count == 0:
                 print("初期データ収集を開始します...")
                 scheduled_scrape()
-            
+
         except Exception as e:
             print(f"初期化エラー: {e}")
 
