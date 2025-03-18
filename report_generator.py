@@ -32,9 +32,29 @@ class ReportGenerator:
         output_path = output_path.replace('.pdf', '.xlsx')
         
         try:
+            # 期間情報の取得
+            dates = [store.get('timestamp') for store in stores_data if store.get('timestamp')]
+            start_date = min(dates).strftime('%Y/%m/%d %H:%M') if dates else 'N/A'
+            end_date = max(dates).strftime('%Y/%m/%d %H:%M') if dates else 'N/A'
+            
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
                 # サマリーシート
                 total_stores = len(stores_data)
+                total_working = sum(store.get('working_staff', 0) for store in stores_data)
+                total_active = sum(store.get('active_staff', 0) for store in stores_data)
+                avg_rate = sum(store.get('rate', 0) for store in stores_data) / total_stores if total_stores > 0 else 0
+
+                summary_data = {
+                    '項目': ['集計期間（開始）', '集計期間（終了）', '総店舗数', '総勤務人数', '総即ヒメ数', '平均稼働率'],
+                    '値': [
+                        start_date,
+                        end_date,
+                        total_stores,
+                        total_working,
+                        total_active,
+                        f"{avg_rate:.1f}%"
+                    ]
+                }
                 total_working = sum(store.get('working_staff', 0) for store in stores_data)
                 total_active = sum(store.get('active_staff', 0) for store in stores_data)
                 avg_rate = sum(store.get('rate', 0) for store in stores_data) / total_stores if total_stores > 0 else 0
@@ -93,11 +113,21 @@ class ReportGenerator:
 
     def _apply_sheet_styling(self, ws, df):
         """シートの基本スタイル適用"""
+        # ヘッダー行の高さを調整
+        ws.row_dimensions[1].height = 25
+        
         for col in range(1, len(df.columns) + 1):
             cell = ws.cell(row=1, column=col)
             cell.fill = self.header_fill
             cell.font = self.header_font
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            
+            # 列幅の自動調整（最小幅15、最大幅40）
+            column_letter = cell.column_letter
+            max_length = max([len(str(cell.value))] + 
+                           [len(str(r[col-1])) if r[col-1] else 0 for r in df.values])
+            adjusted_width = min(max(15, (max_length + 2)), 40)
+            ws.column_dimensions[column_letter].width = adjusted_width
             
         for row in ws.iter_rows(min_row=2):
             for cell in row:
