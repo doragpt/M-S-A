@@ -47,8 +47,17 @@ app.config.update(
     SESSION_FILE_DIR='./flask_session',
     SESSION_FILE_THRESHOLD=500,
     SESSION_FILE_MODE=384,  # 0o600
-    SESSION_COOKIE_PATH='/'
+    SESSION_COOKIE_PATH='/',
+    # エンコーディング設定を追加
+    SESSION_USE_SIGNER=True,
+    SESSION_ENCODING='utf-8'
 )
+
+# Werkzeugのエンコーディング設定を上書き
+from werkzeug.urls import url_quote
+def patched_url_quote(string, charset='utf-8', *args, **kwargs):
+    return url_quote(string, charset=charset, *args, **kwargs)
+werkzeug.urls.url_quote = patched_url_quote
 
 # セッションディレクトリの作成
 os.makedirs('./flask_session', exist_ok=True)
