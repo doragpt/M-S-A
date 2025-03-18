@@ -113,6 +113,8 @@ class ReportGenerator:
                     self._adjust_column_widths(ws)
                     self._apply_sheet_styling(ws, pd.DataFrame())  # 基本スタイルを適用
                 
+            return output_path
+
     def _create_time_analysis_sheet(self, writer, stores_data):
         """時間帯別分析シートを作成"""
         if not stores_data:
