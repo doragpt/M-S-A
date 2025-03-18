@@ -22,3 +22,5 @@ flask-session
 flask-socketio
 pytz
 reportlab
+openpyxl
+pandas
