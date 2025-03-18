@@ -101,10 +101,106 @@ class ReportGenerator:
                 # エリア分析シートの追加
                 self._create_area_analysis_sheet(writer, store_details)
                 
-                # 全シートの幅調整
+                # 時間帯別分析シートの追加
+                self._create_time_analysis_sheet(writer, stores_data)
+                
+                # ジャンル分析シートの追加
+                self._create_genre_analysis_sheet(writer, store_details)
+                
+                # 全シートの幅調整と体裁整理
                 for sheet_name in writer.sheets:
                     ws = writer.sheets[sheet_name]
                     self._adjust_column_widths(ws)
+                    self._apply_sheet_styling(ws, pd.DataFrame())  # 基本スタイルを適用
+                
+    def _create_time_analysis_sheet(self, writer, stores_data):
+        """時間帯別分析シートを作成"""
+        if not stores_data:
+            return
+            
+        # 時間帯別にデータを集計
+        time_stats = {}
+        for store in stores_data:
+            timestamp = store.get('timestamp')
+            if not timestamp:
+                continue
+                
+            hour = timestamp.hour
+            if hour not in time_stats:
+                time_stats[hour] = {
+                    'store_count': 0,
+                    'total_rate': 0,
+                    'working_staff': 0,
+                    'active_staff': 0
+                }
+            
+            time_stats[hour]['store_count'] += 1
+            time_stats[hour]['total_rate'] += store.get('rate', 0)
+            time_stats[hour]['working_staff'] += store.get('working_staff', 0)
+            time_stats[hour]['active_staff'] += store.get('active_staff', 0)
+        
+        # データフレームに変換
+        time_df = pd.DataFrame([
+            {
+                '時間帯': f'{hour}:00',
+                '対象店舗数': stats['store_count'],
+                '平均稼働率': round(stats['total_rate'] / stats['store_count'], 1) if stats['store_count'] > 0 else 0,
+                '総勤務人数': stats['working_staff'],
+                '総即ヒメ数': stats['active_staff'],
+                '平均待機率': round(stats['active_staff'] / stats['working_staff'] * 100, 1) if stats['working_staff'] > 0 else 0
+            }
+            for hour, stats in sorted(time_stats.items())
+        ])
+        
+        # 時間帯別シートに出力
+        time_df.to_excel(writer, sheet_name='時間帯別分析', index=False)
+        ws = writer.sheets['時間帯別分析']
+        
+        # グラフの追加
+        chart = BarChart()
+        chart.title = "時間帯別平均稼働率"
+        chart.y_axis.title = '稼働率 (%)'
+        chart.x_axis.title = '時間帯'
+        
+        data = Reference(ws, min_col=3, min_row=1, max_row=len(time_df)+1)
+        cats = Reference(ws, min_col=1, min_row=2, max_row=len(time_df)+1)
+        
+        chart.add_data(data, titles_from_data=True)
+        chart.set_categories(cats)
+        chart.style = 2
+        
+        ws.add_chart(chart, "H2")
+        
+    def _create_genre_analysis_sheet(self, writer, store_details):
+        """ジャンル分析シートを作成"""
+        df = pd.DataFrame(store_details)
+        
+        # ジャンル別の集計
+        genre_stats = df.groupby(['業種', 'ジャンル']).agg({
+            '店舗名': 'count',
+            '稼働率': ['mean', 'min', 'max'],
+            '勤務人数': 'sum',
+            '即ヒメ数': 'sum'
+        }).round(1).reset_index()
+        
+        # 列名を整理
+        genre_stats.columns = [
+            '業種',
+            'ジャンル',
+            '店舗数',
+            '平均稼働率',
+            '最小稼働率',
+            '最大稼働率',
+            '総勤務人数',
+            '総即ヒメ数'
+        ]
+        
+        # 稼働率でソート
+        genre_stats = genre_stats.sort_values(['業種', '平均稼働率'], ascending=[True, False])
+        
+        # シートに出力
+        genre_stats.to_excel(writer, sheet_name='ジャンル分析', index=False)
+        ws = writer.sheets['ジャンル分析']
 
             return output_path
             
@@ -148,17 +244,44 @@ class ReportGenerator:
     def _create_area_analysis_sheet(self, writer, store_details):
         """エリア分析シートを作成"""
         df = pd.DataFrame(store_details)
+        
+        # エリア分析の集計
         area_stats = df.groupby('エリア').agg({
             '店舗名': 'count',
-            '稼働率': 'mean',
-            '勤務人数': 'sum'
-        }).reset_index()
+            '稼働率': ['mean', 'min', 'max'],
+            '勤務人数': ['sum', 'mean'],
+            '即ヒメ数': ['sum', 'mean']
+        }).round(1).reset_index()
         
-        # 列名を変更
-        area_stats.columns = ['エリア', '店舗数', '平均稼働率', '総勤務人数']
+        # 列名を分かりやすく変更
+        area_stats.columns = [
+            'エリア',
+            '店舗数',
+            '平均稼働率',
+            '最小稼働率',
+            '最大稼働率',
+            '総勤務人数',
+            '平均勤務人数',
+            '総即ヒメ数',
+            '平均即ヒメ数'
+        ]
         
+        # 稼働率でソート
+        area_stats = area_stats.sort_values('平均稼働率', ascending=False)
+        
+        # エリア分析シートに出力
         area_stats.to_excel(writer, sheet_name='エリア分析', index=False)
         ws = writer.sheets['エリア分析']
+        
+        # 条件付き書式の追加（稼働率の列に色付け）
+        rate_columns = ['平均稼働率', '最小稼働率', '最大稼働率']
+        for col_idx, col_name in enumerate(rate_columns, start=3):
+            color_scale = ColorScaleRule(
+                start_type='num', start_value=0, start_color='FF6B6B',
+                mid_type='num', mid_value=50, mid_color='FFD93D',
+                end_type='num', end_value=100, end_color='6BCB77'
+            )
+            ws.conditional_formatting.add(f"{chr(64+col_idx)}2:{chr(64+col_idx)}{len(area_stats)+1}", color_scale)
         
         # グラフの追加
         chart = BarChart()
