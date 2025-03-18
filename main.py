@@ -37,9 +37,14 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 print(f"テンプレートディレクトリ: {template_dir}")
 print(f"静的ファイルディレクトリ: {static_dir}")
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
-app.config['SESSION_COOKIE_PATH'] = '/'
-app.config['SESSION_COOKIE_SECURE'] = False
-app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config.update(
+    SESSION_COOKIE_PATH='/',
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=31),
+    SESSION_COOKIE_NAME='msa_session'
+)
 
 # データベース設定
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
