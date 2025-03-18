@@ -597,19 +597,33 @@ def register_api_routes(bp):
                 store_dict['rate'] = rate
                 stores_list.append(store_dict)
 
-            # レポート生成
-            from report_generator import ReportGenerator
-            generator = ReportGenerator()
-            report_path = "/tmp/all_stores_report.pdf"
-            generator.generate_all_stores_report(stores_list, report_path)
+            try:
+                # レポート生成
+                from report_generator import ReportGenerator
+                generator = ReportGenerator()
+                report_path = "/tmp/all_stores_report.pdf"
+                
+                # レポートディレクトリの存在確認
+                os.makedirs(os.path.dirname(report_path), exist_ok=True)
+                
+                generator.generate_all_stores_report(stores_list, report_path)
 
-            # レポートの送信
-            return send_file(
-                report_path,
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f"all_stores_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-            )
+                if not os.path.exists(report_path):
+                    raise FileNotFoundError("PDFファイルの生成に失敗しました")
+
+                # レポートの送信
+                return send_file(
+                    report_path,
+                    mimetype='application/pdf',
+                    as_attachment=True,
+                    download_name=f"all_stores_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                )
+            except Exception as e:
+                logger.error(f"PDFレポート生成エラー: {str(e)}")
+                return jsonify({
+                    'status': 'error',
+                    'message': f'PDFレポートの生成に失敗しました: {str(e)}'
+                }), 500
 
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500

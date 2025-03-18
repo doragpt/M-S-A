@@ -21,3 +21,4 @@ pytz
 flask-session
 flask-socketio
 pytz
+reportlab
