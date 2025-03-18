@@ -20,8 +20,12 @@ def get_db_connection():
     logger = logging.getLogger('app')
 
     try:
-        # detect_types=sqlite3.PARSE_DECLTYPESを追加してdatetimeを適切に処理
-        conn = sqlite3.connect('store_data.db', detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        conn = sqlite3.connect(
+            'store_data.db',
+            detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES,
+            timeout=20,
+            isolation_level=None  # 自動コミットモード
+        )
         conn.row_factory = sqlite3.Row
 
         # datetime型のアダプターとコンバーターを登録

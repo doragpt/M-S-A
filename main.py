@@ -38,12 +38,12 @@ print(f"テンプレートディレクトリ: {template_dir}")
 print(f"静的ファイルディレクトリ: {static_dir}")
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
 app.config.update(
-    SESSION_COOKIE_PATH='/',
+    SESSION_COOKIE_NAME='msa_session',
     SESSION_COOKIE_SECURE=False,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=timedelta(days=31),
-    SESSION_COOKIE_NAME='msa_session'
+    SESSION_TYPE='filesystem'
 )
 
 # データベース設定
