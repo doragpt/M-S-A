@@ -37,6 +37,9 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 print(f"テンプレートディレクトリ: {template_dir}")
 print(f"静的ファイルディレクトリ: {static_dir}")
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
+app.config['SESSION_COOKIE_PATH'] = '/'
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # データベース設定
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
