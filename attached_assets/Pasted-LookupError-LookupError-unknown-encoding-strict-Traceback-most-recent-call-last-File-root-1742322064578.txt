@@ -1,0 +1,52 @@
+LookupError
+LookupError: unknown encoding: strict
+
+Traceback (most recent call last)
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2486, in __call__
+return self.wsgi_app(environ, start_response)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 43, in __call__
+return super(_SocketIOMiddleware, self).__call__(environ,
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^Open an interactive python shell in this frame
+File "/root/M-S-A/venv/lib/python3.12/site-packages/engineio/middleware.py", line 74, in __call__
+return self.wsgi_app(environ, start_response)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2466, in wsgi_app
+response = self.handle_exception(e)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2463, in wsgi_app
+response = self.full_dispatch_request()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1761, in full_dispatch_request
+return self.finalize_request(rv)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 1782, in finalize_request
+response = self.process_response(response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/app.py", line 2278, in process_response
+self.session_interface.save_session(self, ctx.session, response)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/flask/sessions.py", line 410, in save_session
+response.set_cookie(
+^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/sansio/response.py", line 234, in set_cookie
+dump_cookie(
+^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/http.py", line 1212, in dump_cookie
+path = iri_to_uri(path, charset)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/root/M-S-A/venv/lib/python3.12/site-packages/werkzeug/urls.py", line 813, in iri_to_uri
+path = url_quote(iri.path, charset, errors, _to_uri_safe)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/usr/lib/python3.12/urllib/parse.py", line 917, in quote
+string = string.encode(encoding, errors)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LookupError: unknown encoding: strict
+The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it. For code execution mouse-over the frame you want to debug and click on the console icon on the right side.
+
+You can execute arbitrary Python code in the stack frames and there are some extra helpers available for introspection:
+
+dump() shows all variables in the frame
+dump(obj) dumps all that's known about the object
+Brought to you by DON'T PANIC, your friendly Werkzeug powered traceback interpreter.
