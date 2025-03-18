@@ -119,10 +119,13 @@ class ReportGenerator:
         """エリア分析シートを作成"""
         df = pd.DataFrame(store_details)
         area_stats = df.groupby('エリア').agg({
-            '店舗数': 'count',
-            '平均稼働率': lambda x: x['稼働率'].mean(),
-            '総勤務人数': lambda x: x['勤務人数'].sum()
+            '店舗名': 'count',
+            '稼働率': 'mean',
+            '勤務人数': 'sum'
         }).reset_index()
+        
+        # 列名を変更
+        area_stats.columns = ['エリア', '店舗数', '平均稼働率', '総勤務人数']
         
         area_stats.to_excel(writer, sheet_name='エリア分析', index=False)
         ws = writer.sheets['エリア分析']
