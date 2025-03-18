@@ -55,9 +55,9 @@ app.config.update(
 
 # Werkzeugのエンコーディング設定を上書き
 from urllib.parse import quote
-def patched_url_quote(string, charset=None, safe='/:'):
+def patched_url_quote(string, charset='utf-8', safe='/:'):
     if isinstance(string, bytes):
-        string = string.decode('utf-8')
+        string = string.decode(charset)
     return quote(string, safe=safe)
 werkzeug.urls.url_quote = patched_url_quote
 
