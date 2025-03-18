@@ -11,15 +11,15 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
 import os
 
-FONT_PATH = "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf"
+FONT_PATH = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
 if os.path.exists(FONT_PATH):
-    pdfmetrics.registerFont(TTFont('Japanese', FONT_PATH))
+    pdfmetrics.registerFont(TTFont('IPAGothic', FONT_PATH))
 else:
     # フォールバック: 組み込みのHeiseiフォントを使用
     pdfmetrics.registerFont(UnicodeCIDFont('HeiseiKakuGo-W5'))
-    
-# デフォルトエンコーディングをUTF-8に設定
-defaultEncoding = 'UTF-8'
+
+# スタイル設定の更新
+default_font = 'IPAGothic' if os.path.exists(FONT_PATH) else 'HeiseiKakuGo-W5'
 from datetime import datetime
 import pytz
 
@@ -47,7 +47,8 @@ class ReportGenerator:
             parent=self.styles['Heading1'],
             fontSize=24,
             spaceAfter=30,
-            fontName='HeiseiKakuGo-W5'
+            fontName=default_font,
+            encoding='utf-8'
         )
         elements.append(Paragraph("全店舗稼働状況レポート", title_style))
 
