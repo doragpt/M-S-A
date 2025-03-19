@@ -4212,10 +4212,18 @@
     // 人気店舗ランキングチャートの更新
     function updatePopularRankingChart(rankingData) {
       try {
-        const ctx = document.getElementById('popularRankingChart').getContext('2d');
+        // 既存のチャートを破棄して新しいキャンバスを作成
+        if (charts.popularRanking) {
+          charts.popularRanking.destroy();
+          charts.popularRanking = null;
+        }
+
+        const existingCanvas = document.getElementById('popularRankingChart');
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'popularRankingChart';
+        existingCanvas.parentNode.replaceChild(newCanvas, existingCanvas);
         
-        // 既存のチャートを破棄
-        if (charts.popularRanking) charts.popularRanking.destroy();
+        const ctx = newCanvas.getContext('2d');
         
         // データが配列でない場合は処理を中止
         if (!Array.isArray(rankingData)) {
