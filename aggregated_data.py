@@ -51,9 +51,13 @@ class AggregatedData:
                 func.avg(StoreStatus.total_staff).label('avg_total_staff'),
                 func.avg(
                     func.case(
-                        [(StoreStatus.total_staff > 0, 
-                          StoreStatus.working_staff * 100.0 / StoreStatus.total_staff)],
-                        else_=0
+                        [(and_(
+                            StoreStatus.total_staff > 0,
+                            StoreStatus.shift_time != '',  # シフト時間が設定されている
+                            StoreStatus.working_staff > 0  # 勤務中のスタッフがいる
+                        ), 
+                        StoreStatus.working_staff * 100.0 / StoreStatus.total_staff)],
+                        else_=None
                     )
                 ).label('avg_operation_rate')
             ).filter(
