@@ -12,13 +12,13 @@ import gc
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
 # 8GB/6コアVPSのリソースを最適活用（コア数×2+2）
-MAX_CONCURRENT_TASKS = 14  # コア数×2+2の並列処理数（8GB/6コアに最適化）
+MAX_CONCURRENT_TASKS = 10  # コア数×2+2の並列処理数（8GB/6コアに最適化）
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
 PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に延長
 # メモリ管理
-FORCE_GC_AFTER_STORES = 40  # 40店舗処理後に強制GC実行（メモリ節約）
+FORCE_GC_AFTER_STORES = 20  # 20店舗処理後に強制GC実行（メモリ節約）
 
 # ロギングレベルを設定
 import logging
