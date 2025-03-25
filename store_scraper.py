@@ -560,10 +560,31 @@ async def scrape_multiple_stores(urls, max_workers=None):
             processed_count += batch_size_actual
             success_rate = len(valid_results) / batch_size_actual * 100 if batch_size_actual > 0 else 0
             
+            # 総進捗率の計算
+            total_progress = processed_count / total_urls * 100 if total_urls > 0 else 0
+            
             # バッチ処理時間
             batch_duration = time.time() - batch_start
+            logger.info(f"★★★ スクレイピング進捗: {processed_count}/{total_urls}件 ({total_progress:.1f}%) ★★★")
             logger.info(f"バッチ完了: {len(valid_results)}/{batch_size_actual}件成功 ({success_rate:.1f}%), "
-                       f"処理時間: {batch_duration:.1f}秒, 総進捗: {processed_count}/{total_urls}件")
+                       f"処理時間: {batch_duration:.1f}秒")
+            
+            # 残り時間の推定（処理済みのデータがある場合のみ）
+            if processed_count > 0 and total_urls > processed_count:
+                elapsed_time = time.time() - batch_start  # このバッチにかかった時間
+                avg_time_per_item = elapsed_time / batch_size_actual  # 1アイテムあたりの平均時間
+                remaining_items = total_urls - processed_count  # 残りのアイテム数
+                estimated_time = avg_time_per_item * remaining_items  # 残り時間の推定
+                
+                # 時間の表示を整形
+                if estimated_time < 60:
+                    time_str = f"{estimated_time:.1f}秒"
+                elif estimated_time < 3600:
+                    time_str = f"{estimated_time / 60:.1f}分"
+                else:
+                    time_str = f"{estimated_time / 3600:.1f}時間"
+                    
+                logger.info(f"推定残り時間: {time_str} (進捗率: {total_progress:.1f}%)")
             
             # バッチ処理間の適応的スリープ（サーバー負荷軽減とブロック回避）
             # より長めのスリープを設定

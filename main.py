@@ -182,7 +182,7 @@ def scheduled_scrape():
             # 明示的なガベージコレクション
             gc.collect()
 
-            logger.info(f"スクレイピング完了: 取得件数 {len(results)}")
+            logger.info(f"★★★ スクレイピング完了: 合計 {len(results)}件取得 ★★★")
 
             # バッチでDBに保存（メモリ効率化）
             record_update_count = 0
