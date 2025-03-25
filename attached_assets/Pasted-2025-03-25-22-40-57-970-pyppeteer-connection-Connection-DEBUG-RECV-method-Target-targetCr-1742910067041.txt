@@ -1,0 +1,21 @@
+2025-03-25 22:40:57,970 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"C714A5C586A468A020378AF371673A73","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
+2025-03-25 22:40:57,975 - websockets.client - DEBUG - < TEXT '{"id":5404,"result":{"targetId":"C714A5C586A468A020378AF371673A73"}}' [68 bytes]
+2025-03-25 22:40:57,975 - pyppeteer.connection.Connection - DEBUG - RECV: {"id":5404,"result":{"targetId":"C714A5C586A468A020378AF371673A73"}}
+2025-03-25 22:40:57,976 - websockets.client - DEBUG - < TEXT '{"method":"Target.targetCreated","params":{"tar...767B1BFC91F64DE0505"}}}' [234 bytes]
+2025-03-25 22:40:57,976 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"F5671611ED951DC3D9C16E2B1F503AB6","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
+2025-03-25 22:40:57,981 - websockets.client - DEBUG - < TEXT '{"id":5405,"result":{"targetId":"F5671611ED951DC3D9C16E2B1F503AB6"}}' [68 bytes]
+2025-03-25 22:40:57,981 - pyppeteer.connection.Connection - DEBUG - RECV: {"id":5405,"result":{"targetId":"F5671611ED951DC3D9C16E2B1F503AB6"}}
+2025-03-25 22:40:57,981 - websockets.client - DEBUG - < TEXT '{"method":"Target.targetCreated","params":{"tar...767B1BFC91F64DE0505"}}}' [234 bytes]
+2025-03-25 22:40:57,981 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"C3E77EE9D2F1EBB96F5862B46CB893D6","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
+2025-03-25 22:40:57,986 - websockets.client - DEBUG - < TEXT '{"id":5406,"result":{"targetId":"C3E77EE9D2F1EBB96F5862B46CB893D6"}}' [68 bytes]
+2025-03-25 22:40:57,987 - pyppeteer.connection.Connection - DEBUG - RECV: {"id":5406,"result":{"targetId":"C3E77EE9D2F1EBB96F5862B46CB893D6"}}
+2025-03-25 22:40:57,987 - websockets.client - DEBUG - < TEXT '{"method":"Target.targetCreated","params":{"tar...767B1BFC91F64DE0505"}}}' [234 bytes]
+2025-03-25 22:40:57,987 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"CBBBD0F9D48392457AC92A253BF29A45","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
+2025-03-25 22:40:57,992 - websockets.client - DEBUG - < TEXT '{"id":5407,"result":{"targetId":"CBBBD0F9D48392457AC92A253BF29A45"}}' [68 bytes]
+2025-03-25 22:40:57,992 - pyppeteer.connection.Connection - DEBUG - RECV: {"id":5407,"result":{"targetId":"CBBBD0F9D48392457AC92A253BF29A45"}}
+2025-03-25 22:40:57,993 - websockets.client - DEBUG - < TEXT '{"method":"Target.targetCreated","params":{"tar...767B1BFC91F64DE0505"}}}' [234 bytes]
+2025-03-25 22:40:57,993 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"B0A5B15CE4C75A30B34B911320A9114A","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
+2025-03-25 22:40:57,998 - websockets.client - DEBUG - < TEXT '{"id":5408,"result":{"targetId":"B0A5B15CE4C75A30B34B911320A9114A"}}' [68 bytes]
+2025-03-25 22:40:57,998 - pyppeteer.connection.Connection - DEBUG - RECV: {"id":5408,"result":{"targetId":"B0A5B15CE4C75A30B34B911320A9114A"}}
+2025-03-25 22:40:57,998 - websockets.client - DEBUG - < TEXT '{"method":"Target.targetCreated","params":{"tar...767B1BFC91F64DE0505"}}}' [234 bytes]
+2025-03-25 22:40:57,999 - pyppeteer.connection.Connection - DEBUG - RECV: {"method":"Target.targetCreated","params":{"targetInfo":{"targetId":"27A845B9F9C68D63D1EE54DA456953E3","type":"page","title":"","url":"","attached":false,"canAccessOpener":false,"browserContextId":"955F284FD4C45767B1BFC91F64DE0505"}}}
