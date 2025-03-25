@@ -1,0 +1,521 @@
+(venv) root@vm-1d842382-96:~/M-S-A# git fetch origin main
+scraper.py speed_up_script.pyremote: Enumerating objects: 7, done.
+remote: Counting objects: 100% (7/7), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 4 (delta 3), reused 4 (delta 3), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 768 bytes | 768.00 KiB/s, done.
+From https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+   169a5d0..60a8a79  main       -> origin/main
+(venv) root@vm-1d842382-96:~/M-S-A# git checkout origin/main -- main.py store_scraper.py speed_up_script.py
+(venv) root@vm-1d842382-96:~/M-S-A# pip install sqlalchemy flask-sqlalchemy pytz bs4 pyppeteer flask-caching flask-socketio apscheduler psutil
+Requirement already satisfied: sqlalchemy in ./venv/lib/python3.12/site-packages (2.0.39)
+Requirement already satisfied: flask-sqlalchemy in ./venv/lib/python3.12/site-packages (3.1.1)
+Requirement already satisfied: pytz in ./venv/lib/python3.12/site-packages (2025.2)
+Requirement already satisfied: bs4 in ./venv/lib/python3.12/site-packages (0.0.2)
+Requirement already satisfied: pyppeteer in ./venv/lib/python3.12/site-packages (2.0.0)
+Requirement already satisfied: flask-caching in ./venv/lib/python3.12/site-packages (2.3.1)
+Requirement already satisfied: flask-socketio in ./venv/lib/python3.12/site-packages (5.5.1)
+Requirement already satisfied: apscheduler in ./venv/lib/python3.12/site-packages (3.11.0)
+Requirement already satisfied: psutil in ./venv/lib/python3.12/site-packages (7.0.0)
+Requirement already satisfied: greenlet!=0.4.17 in ./venv/lib/python3.12/site-packages (from sqlalchemy) (3.1.1)
+Requirement already satisfied: typing-extensions>=4.6.0 in ./venv/lib/python3.12/site-packages (from sqlalchemy) (4.12.2)
+Requirement already satisfied: flask>=2.2.5 in ./venv/lib/python3.12/site-packages (from flask-sqlalchemy) (3.1.0)
+Requirement already satisfied: beautifulsoup4 in ./venv/lib/python3.12/site-packages (from bs4) (4.13.3)
+Requirement already satisfied: appdirs<2.0.0,>=1.4.3 in ./venv/lib/python3.12/site-packages (from pyppeteer) (1.4.4)
+Requirement already satisfied: certifi>=2023 in ./venv/lib/python3.12/site-packages (from pyppeteer) (2025.1.31)
+Requirement already satisfied: importlib-metadata>=1.4 in ./venv/lib/python3.12/site-packages (from pyppeteer) (8.6.1)
+Requirement already satisfied: pyee<12.0.0,>=11.0.0 in ./venv/lib/python3.12/site-packages (from pyppeteer) (11.1.1)
+Requirement already satisfied: tqdm<5.0.0,>=4.42.1 in ./venv/lib/python3.12/site-packages (from pyppeteer) (4.67.1)
+Requirement already satisfied: urllib3<2.0.0,>=1.25.8 in ./venv/lib/python3.12/site-packages (from pyppeteer) (1.26.20)
+Requirement already satisfied: websockets<11.0,>=10.0 in ./venv/lib/python3.12/site-packages (from pyppeteer) (10.4)
+Requirement already satisfied: cachelib>=0.9.0 in ./venv/lib/python3.12/site-packages (from flask-caching) (0.13.0)
+Requirement already satisfied: python-socketio>=5.12.0 in ./venv/lib/python3.12/site-packages (from flask-socketio) (5.12.1)
+Requirement already satisfied: tzlocal>=3.0 in ./venv/lib/python3.12/site-packages (from apscheduler) (5.3.1)
+Requirement already satisfied: Werkzeug>=3.1 in ./venv/lib/python3.12/site-packages (from flask>=2.2.5->flask-sqlalchemy) (3.1.3)
+Requirement already satisfied: Jinja2>=3.1.2 in ./venv/lib/python3.12/site-packages (from flask>=2.2.5->flask-sqlalchemy) (3.1.6)
+Requirement already satisfied: itsdangerous>=2.2 in ./venv/lib/python3.12/site-packages (from flask>=2.2.5->flask-sqlalchemy) (2.2.0)
+Requirement already satisfied: click>=8.1.3 in ./venv/lib/python3.12/site-packages (from flask>=2.2.5->flask-sqlalchemy) (8.1.8)
+Requirement already satisfied: blinker>=1.9 in ./venv/lib/python3.12/site-packages (from flask>=2.2.5->flask-sqlalchemy) (1.9.0)
+Requirement already satisfied: zipp>=3.20 in ./venv/lib/python3.12/site-packages (from importlib-metadata>=1.4->pyppeteer) (3.21.0)
+Requirement already satisfied: bidict>=0.21.0 in ./venv/lib/python3.12/site-packages (from python-socketio>=5.12.0->flask-socketio) (0.23.1)
+Requirement already satisfied: python-engineio>=4.11.0 in ./venv/lib/python3.12/site-packages (from python-socketio>=5.12.0->flask-socketio) (4.11.2)
+Requirement already satisfied: soupsieve>1.2 in ./venv/lib/python3.12/site-packages (from beautifulsoup4->bs4) (2.6)
+Requirement already satisfied: MarkupSafe>=2.0 in ./venv/lib/python3.12/site-packages (from Jinja2>=3.1.2->flask>=2.2.5->flask-sqlalchemy) (3.0.2)
+Requirement already satisfied: simple-websocket>=0.10.0 in ./venv/lib/python3.12/site-packages (from python-engineio>=4.11.0->python-socketio>=5.12.0->flask-socketio) (1.1.0)
+Requirement already satisfied: wsproto in ./venv/lib/python3.12/site-packages (from simple-websocket>=0.10.0->python-engineio>=4.11.0->python-socketio>=5.12.0->flask-socketio) (1.2.0)
+Requirement already satisfied: h11<1,>=0.9.0 in ./venv/lib/python3.12/site-packages (from wsproto->simple-websocket>=0.10.0->python-engineio>=4.11.0->python-socketio>=5.12.0->flask-socketio) (0.14.0)
+(venv) root@vm-1d842382-96:~/M-S-A# git fetch origin main
+y store_scraper.py speed_up_script.pyremote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 8 (delta 5), reused 8 (delta 5), pack-reused 0 (from 0)
+Unpacking objects: 100% (8/8), 2.29 KiB | 1.14 MiB/s, done.
+From https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+   60a8a79..c7dda8a  main       -> origin/main
+(venv) root@vm-1d842382-96:~/M-S-A# git checkout origin/main -- main.py store_scraper.py speed_up_script.py
+(venv) root@vm-1d842382-96:~/M-S-A# git fetch origin main
+y store_scraper.py speed_up_script.pyFrom https://github.com/doragpt/M-S-A
+ * branch            main       -> FETCH_HEAD
+(venv) root@vm-1d842382-96:~/M-S-A# git checkout origin/main -- main.py store_scraper.py speed_up_script.py
+(venv) root@vm-1d842382-96:~/M-S-A# kill -9 $(lsof -t -i:5000)
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+(venv) root@vm-1d842382-96:~/M-S-A#
+(venv) root@vm-1d842382-96:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-25 22:45:03,280 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:45:03,282 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:45:03,283 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-25 22:45:03,283 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-25 22:45:03,283 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-25 22:45:03 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=0件, URL=803件
+初期データ収集を開始します...
+2025-03-25 22:45:03,296 - __main__ - INFO - 定期スクレイピングを開始します
+2025-03-25 22:45:03,302 - __main__ - INFO - スクレイピング開始: 対象店舗数 803
+2025-03-25 22:45:03,302 - __main__ - INFO - スクレイピング前メモリ: 使用率=84.0%, 利用可能=1917.5MB
+2025-03-25 22:45:03,302 - app - INFO - スクレイピングを開始します（店舗数: 803、並列実行数: 3）
+2025-03-25 22:45:03,403 - app - INFO - システム情報: CPU=6コア, メモリ使用率=84.0%, 利用可能メモリ=1913.6MB
+2025-03-25 22:45:03,403 - app - INFO - 最適化設定: ワーカー数=2, バッチサイズ=40, ワーカーあたりのURL数=20
+2025-03-25 22:45:03,567 - app - INFO - バッチ処理中: 1〜40店舗 / 合計803店舗
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+2025-03-25 22:45:03,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+2025-03-25 22:45:03,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230105/act/
+2025-03-25 22:45:04,038 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,040 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/tia/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,041 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,041 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,041 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,042 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,042 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,042 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,042 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,042 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,043 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,043 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,043 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,043 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,043 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,044 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,044 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,044 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,044 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,044 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,045 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,045 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,045 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1315/A131503/episode/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/gunma/A1002/A100203/phantom/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,046 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/gifu/A2101/A210101/hime/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1201/A120101/zero/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/aichi/A2301/A230103/elle/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,047 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,048 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/aichi/A2301/A230105/act/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,554 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+2025-03-25 22:45:04,565 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+2025-03-25 22:45:04,578 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-25 22:45:04,593 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,611 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,615 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,619 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+2025-03-25 22:45:04,654 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,677 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+2025-03-25 22:45:04,699 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+2025-03-25 22:45:04,717 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,737 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/aichi/A2301/A230103/elle/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,821 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+2025-03-25 22:45:04,827 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+2025-03-25 22:45:04,857 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+2025-03-25 22:45:04,861 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+2025-03-25 22:45:04,866 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,867 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,888 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230105/act/
+2025-03-25 22:45:04,899 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,905 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:04,922 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/aichi/A2301/A230105/act/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,107 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+2025-03-25 22:45:05,138 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+2025-03-25 22:45:05,147 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,172 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1201/A120101/zero/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,173 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+2025-03-25 22:45:05,177 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+2025-03-25 22:45:05,206 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+2025-03-25 22:45:05,211 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+2025-03-25 22:45:05,211 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/tia/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,231 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,248 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1315/A131503/episode/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,254 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,259 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+2025-03-25 22:45:05,276 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+2025-03-25 22:45:05,361 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+2025-03-25 22:45:05,377 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+2025-03-25 22:45:05,388 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+2025-03-25 22:45:05,393 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+2025-03-25 22:45:05,419 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+2025-03-25 22:45:05,443 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+2025-03-25 22:45:05,448 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+2025-03-25 22:45:05,453 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+2025-03-25 22:45:05,475 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,475 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,477 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-25 22:45:05,504 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+2025-03-25 22:45:05,560 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,561 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,562 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,562 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,562 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,563 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/gunma/A1002/A100203/phantom/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,563 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,564 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,565 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/gifu/A2101/A210101/hime/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,566 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,629 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+2025-03-25 22:45:05,641 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+2025-03-25 22:45:05,646 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,654 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,702 - app - INFO - スクレイピング開始: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+2025-03-25 22:45:05,710 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+2025-03-25 22:45:05,722 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,725 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,733 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+2025-03-25 22:45:05,746 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,782 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+2025-03-25 22:45:05,795 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+2025-03-25 22:45:05,799 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,802 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+2025-03-25 22:45:05,813 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,815 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/aichi/A2301/A230103/elle/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,888 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+2025-03-25 22:45:05,899 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,932 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+2025-03-25 22:45:05,946 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:05,977 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+2025-03-25 22:45:05,984 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+2025-03-25 22:45:05,989 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+2025-03-25 22:45:05,996 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,001 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,003 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,013 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+2025-03-25 22:45:06,021 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+2025-03-25 22:45:06,026 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+2025-03-25 22:45:06,037 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,039 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+2025-03-25 22:45:06,043 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,043 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,054 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,080 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+2025-03-25 22:45:06,095 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,105 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230105/act/
+2025-03-25 22:45:06,118 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/aichi/A2301/A230105/act/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,142 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-25 22:45:06,157 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,251 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+2025-03-25 22:45:06,262 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/gunma/A1002/A100203/phantom/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,282 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+2025-03-25 22:45:06,296 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+2025-03-25 22:45:06,431 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,432 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-25 22:45:06,449 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,509 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+2025-03-25 22:45:06,524 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/tia/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,549 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+2025-03-25 22:45:06,562 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,595 - app - INFO - スクレイピング開始: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+2025-03-25 22:45:06,602 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+2025-03-25 22:45:06,613 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,614 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,720 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+2025-03-25 22:45:06,726 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+2025-03-25 22:45:06,739 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,740 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/gifu/A2101/A210101/hime/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,750 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+2025-03-25 22:45:06,759 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+2025-03-25 22:45:06,762 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+2025-03-25 22:45:06,774 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,775 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1315/A131503/episode/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,775 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,777 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+2025-03-25 22:45:06,792 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,796 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+2025-03-25 22:45:06,796 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+2025-03-25 22:45:06,810 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,811 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:06,822 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+2025-03-25 22:45:06,834 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/chiba/A1201/A120101/zero/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,002 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+2025-03-25 22:45:07,017 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,074 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+2025-03-25 22:45:07,080 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+2025-03-25 22:45:07,089 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,092 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,094 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+2025-03-25 22:45:07,107 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,120 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+2025-03-25 22:45:07,132 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,304 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+2025-03-25 22:45:07,318 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,324 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+2025-03-25 22:45:07,338 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,352 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+2025-03-25 22:45:07,364 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,409 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+2025-03-25 22:45:07,423 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,495 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+2025-03-25 22:45:07,507 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,511 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+2025-03-25 22:45:07,523 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,758 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+2025-03-25 22:45:07,773 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,777 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+2025-03-25 22:45:07,791 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,895 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+2025-03-25 22:45:07,908 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:07,908 - app - INFO - バッチ完了: 0/40件成功 (0.0%), 処理時間: 4.3秒, 総進捗: 40/803件
+2025-03-25 22:45:08,567 - app - INFO - バッチ処理中: 41〜80店舗 / 合計803店舗
+2025-03-25 22:45:08,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+2025-03-25 22:45:08,668 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/chupa/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+2025-03-25 22:45:08,669 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/win/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/
+2025-03-25 22:45:08,670 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/
+2025-03-25 22:45:08,902 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/aichi/A2301/A230101/gekka/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,903 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,903 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/aichi/A2301/A230101/papi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,903 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,904 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,908 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,908 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,908 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,908 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1101/A110101/chupa/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,912 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,912 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,912 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,912 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,913 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,913 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,913 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,914 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,914 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/nagano/A2001/A200101/win/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,914 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,914 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/nagano/A2003/A200302/hug/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,915 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:08,916 - app - WARNING - ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,437 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/
+2025-03-25 22:45:09,450 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,466 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/
+2025-03-25 22:45:09,480 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,499 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/
+2025-03-25 22:45:09,510 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,534 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+2025-03-25 22:45:09,548 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,661 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/
+2025-03-25 22:45:09,676 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,699 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+2025-03-25 22:45:09,706 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/
+2025-03-25 22:45:09,716 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/aichi/A2301/A230101/gekka/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,717 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,738 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+2025-03-25 22:45:09,742 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/
+2025-03-25 22:45:09,756 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,758 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,799 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+2025-03-25 22:45:09,811 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,864 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+2025-03-25 22:45:09,877 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:09,930 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/
+2025-03-25 22:45:09,946 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,043 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+2025-03-25 22:45:10,049 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/
+2025-03-25 22:45:10,055 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/
+2025-03-25 22:45:10,066 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/nagano/A2003/A200302/hug/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,069 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,072 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,074 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/
+2025-03-25 22:45:10,088 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,121 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/
+2025-03-25 22:45:10,136 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/
+2025-03-25 22:45:10,137 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,146 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/
+2025-03-25 22:45:10,152 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,160 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,191 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/
+2025-03-25 22:45:10,205 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/
+2025-03-25 22:45:10,211 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,222 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,284 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/
+2025-03-25 22:45:10,296 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/
+2025-03-25 22:45:10,304 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,310 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,317 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-25 22:45:10,331 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/aichi/A2301/A230101/papi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,366 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/
+2025-03-25 22:45:10,369 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/
+2025-03-25 22:45:10,372 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/
+2025-03-25 22:45:10,388 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,388 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,389 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,397 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/
+2025-03-25 22:45:10,412 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,448 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+2025-03-25 22:45:10,461 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,469 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/
+2025-03-25 22:45:10,471 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/chupa/
+2025-03-25 22:45:10,486 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,488 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1101/A110101/chupa/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,504 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/
+2025-03-25 22:45:10,518 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/
+2025-03-25 22:45:10,524 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,533 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,556 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+2025-03-25 22:45:10,558 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+2025-03-25 22:45:10,577 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,578 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/aichi/A2301/A230101/gekka/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,610 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/
+2025-03-25 22:45:10,624 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,642 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/
+2025-03-25 22:45:10,656 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,676 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+2025-03-25 22:45:10,681 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/win/
+2025-03-25 22:45:10,696 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,698 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/nagano/A2001/A200101/win/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,704 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/
+2025-03-25 22:45:10,725 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/
+2025-03-25 22:45:10,732 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,738 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,741 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/
+2025-03-25 22:45:10,755 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,808 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/
+2025-03-25 22:45:10,825 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,828 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/
+2025-03-25 22:45:10,842 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,848 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/
+2025-03-25 22:45:10,862 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,882 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/
+2025-03-25 22:45:10,898 - app - WARNING - ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:10,955 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/
+2025-03-25 22:45:10,973 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,121 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/
+2025-03-25 22:45:11,136 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,158 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+2025-03-25 22:45:11,174 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,186 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-25 22:45:11,199 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/aichi/A2301/A230101/papi/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,207 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+2025-03-25 22:45:11,221 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,274 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+2025-03-25 22:45:11,288 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,290 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/
+2025-03-25 22:45:11,304 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,311 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/
+2025-03-25 22:45:11,327 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/
+2025-03-25 22:45:11,419 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/
+2025-03-25 22:45:11,427 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+2025-03-25 22:45:11,443 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,445 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,445 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/nagano/A2003/A200302/hug/ - object NoneType can't be used in 'await' expression
+2025-03-25 22:45:11,522 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/
+2025-03-25 22:45:11,536 - app - WARNING - ページロード失敗（リトライ 3/2）: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/ - object NoneType can't be used in 'await' expression
