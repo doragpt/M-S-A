@@ -156,8 +156,18 @@ def scheduled_scrape():
         try:
             # スクレイピング実行（エラーハンドリング強化）
             try:
-                max_workers = 1  # Replit環境ではワーカー数を減らす
-                results = scrape_store_data(store_urls, max_workers)
+                # Replit環境向けの最適化設定
+                max_workers = 1  # ワーカー数を1に制限
+                max_urls = 20  # 一度に処理するURL数を制限
+                
+                # URLが多すぎる場合は制限する（テスト用）
+                if len(store_urls) > max_urls:
+                    logger.info(f"URLが多すぎるため、最初の{max_urls}件のみ処理します")
+                    limited_urls = store_urls[:max_urls]
+                else:
+                    limited_urls = store_urls
+                
+                results = scrape_store_data(limited_urls, max_workers)
             except Exception as e:
                 logger.error(f"スクレイピング実行中にエラーが発生しました: {e}")
                 import traceback

@@ -10,6 +10,40 @@ from concurrent.futures import ThreadPoolExecutor
 import pytz
 from bs4 import BeautifulSoup
 import traceback
+import shutil
+
+def find_chromium_executable():
+    """利用可能なChromiumブラウザの実行ファイルを探す"""
+    possible_paths = [
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/nix/store/*/bin/chromium',  # Nixストアのパスを検索
+        '/opt/google/chrome/chrome'
+    ]
+    
+    # 明示的なパスを確認
+    for path in possible_paths:
+        if '*' in path:
+            # ワイルドカードを含むパスの場合
+            import glob
+            matching_paths = glob.glob(path)
+            for match in matching_paths:
+                if os.path.exists(match) and os.access(match, os.X_OK):
+                    return match
+        elif os.path.exists(path) and os.access(path, os.X_OK):
+            return path
+    
+    # PATHからの検索
+    chrome_names = ['chromium-browser', 'chromium', 'google-chrome', 'chrome']
+    for name in chrome_names:
+        path = shutil.which(name)
+        if path:
+            return path
+    
+    # デフォルトはNone（自動検出）
+    return None
 
 from pyppeteer import launch
 from pyppeteer.errors import TimeoutError, PageError
@@ -165,7 +199,8 @@ async def init_browser():
                     'args': chrome_args,
                     'ignoreHTTPSErrors': True,
                     'defaultViewport': {'width': 800, 'height': 600},  # より小さく設定
-                    'executablePath': '/usr/bin/chromium-browser',  # Replitのデフォルトパス指定
+                    # 複数の可能性のあるパスを試す
+                    'executablePath': find_chromium_executable(),  # 利用可能なChromiumを検索
                 })
                 
                 if browser:
