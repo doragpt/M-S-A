@@ -1,0 +1,263 @@
+(venv) root@vm-1d842382-96:~/M-S-A# git checkout origin/main -- main.py store_scraper.py speed_up_script.py
+(venv) root@vm-1d842382-96:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-25 22:47:26,807 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:47:26,812 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:47:26,812 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-25 22:47:26,812 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-25 22:47:26,813 - apscheduler.scheduler - INFO - Scheduler started
+サーバー起動時刻（JST）: 2025-03-25 22:47:26 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=0件, URL=803件
+初期データ収集を開始します...
+2025-03-25 22:47:26,831 - __main__ - INFO - 定期スクレイピングを開始します
+2025-03-25 22:47:26,838 - __main__ - INFO - スクレイピング開始: 対象店舗数 803
+2025-03-25 22:47:26,838 - __main__ - INFO - スクレイピング前メモリ: 使用率=96.6%, 利用可能=410.8MB
+2025-03-25 22:47:26,838 - app - INFO - スクレイピングを開始します（店舗数: 803、並列実行数: 3）
+2025-03-25 22:47:26,939 - app - INFO - システム情報: CPU=6コア, メモリ使用率=96.6%, 利用可能メモリ=410.8MB
+2025-03-25 22:47:26,939 - app - INFO - 最適化設定: ワーカー数=2, バッチサイズ=40, ワーカーあたりのURL数=20
+2025-03-25 22:47:27,313 - app - INFO - バッチ処理中: 1〜40店舗 / 合計803店舗
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+2025-03-25 22:47:27,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+2025-03-25 22:47:27,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230105/act/
+2025-03-25 22:47:27,875 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,875 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+2025-03-25 22:47:27,876 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,876 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+2025-03-25 22:47:27,878 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,878 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+2025-03-25 22:47:27,878 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,878 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+2025-03-25 22:47:27,879 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,880 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+2025-03-25 22:47:27,880 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,880 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+2025-03-25 22:47:27,881 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,881 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+2025-03-25 22:47:27,881 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,882 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+2025-03-25 22:47:27,883 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,883 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+2025-03-25 22:47:27,883 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,883 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+2025-03-25 22:47:27,883 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,883 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-25 22:47:27,884 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,884 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+2025-03-25 22:47:27,884 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,884 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+2025-03-25 22:47:27,884 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,884 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+2025-03-25 22:47:27,884 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,884 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+2025-03-25 22:47:27,885 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,885 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+2025-03-25 22:47:27,885 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,885 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+2025-03-25 22:47:27,886 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,886 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+2025-03-25 22:47:27,886 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,886 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+2025-03-25 22:47:27,886 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,886 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+2025-03-25 22:47:27,886 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,886 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+2025-03-25 22:47:27,886 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,887 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+2025-03-25 22:47:27,887 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,888 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+2025-03-25 22:47:27,888 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,889 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/aichi/A2301/A230105/act/
+2025-03-25 22:47:27,889 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,889 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+2025-03-25 22:47:27,889 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,889 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+2025-03-25 22:47:27,889 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:27,889 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+2025-03-25 22:47:27,889 - app - INFO - バッチ完了: 0/40件成功 (0.0%), 処理時間: 0.6秒, 総進捗: 40/803件
+2025-03-25 22:47:32,313 - app - INFO - バッチ処理中: 41〜80店舗 / 合計803店舗
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/
+2025-03-25 22:47:32,414 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/chupa/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/win/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/
+2025-03-25 22:47:32,415 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/
+2025-03-25 22:47:32,416 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/
+2025-03-25 22:47:32,807 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,808 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130506/adeejo-i/
+2025-03-25 22:47:32,808 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,808 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1313/A131301/k-classmate/
+2025-03-25 22:47:32,809 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,809 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+2025-03-25 22:47:32,809 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,809 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/miseijuku/
+2025-03-25 22:47:32,814 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,814 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1304/A130401/stella_next/
+2025-03-25 22:47:32,814 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,814 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+2025-03-25 22:47:32,814 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1315/A131503/royalring/
+2025-03-25 22:47:32,815 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1317/A131703/g-classmate/
+2025-03-25 22:47:32,815 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/
+2025-03-25 22:47:32,815 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1317/A131703/onemore-gotanda/
+2025-03-25 22:47:32,815 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+2025-03-25 22:47:32,815 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,815 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1305/A130505/se-den-kwami/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1313/A131301/onemore-kinshicho/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,816 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+2025-03-25 22:47:32,816 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1101/A110101/chupa/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1105/A110501/lermanbro/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/
+2025-03-25 22:47:32,817 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,817 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1330/A133001/s-nametakute/
+2025-03-25 22:47:32,818 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,818 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/gunma/A1001/A100102/clubaudition/
+2025-03-25 22:47:32,820 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,820 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/aichi/A2301/A230103/eden-n/
+2025-03-25 22:47:32,821 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,821 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/nagano/A2002/A200201/meron_n/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,822 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1330/A133004/hachiouji-meimon/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,822 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,822 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1313/A131301/kinshicho-ring/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,822 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/kanagawa/A1405/A140503/kimitoyarisugi/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,822 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/nagano/A2001/A200101/win/
+2025-03-25 22:47:32,822 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1303/A130301/z-nametakute/
+2025-03-25 22:47:32,823 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/nagano/A2001/A200101/tennnennkajitsubb/
+2025-03-25 22:47:32,823 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/tokyo/A1316/A131603/ultra-celeb/
+2025-03-25 22:47:32,823 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/kanagawa/A1401/A140103/yarisugi-gakuen/
+2025-03-25 22:47:32,823 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/saitama/A1104/A110401/surprisegakuen/
+2025-03-25 22:47:32,823 - app - ERROR - ページ作成エラー: object NoneType can't be used in 'await' expression
+2025-03-25 22:47:32,823 - app - ERROR - ページの作成に失敗しました: https://www.cityheaven.net/toyama/A1601/A160101/high_style_t/
+2025-03-25 22:47:32,823 - app - INFO - バッチ完了: 0/40件成功 (0.0%), 処理時間: 0.5秒, 総進捗: 80/803件
