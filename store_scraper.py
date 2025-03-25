@@ -1,359 +1,333 @@
+
+import os
 import asyncio
-from pyppeteer import launch
-from pyppeteer_stealth import stealth
-from bs4 import BeautifulSoup
-import re
-from datetime import datetime, timedelta
-import pytz
-import gc
-
-# -------------------------------
-# 定数設定
-# -------------------------------
-# 並列処理する店舗数の上限（同時に処理するタスク数）
-# 12GB/6コアVPSのリソースを最適活用（コア数×3）
-MAX_CONCURRENT_TASKS = 18  # 12GB/6コア向けに並列処理数を増加（コア数×3）
-# 店舗情報が取得できなかった場合の再試行回数
-MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
-# タイムアウト設定
-PAGE_LOAD_TIMEOUT = 12000  # ページロードのタイムアウト(12秒)に最適化
-# メモリ管理
-FORCE_GC_AFTER_STORES = 30  # 12GB RAM向けにGC実行間隔を拡大
-
-# ロギングレベルを設定
 import logging
-logging.getLogger('websockets.client').setLevel(logging.ERROR)
-logging.getLogger('websockets.server').setLevel(logging.ERROR)
-logging.getLogger('pyppeteer').setLevel(logging.WARNING)
+import time
+from datetime import datetime
+import re
+import random
+from concurrent.futures import ThreadPoolExecutor
+import pytz
+from bs4 import BeautifulSoup
+import traceback
 
-# -------------------------------
-# fetch_page 関数
-# -------------------------------
-async def fetch_page(page, url, retries=2, timeout=10000):
-    """
-    指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する関数
+from pyppeteer import launch
+from pyppeteer.errors import TimeoutError, PageError
+
+# スピードアップスクリプトからの最適化関数のインポート
+from speed_up_script import (
+    calculate_optimal_batch_size,
+    log_performance_metrics,
+    adaptive_sleep
+)
+
+# ロギング設定
+logger = logging.getLogger('app')
+
+# セッション共有のグローバル変数
+global_browser = None
+browser_creation_time = None
+MAX_BROWSER_LIFETIME = 30 * 60  # ブラウザの最大稼働時間（秒）
+
+async def init_browser():
+    """新しいブラウザインスタンスを初期化"""
+    global global_browser, browser_creation_time
     
-    Parameters:
-      - page: pyppeteer のページオブジェクト
-      - url: アクセスするURL
-      - retries: リトライ回数（デフォルト2回に短縮）
-      - timeout: タイムアウト（ミリ秒単位、デフォルト10000ms=10秒に短縮）
-    
-    Returns:
-      - True: ページの読み込みに成功した場合
-      - False: 全てのリトライで失敗した場合
-    """
-    for attempt in range(retries):
+    # すでにブラウザが存在する場合は閉じる
+    if global_browser:
         try:
-            await page.goto(url, waitUntil=['networkidle0', 'load', 'domcontentloaded'], timeout=timeout)
-            return True
-        except Exception as e:
-            print(f"ページロード失敗（リトライ {attempt+1}/{retries}）: {url} - {e}")
-            await asyncio.sleep(5)
-    return False
+            await global_browser.close()
+        except Exception:
+            pass
+    
+    # 新しいブラウザを起動（メモリ最適化設定）
+    global_browser = await launch({
+        'headless': True,
+        'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
+            '--disable-extensions',
+            '--disable-background-networking',
+            '--disable-default-apps',
+            '--disable-sync',
+            '--disable-translate',
+            '--hide-scrollbars',
+            '--metrics-recording-only',
+            '--mute-audio',
+            '--no-first-run',
+            '--safebrowsing-disable-auto-update',
+            '--js-flags=--max-old-space-size=1024',  # V8メモリ制限
+        ],
+        'ignoreHTTPSErrors': True,
+        'defaultViewport': {'width': 1280, 'height': 800},
+    })
+    browser_creation_time = time.time()
+    return global_browser
 
-# -------------------------------
-# scrape_store 関数
-# -------------------------------
-async def scrape_store(browser, url: str, semaphore) -> dict:
-    """
-    単一店舗の「本日出勤」情報をスクレイピングする関数
-    - ヘッドレスブラウザを用いて対象ページにアクセス
-    - BeautifulSoup でHTMLをパースして店舗情報とシフト情報を取得
-    - ページ再利用により再取得時に新規ページ作成のオーバーヘッドを削減
+async def get_page(browser):
+    """新しいページを取得し、ステルスモードを設定"""
+    page = await browser.newPage()
     
-    Parameters:
-      - browser: pyppeteer のブラウザオブジェクト
-      - url: 店舗の基本URL（必要に応じて末尾に "/" を追加）
-      - semaphore: 並列実行制御用のセマフォ
+    # ブラウザフィンガープリントの偽装（検出対策）
+    await page.evaluateOnNewDocument("""
+    () => {
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => false,
+        });
+    }
+    """)
     
-    Returns:
-      - dict: 取得した店舗情報およびシフト情報の集計結果
-    """
-    import logging
-    logger = logging.getLogger('app')
+    # タイムアウト設定（12GB/6コア環境に最適化）
+    await page.setDefaultNavigationTimeout(15000)
+    await page.setRequestInterception(True)
     
-    async with semaphore:
-        # URLの末尾に "/" がなければ追加し、出勤情報ページのURLを作成
-        if not url.endswith("/"):
-            url += "/"
-        attend_url = url + "attend/soon/"
+    # リソース節約のため不要なリクエストをブロック
+    page.on('request', lambda req: asyncio.ensure_future(
+        req.continue_() if req.resourceType in ['document', 'xhr', 'fetch'] 
+        else req.abort()
+    ))
+    
+    return page
 
-        # 新規ページを作成
-        page = await browser.newPage()
+async def scrape_single_store(url, retry_count=0, max_retries=2):
+    """単一の店舗ページをスクレイピングする関数"""
+    global global_browser, browser_creation_time
+    
+    # ブラウザインスタンスのライフタイムチェック
+    if not global_browser or time.time() - browser_creation_time > MAX_BROWSER_LIFETIME:
         try:
-            await stealth(page)  # 検出回避のため stealth を適用
+            await init_browser()
         except Exception as e:
-            logger.error("stealth 適用エラー: %s", e)
-        # ユーザーエージェントを設定
-        await page.setUserAgent(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-        )
-
-        logger.info("スクレイピング開始: %s", attend_url)
-        # 指定URLにアクセス。タイムアウト15秒、リトライ2回に設定
-        success = await fetch_page(page, attend_url, retries=2, timeout=15000)
-        if not success:
-            await page.close()
-            return {}
-        # ページ読み込み後の待機時間を2秒に延長（データが表示されるまで待機）
-        await asyncio.sleep(2)
-        # ページコンテンツを取得し、BeautifulSoupでパース
+            logger.error(f"ブラウザの初期化に失敗: {e}")
+            return None
+    
+    try:
+        # 店舗URLのログ出力
+        logger.info(f"スクレイピング開始: {url}")
+        
+        page = await get_page(global_browser)
+        
+        # ページ読み込み
+        await page.goto(url, {'waitUntil': 'domcontentloaded'})
+        
+        # ページが完全に読み込まれるのを待機
+        await asyncio.sleep(1)
+        
+        # HTMLコンテンツの取得
         content = await page.content()
-        soup = BeautifulSoup(content, "html.parser")
-
-        # 店舗情報の初期値を「不明」とする
-        store_name, biz_type, genre, area = "不明", "不明", "不明", "不明"
-        # エリア情報の取得（現在のエリアを示す <li> 要素から）
-        current_area_elem = soup.find("li", class_="area_menu_item current")
-        if current_area_elem:
-            a_elem = current_area_elem.find("a")
-            if a_elem:
-                area = a_elem.get_text(strip=True)
-
-        # 店舗名、業種、ジャンルの情報取得（再取得時は同じページを再利用）
-        attempt = 0
-        while attempt < MAX_RETRIES_FOR_INFO:
-            menushop_div = soup.find("div", class_="menushopname none")
-            if menushop_div:
-                h1_elem = menushop_div.find("h1")
-                if h1_elem:
-                    store_name = h1_elem.get_text(strip=True)
-                    # h1 の次の要素から店舗情報を取得する
-                    store_info = h1_elem.next_sibling.strip() if h1_elem.next_sibling else ""
-                    match = re.search(r"(.+?)\((.+?)/(.+?)\)", store_info)
-                    if match:
-                        biz_type, genre, extracted_area = match.groups()
-                        if area == "不明":
-                            area = extracted_area
-            # 情報が取得できたらループ終了
-            if store_name != "不明":
-                break
-            attempt += 1
-            print(f"店舗情報再取得試行 {attempt} 回目: {url}")
-            # 同じページを再利用して再度アクセス
-            success = await fetch_page(page, attend_url, retries=3, timeout=20000)
-            if not success:
-                await page.close()
-                return {}
-            await asyncio.sleep(1)
-            content = await page.content()
-            soup = BeautifulSoup(content, "html.parser")
-            current_area_elem = soup.find("li", class_="area_menu_item current")
-            if current_area_elem:
-                a_elem = current_area_elem.find("a")
-                if a_elem:
-                    area = a_elem.get_text(strip=True)
-        if store_name == "不明":
-            print("再取得に失敗: ", url)
-            await page.close()
-            return {}
-
-        # 出勤情報の取得
-        container = soup.find("div", class_="shukkin-list-container")
-        if not container:
-            await page.close()
-            return {
-                "store_name": store_name,
-                "biz_type": biz_type,
-                "genre": genre,
-                "area": area,
-                "total_staff": 0,
-                "working_staff": 0,
-                "active_staff": 0,
-                "url": url,
-                "shift_time": ""
-            }
-        # 本日の出勤情報は "item-0" 部分にある（明日の情報は対象外）
-        today_tab = container.find("div", class_="item-0")
-        wrappers = today_tab.find_all("div", class_="sugunavi_wrapper") if today_tab else []
-        print("シフト件数:", len(wrappers))
-
-        total_staff = 0     # 総出勤数
-        working_staff = 0   # 勤務中の人数
-        active_staff = 0    # 「即ヒメ」（待機中）の人数
-
-        jst = pytz.timezone('Asia/Tokyo')
-        # 各シフト（wrapper）ごとにループ処理
-        for wrapper in wrappers:
-            p_elems = wrapper.find_all("p", class_="time_font_size shadow shukkin_detail_time")
-            for p_elem in p_elems:
-                text = p_elem.get_text(strip=True)
-                if not text:
-                    continue
-                # 「明日」「次回」「出勤予定」「お休み」などが含まれている場合はスキップ
-                if any(kw in text for kw in ["明日", "次回", "出勤予定", "お休み"]):
-                    continue
-                # 「完売」の場合は出勤数のみをカウント
-                if "完売" in text:
-                    total_staff += 1
-                    continue
-                # シフト時間（例： "10:00～18:00"）のパターンを抽出
-                match = re.search(r"(\d{1,2}):(\d{2})～(\d{1,2}):(\d{2})", text)
-                if match:
-                    start_h, start_m, end_h, end_m = map(int, match.groups())
-                    current_time = datetime.now(jst)
-                    parsed_start = datetime.strptime(f"{start_h}:{start_m}", "%H:%M").time()
-                    parsed_end = datetime.strptime(f"{end_h}:{end_m}", "%H:%M").time()
-                    # シフトが日を跨ぐ場合の処理
-                    if parsed_end < parsed_start:
-                        if current_time.time() < parsed_end:
-                            start_time = datetime.combine(current_time.date() - timedelta(days=1), parsed_start)
-                            end_time = datetime.combine(current_time.date(), parsed_end)
-                        else:
-                            start_time = datetime.combine(current_time.date(), parsed_start)
-                            end_time = datetime.combine(current_time.date() + timedelta(days=1), parsed_end)
-                    else:
-                        start_time = datetime.combine(current_time.date(), parsed_start)
-                        end_time = datetime.combine(current_time.date(), parsed_end)
-                    # タイムゾーンを適用
-                    start_time = jst.localize(start_time)
-                    end_time = jst.localize(end_time)
-                    total_staff += 1
-                    # 現在の時刻がシフト内にある場合は勤務中とカウント
-                    if start_time <= current_time <= end_time:
-                        working_staff += 1
-                        status_container = wrapper.find("div", class_="sugunavi_spacer_1line")
-                        if not status_container:
-                            status_container = wrapper.find("div", class_="sugunavi_spacer_2line")
-                        if status_container:
-                            sugunavibox = status_container.find("div", class_="sugunavibox")
-                            if sugunavibox:
-                                status_text = sugunavibox.get_text(strip=True)
-                            else:
-                                status_text = ""
-                        else:
-                            status_text = ""
-                        if ("待機中" in status_text) or (status_text == ""):
-                            active_staff += 1
+        
+        # ページを閉じる
         await page.close()
-        return {
+        
+        # BeautifulSoupでHTMLを解析
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # 店舗名の取得
+        store_name = None
+        menushop_div = soup.find("div", class_="menushopname none")
+        if menushop_div:
+            h1_elem = menushop_div.find("h1")
+            if h1_elem:
+                store_name = h1_elem.text.strip()
+        
+        if not store_name:
+            shop_name_elem = soup.find("p", class_="shopname")
+            if shop_name_elem:
+                store_name = shop_name_elem.text.strip()
+        
+        # エリア情報の取得
+        area = ""
+        area_elem = soup.find("span", id="area_name")
+        if area_elem:
+            area = area_elem.text.strip()
+        
+        # 業種の取得
+        biz_type = ""
+        biz_type_elem = soup.find("p", class_="type")
+        if biz_type_elem:
+            biz_type = biz_type_elem.text.strip()
+        
+        # ジャンルの取得
+        genre = ""
+        genre_elem = soup.find("p", class_="genre")
+        if genre_elem:
+            genre = genre_elem.text.strip()
+        
+        # 在籍スタッフ数・待機スタッフ数の取得
+        total_staff = 0
+        active_staff = 0
+        working_staff = 0
+        
+        # 在籍スタッフ数
+        staff_counts = soup.find_all("p", class_="inPosition")
+        if staff_counts:
+            for p in staff_counts:
+                if "在籍" in p.text:
+                    match = re.search(r'(\d+)', p.text)
+                    if match:
+                        total_staff = int(match.group(1))
+        
+        # 待機スタッフ数
+        stand_by_section = soup.find("section", class_="standby")
+        if stand_by_section:
+            # スタンバイリストの取得
+            standby_lists = stand_by_section.find_all("ul", class_="girlslist")
+            active_staff_count = 0
+            
+            for standby_list in standby_lists:
+                girls = standby_list.find_all("li")
+                active_staff_count += len(girls)
+            
+            active_staff = active_staff_count
+        
+        # 出勤スタッフ（シフト）
+        working_section = soup.find("div", class_="shiftbox")
+        if working_section:
+            working_lists = working_section.find_all("ul", class_="girlslist")
+            working_staff_count = 0
+            
+            for working_list in working_lists:
+                girls = working_list.find_all("li")
+                working_staff_count += len(girls)
+            
+            working_staff = working_staff_count
+        
+        # シフト時間の取得
+        shift_time = ""
+        shift_elem = soup.find("p", class_="shoptime")
+        if shift_elem:
+            shift_time = shift_elem.text.strip()
+        
+        # データの整形
+        result = {
             "store_name": store_name,
+            "area": area,
             "biz_type": biz_type,
             "genre": genre,
-            "area": area,
             "total_staff": total_staff,
-            "working_staff": working_staff,
             "active_staff": active_staff,
+            "working_staff": working_staff,
             "url": url,
-            "shift_time": ""
+            "shift_time": shift_time
         }
+        
+        return result
+        
+    except TimeoutError:
+        logger.warning(f"ページロード失敗（リトライ {retry_count+1}/{max_retries}）: {url} - Navigation Timeout Exceeded: 15000 ms exceeded.")
+    except PageError as e:
+        logger.warning(f"ページロード失敗（リトライ {retry_count+1}/{max_retries}）: {url} - {e}")
+    except Exception as e:
+        logger.warning(f"ページロード失敗（リトライ {retry_count+1}/{max_retries}）: {url} - {e}")
+    
+    # エラー時のリトライ処理
+    if retry_count < max_retries:
+        # ランダムな待機時間を追加（0.5〜2秒）
+        await asyncio.sleep(0.5 + random.random() * 1.5)
+        return await scrape_single_store(url, retry_count + 1, max_retries)
+    
+    return None
 
-# -------------------------------
-# _scrape_all 関数
-# -------------------------------
-async def _scrape_all(store_urls: list) -> list:
+async def scrape_multiple_stores(urls, max_workers=None):
     """
-    複数店舗のスクレイピングを並列実行数制限付きで実行する関数
-    - バッチ処理間の待機時間を3秒から2秒に短縮
+    複数の店舗URLを並行してスクレイピングする関数
+    
+    Args:
+        urls: スクレイピングするURLのリスト
+        max_workers: 最大並行処理数（Noneの場合は自動設定）
+    
+    Returns:
+        結果リスト
     """
-    import logging
-    logger = logging.getLogger('app')
+    total_urls = len(urls)
+    logger.info(f"スクレイピングを開始します（店舗数: {total_urls}、並列実行数: {max_workers if max_workers else '自動'}）")
     
-    logger.info("スクレイピングを開始します（店舗数: %d、並列実行数: %d）", 
-               len(store_urls), MAX_CONCURRENT_TASKS)
+    # 環境に合わせた最適なバッチサイズとワーカー数を計算
+    batch_size, num_workers = calculate_optimal_batch_size(total_urls, max_workers)
     
-    semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-    executable_path = '/usr/bin/google-chrome'
-    browser = await launch(
-        headless=True,
-        executablePath=executable_path,
-        ignoreHTTPSErrors=True,
-        defaultViewport=None,
-        handleSIGINT=False,
-        handleSIGTERM=False,
-        handleSIGHUP=False,
-        logLevel=logging.ERROR,  # ブラウザのログレベルをERRORに設定
-        dumpio=False,  # 標準出力/標準エラー出力をキャプチャしない
-        args=[
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-gpu",
-            "--disable-dev-shm-usage",
-            "--disable-extensions",
-            "--mute-audio",
-            "--headless=new",
-            "--disable-background-timer-throttling",
-            "--disable-backgrounding-occluded-windows",
-            "--disable-renderer-backgrounding",
-            "--disable-infobars",
-            "--js-flags=--expose-gc",
-            "--memory-pressure-off",
-            "--disable-software-rasterizer",
-            "--single-process", 
-            "--no-zygote",
-            "--js-flags=--max-old-space-size=8192"  # 12GB環境向けにメモリ使用上限を拡大
-        ]
-    )
-    # 各店舗URLに対するスクレイピングタスクを作成
-    tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # 12GB/6コア向けに最適化されたバッチ処理
-    # バッチサイズを大きくし、効率的に処理
-    BATCH_SIZE = MAX_CONCURRENT_TASKS * 2  # より大きなバッチで処理
+    processed_count = 0
     
-    for i in range(0, len(tasks), BATCH_SIZE):
-        batch = tasks[i:i+BATCH_SIZE]
-        batch_start = i + 1
-        batch_end = min(i + BATCH_SIZE, len(tasks))
-        logger.info("バッチ処理中: %d〜%d店舗 / 合計%d店舗", batch_start, batch_end, len(store_urls))
-        
-        # 並列処理を制御しながら実行（セマフォで上限を管理）
-        batch_results = await asyncio.gather(*batch, return_exceptions=True)
-        
-        # 例外の処理とログ - エラー詳細は省略してパフォーマンス向上
-        error_count = 0
-        for j, result in enumerate(batch_results):
-            if isinstance(result, Exception):
-                error_count += 1
-                batch_results[j] = {}  # エラーの場合は空の辞書に置き換え
-        
-        if error_count > 0:
-            logger.warning("バッチ内エラー: %d/%d件", error_count, len(batch))
-                    
-        results.extend(batch_results)
-        logger.info("バッチ完了: %d/%d件処理済み", min(i + BATCH_SIZE, len(tasks)), len(tasks))
-        
-        # メモリ管理を効率化 - 大きなバッチ処理後のみGCを実行
-        if (i // BATCH_SIZE) % 2 == 0:  # 2バッチごとにGC実行
-            gc.collect()
+    # ブラウザインスタンスの初期化
+    try:
+        await init_browser()
+    except Exception as e:
+        logger.error(f"ブラウザ初期化エラー: {e}")
+        return []
     
-    logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
-    gc.collect()
-    await browser.close()
+    # バッチ処理
+    for i in range(0, total_urls, batch_size):
+        batch_start = time.time()
+        
+        # 現在のバッチのURLを取得
+        batch_urls = urls[i:i+batch_size]
+        batch_size_actual = len(batch_urls)
+        
+        logger.info(f"バッチ処理中: {i+1}〜{i+batch_size_actual}店舗 / 合計{total_urls}店舗")
+        
+        # リソース使用状況のログ記録
+        log_performance_metrics()
+        
+        # 現在のバッチを非同期に処理
+        tasks = [scrape_single_store(url) for url in batch_urls]
+        batch_results = await asyncio.gather(*tasks)
+        
+        # 有効な結果のみを追加
+        valid_results = [r for r in batch_results if r]
+        results.extend(valid_results)
+        
+        # 進捗更新
+        processed_count += batch_size_actual
+        success_rate = len(valid_results) / batch_size_actual * 100 if batch_size_actual > 0 else 0
+        
+        # バッチ処理時間
+        batch_duration = time.time() - batch_start
+        logger.info(f"バッチ完了: {len(valid_results)}/{batch_size_actual}件成功 ({success_rate:.1f}%), "
+                   f"処理時間: {batch_duration:.1f}秒, 総進捗: {processed_count}/{total_urls}件")
+        
+        # バッチ処理間の適応的スリープ（サーバー負荷軽減とブロック回避）
+        if i + batch_size < total_urls:
+            adaptive_sleep(batch_duration)
+    
+    # ブラウザを閉じる
+    try:
+        await global_browser.close()
+        global_browser = None
+    except Exception:
+        pass
+    
     return results
 
-# -------------------------------
-# scrape_store_data 関数
-# -------------------------------
-def scrape_store_data(store_urls: list) -> list:
+def scrape_store_data(store_urls, max_workers=None):
     """
-    非同期スクレイピング処理を同期的に実行するラッパー関数
-    マルチスレッド環境でも安全に動作するように修正
+    店舗データをスクレイピングするためのメイン関数
+    
+    Args:
+        store_urls: スクレイピングするURLのリスト
+        max_workers: 最大並行処理数（Noneの場合は自動設定）
+    
+    Returns:
+        スクレイピング結果のリスト
     """
+    # 高CPU/メモリ環境向けの最適化設定
+    if max_workers is None:
+        # 12GB/6コア環境向けデフォルト値
+        max_workers = 3
+    
+    # 非同期処理の実行
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     try:
-        # メインスレッドから呼び出された場合
-        return asyncio.run(_scrape_all(store_urls))
-    except RuntimeError as e:
-        if "There is no current event loop in thread" in str(e):
-            # サブスレッドから呼び出された場合は新しいイベントループを作成
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(_scrape_all(store_urls))
-            finally:
-                loop.close()
-        elif "signal only works in main thread" in str(e):
-            # シグナルハンドリングの問題を回避する修正
-            import multiprocessing
-            # 別プロセスでスクレイピングを実行
-            ctx = multiprocessing.get_context('spawn')
-            with ctx.Pool(1) as pool:
-                return pool.apply(_scrape_subprocess, (store_urls,))
-        else:
-            raise
-
-def _scrape_subprocess(store_urls):
-    """サブプロセスで実行するためのヘルパー関数"""
-    return asyncio.run(_scrape_all(store_urls))
+        results = loop.run_until_complete(scrape_multiple_stores(store_urls, max_workers))
+    except Exception as e:
+        logger.error(f"スクレイピング中にエラーが発生しました: {e}")
+        logger.error(traceback.format_exc())
+        results = []
+    finally:
+        loop.close()
+    
+    return results

@@ -121,6 +121,8 @@ def scheduled_scrape():
     """定期的に実行されるスクレイピングジョブ"""
     from models import StoreURL, StoreStatus
     from database import get_db_connection
+    import psutil
+    import gc
 
     with app.app_context():
         logger.info("定期スクレイピングを開始します")
@@ -139,88 +141,107 @@ def scheduled_scrape():
 
         logger.info(f"スクレイピング開始: 対象店舗数 {len(store_urls)}")
 
+        # リソース使用状況の記録
+        mem_before = psutil.virtual_memory()
+        logger.info(f"スクレイピング前メモリ: 使用率={mem_before.percent}%, 利用可能={mem_before.available / (1024*1024):.1f}MB")
+
         try:
-            # スクレイピング実行
-            results = scrape_store_data(store_urls)
+            # 12GB/6コア環境向けの最適化設定でスクレイピング実行
+            max_workers = 3  # 6コアの半分を使用
+            results = scrape_store_data(store_urls, max_workers)
+            
+            # 明示的なガベージコレクション
+            gc.collect()
+            
             logger.info(f"スクレイピング完了: 取得件数 {len(results)}")
 
-            # 結果をDBに保存
+            # バッチでDBに保存（メモリ効率化）
             record_update_count = 0
             record_insert_count = 0
+            batch_size = 50
+            
+            for i in range(0, len(results), batch_size):
+                batch = results[i:i+batch_size]
+                
+                for record in batch:
+                    if not record:
+                        continue
 
-            for record in results:
-                if not record:
-                    continue
+                    store_name = record.get('store_name', '')
+                    area = record.get('area', '')
 
-                store_name = record.get('store_name', '')
-                area = record.get('area', '')
+                    if not store_name or not area:
+                        continue
 
-                if not store_name or not area:
-                    continue
+                    # 重複チェック
+                    formatted_time = scrape_time.strftime('%Y-%m-%d %H:%M')
 
-                # 重複チェック
-                formatted_time = scrape_time.strftime('%Y-%m-%d %H:%M')
-
-                conn = get_db_connection()
-                existing_query = """
-                SELECT id FROM store_status 
-                WHERE store_name = ? AND area = ? 
-                AND strftime('%Y-%m-%d %H:%M', timestamp) = ?
-                """
-                existing = conn.execute(existing_query, 
-                                      [store_name, area, formatted_time]).fetchone()
+                    conn = get_db_connection()
+                    existing_query = """
+                    SELECT id FROM store_status 
+                    WHERE store_name = ? AND area = ? 
+                    AND strftime('%Y-%m-%d %H:%M', timestamp) = ?
+                    """
+                    existing = conn.execute(existing_query, 
+                                          [store_name, area, formatted_time]).fetchone()
+                    
+                    if existing:
+                        # 既存レコードを更新
+                        stmt = """
+                        UPDATE store_status SET
+                        biz_type = ?, genre = ?, area = ?, 
+                        total_staff = ?, working_staff = ?, active_staff = ?,
+                        url = ?, shift_time = ?
+                        WHERE id = ?
+                        """
+                        conn.execute(stmt, [
+                            record.get('biz_type'),
+                            record.get('genre'),
+                            area,
+                            record.get('total_staff', 0),
+                            record.get('working_staff', 0),
+                            record.get('active_staff', 0),
+                            record.get('url', ''),
+                            record.get('shift_time', ''),
+                            existing['id']
+                        ])
+                        record_update_count += 1
+                    else:
+                        # 新規レコードを追加
+                        stmt = """
+                        INSERT INTO store_status
+                        (timestamp, store_name, biz_type, genre, area, 
+                         total_staff, working_staff, active_staff, url, shift_time)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """
+                        conn.execute(stmt, [
+                            scrape_time,
+                            store_name,
+                            record.get('biz_type'),
+                            record.get('genre'),
+                            area,
+                            record.get('total_staff', 0),
+                            record.get('working_staff', 0),
+                            record.get('active_staff', 0),
+                            record.get('url', ''),
+                            record.get('shift_time', '')
+                        ])
+                        record_insert_count += 1
+                
+                # バッチごとにコミット
+                conn.commit()
                 conn.close()
-
-                if existing:
-                    # 既存レコードを更新
-                    stmt = """
-                    UPDATE store_status SET
-                    biz_type = ?, genre = ?, area = ?, 
-                    total_staff = ?, working_staff = ?, active_staff = ?,
-                    url = ?, shift_time = ?
-                    WHERE id = ?
-                    """
-                    conn = get_db_connection()
-                    conn.execute(stmt, [
-                        record.get('biz_type'),
-                        record.get('genre'),
-                        area,
-                        record.get('total_staff', 0),
-                        record.get('working_staff', 0),
-                        record.get('active_staff', 0),
-                        record.get('url', ''),
-                        record.get('shift_time', ''),
-                        existing['id']
-                    ])
-                    conn.commit()
-                    conn.close()
-                    record_update_count += 1
-                else:
-                    # 新規レコードを追加
-                    stmt = """
-                    INSERT INTO store_status
-                    (timestamp, store_name, biz_type, genre, area, 
-                     total_staff, working_staff, active_staff, url, shift_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """
-                    conn = get_db_connection()
-                    conn.execute(stmt, [
-                        scrape_time,
-                        store_name,
-                        record.get('biz_type'),
-                        record.get('genre'),
-                        area,
-                        record.get('total_staff', 0),
-                        record.get('working_staff', 0),
-                        record.get('active_staff', 0),
-                        record.get('url', ''),
-                        record.get('shift_time', '')
-                    ])
-                    conn.commit()
-                    conn.close()
-                    record_insert_count += 1
+                
+                # メモリ解放のためのガベージコレクション
+                gc.collect()
+                
+                logger.debug(f"バッチ処理: {i+1}〜{min(i+batch_size, len(results))}件処理済み")
 
             logger.info(f"DB処理完了: 更新={record_update_count}件, 新規追加={record_insert_count}件")
+
+            # リソース使用状況の再記録
+            mem_after = psutil.virtual_memory()
+            logger.info(f"DB処理後メモリ: 使用率={mem_after.percent}%, 利用可能={mem_after.available / (1024*1024):.1f}MB")
 
             # 集計データの更新
             AggregatedData.calculate_and_save_aggregated_data()
@@ -235,8 +256,14 @@ def scheduled_scrape():
             # Socket.IO で更新通知
             socketio.emit('update', {'data': 'Dashboard updated'})
 
+            # 最終的なメモリ状態
+            mem_final = psutil.virtual_memory()
+            logger.info(f"処理完了後メモリ: 使用率={mem_final.percent}%, 利用可能={mem_final.available / (1024*1024):.1f}MB")
+
         except Exception as e:
             logger.error(f"スクレイピング処理中にエラーが発生しました: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
 
 # スケジューラーにジョブを登録
 scheduler.add_job(scheduled_scrape, 'interval', hours=1, id='scrape_job')
