@@ -28,10 +28,12 @@ logging.basicConfig(
 )
 
 # サードパーティライブラリのロギングレベルを上げて出力を抑制
-logging.getLogger('pyppeteer').setLevel(logging.ERROR)
-logging.getLogger('websockets').setLevel(logging.ERROR)
-logging.getLogger('urllib3').setLevel(logging.ERROR)
-logging.getLogger('asyncio').setLevel(logging.ERROR)
+logging.getLogger('pyppeteer').setLevel(logging.CRITICAL)
+logging.getLogger('websockets').setLevel(logging.CRITICAL)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+logging.getLogger('asyncio').setLevel(logging.CRITICAL)
+logging.getLogger('apscheduler').setLevel(logging.WARNING)
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # Flaskアプリの初期化

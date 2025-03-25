@@ -22,12 +22,13 @@ import time
 
 # ロギング設定
 logger = logging.getLogger('app')
+logger.setLevel(logging.INFO)  # INFOレベル以上のみ出力
 
 # pyppeteerとwebsocketsのロギングレベルを上げてデバッグ出力を抑制
-logging.getLogger('pyppeteer').setLevel(logging.ERROR)
-logging.getLogger('websockets').setLevel(logging.ERROR)
-logging.getLogger('urllib3').setLevel(logging.ERROR)
-logging.getLogger('asyncio').setLevel(logging.ERROR)
+logging.getLogger('pyppeteer').setLevel(logging.CRITICAL)
+logging.getLogger('websockets').setLevel(logging.CRITICAL)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 
 def get_system_resources():
     """システムリソースの使用状況を取得"""
@@ -127,40 +128,58 @@ async def init_browser():
         global_browser = None
     
     try:
-        # 新しいブラウザを起動（メモリ最適化設定）
-        global_browser = await launch({
-            'headless': True,
-            'args': [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--disable-extensions',
-                '--disable-background-networking',
-                '--disable-default-apps',
-                '--disable-sync',
-                '--disable-translate',
-                '--hide-scrollbars',
-                '--metrics-recording-only',
-                '--mute-audio',
-                '--no-first-run',
-                '--safebrowsing-disable-auto-update',
-                '--js-flags=--max-old-space-size=1024',  # V8メモリ制限
-            ],
-            'ignoreHTTPSErrors': True,
-            'defaultViewport': {'width': 1280, 'height': 800},
-        })
-        browser_creation_time = time.time()
+        # リトライロジックを追加
+        max_retries = 3
+        retry_count = 0
         
-        # ブラウザが正常に起動したか確認
-        if not global_browser:
-            logger.error("ブラウザの初期化に失敗しました")
-            return None
-            
-        return global_browser
+        while retry_count < max_retries:
+            try:
+                # 新しいブラウザを起動（メモリ最適化設定）
+                browser = await launch({
+                    'headless': True,
+                    'handleSIGINT': False,
+                    'handleSIGTERM': False,
+                    'handleSIGHUP': False,
+                    'args': [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--disable-gpu',
+                        '--disable-extensions',
+                        '--disable-background-networking',
+                        '--disable-default-apps',
+                        '--disable-sync',
+                        '--disable-translate',
+                        '--hide-scrollbars',
+                        '--metrics-recording-only',
+                        '--mute-audio',
+                        '--no-first-run',
+                        '--safebrowsing-disable-auto-update',
+                        '--js-flags=--max-old-space-size=512',  # V8メモリ制限をさらに下げる
+                    ],
+                    'ignoreHTTPSErrors': True,
+                    'defaultViewport': {'width': 1024, 'height': 768},  # 少し小さめに
+                })
+                
+                if browser:
+                    global_browser = browser
+                    browser_creation_time = time.time()
+                    logger.info("ブラウザが正常に初期化されました")
+                    return browser
+                else:
+                    retry_count += 1
+                    logger.warning(f"ブラウザの初期化に失敗しました（リトライ {retry_count}/{max_retries}）")
+                    await asyncio.sleep(1)  # 少し待機
+            except Exception as e:
+                retry_count += 1
+                logger.warning(f"ブラウザ初期化エラー（リトライ {retry_count}/{max_retries}）: {e}")
+                await asyncio.sleep(1)  # 少し待機
+        
+        logger.error(f"最大リトライ回数（{max_retries}回）を超えました。ブラウザの初期化に失敗しました。")
+        return None
     except Exception as e:
-        logger.error(f"ブラウザ初期化エラー: {e}")
+        logger.error(f"予期せぬエラーでブラウザの初期化に失敗しました: {e}")
         return None
 
 async def get_page(browser):
@@ -355,7 +374,9 @@ async def scrape_multiple_stores(urls, max_workers=None):
     logger.info(f"スクレイピングを開始します（店舗数: {total_urls}、並列実行数: {max_workers if max_workers else '自動'}）")
     
     # 環境に合わせた最適なバッチサイズとワーカー数を計算
+    # より小さなバッチサイズを使用して負荷を軽減
     batch_size, num_workers = calculate_optimal_batch_size(total_urls, max_workers)
+    batch_size = min(batch_size, 20)  # バッチサイズの上限を20に制限
     
     results = []
     processed_count = 0
@@ -363,8 +384,14 @@ async def scrape_multiple_stores(urls, max_workers=None):
     # ブラウザインスタンスの初期化
     browser = await init_browser()
     if not browser:
-        logger.error("ブラウザの初期化に失敗しました。スクレイピングを中止します。")
-        return []
+        # ブラウザの初期化に失敗した場合、少し待ってリトライ
+        logger.warning("最初のブラウザ初期化に失敗しました。5秒後にリトライします。")
+        await asyncio.sleep(5)
+        browser = await init_browser()
+        
+        if not browser:
+            logger.error("ブラウザの初期化に失敗しました。スクレイピングを中止します。")
+            return []
     
     # バッチ処理
     for i in range(0, total_urls, batch_size):
@@ -376,36 +403,67 @@ async def scrape_multiple_stores(urls, max_workers=None):
         
         logger.info(f"バッチ処理中: {i+1}〜{i+batch_size_actual}店舗 / 合計{total_urls}店舗")
         
+        # ブラウザの状態確認と必要に応じて再初期化
+        if not global_browser or time.time() - browser_creation_time > MAX_BROWSER_LIFETIME / 2:
+            try:
+                logger.info("ブラウザを再初期化します")
+                await init_browser()
+                if not global_browser:
+                    logger.error("ブラウザの再初期化に失敗しました。5秒待機後に再試行します。")
+                    await asyncio.sleep(5)
+                    await init_browser()
+            except Exception as e:
+                logger.error(f"ブラウザの再初期化中にエラーが発生しました: {e}")
+        
         # リソース使用状況のログ記録
         log_performance_metrics()
         
-        # 現在のバッチを非同期に処理
-        tasks = [scrape_single_store(url) for url in batch_urls]
-        batch_results = await asyncio.gather(*tasks)
-        
-        # 有効な結果のみを追加
-        valid_results = [r for r in batch_results if r]
-        results.extend(valid_results)
-        
-        # 進捗更新
-        processed_count += batch_size_actual
-        success_rate = len(valid_results) / batch_size_actual * 100 if batch_size_actual > 0 else 0
-        
-        # バッチ処理時間
-        batch_duration = time.time() - batch_start
-        logger.info(f"バッチ完了: {len(valid_results)}/{batch_size_actual}件成功 ({success_rate:.1f}%), "
-                   f"処理時間: {batch_duration:.1f}秒, 総進捗: {processed_count}/{total_urls}件")
-        
-        # バッチ処理間の適応的スリープ（サーバー負荷軽減とブロック回避）
-        if i + batch_size < total_urls:
-            adaptive_sleep(batch_duration)
+        try:
+            # 現在のバッチを非同期に処理
+            tasks = [scrape_single_store(url) for url in batch_urls]
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # 有効な結果のみを追加 (例外は除外)
+            valid_results = []
+            for res in batch_results:
+                if isinstance(res, Exception):
+                    logger.warning(f"スクレイピング中に例外が発生しました: {res}")
+                elif res:
+                    valid_results.append(res)
+            
+            results.extend(valid_results)
+            
+            # 進捗更新
+            processed_count += batch_size_actual
+            success_rate = len(valid_results) / batch_size_actual * 100 if batch_size_actual > 0 else 0
+            
+            # バッチ処理時間
+            batch_duration = time.time() - batch_start
+            logger.info(f"バッチ完了: {len(valid_results)}/{batch_size_actual}件成功 ({success_rate:.1f}%), "
+                       f"処理時間: {batch_duration:.1f}秒, 総進捗: {processed_count}/{total_urls}件")
+            
+            # バッチ処理間の適応的スリープ（サーバー負荷軽減とブロック回避）
+            # より長めのスリープを設定
+            if i + batch_size < total_urls:
+                sleep_time = max(5.0, batch_duration * 0.5)  # 少なくとも5秒、または処理時間の半分
+                logger.info(f"次のバッチまで {sleep_time:.1f}秒 待機します")
+                await asyncio.sleep(sleep_time)
+                
+            # 定期的にガベージコレクションを実行
+            if processed_count % 100 == 0:
+                import gc
+                gc.collect()
+                
+        except Exception as e:
+            logger.error(f"バッチ処理中に予期せぬエラーが発生しました: {e}")
     
     # ブラウザを閉じる
     try:
-        await global_browser.close()
-        global_browser = None
-    except Exception:
-        pass
+        if global_browser:
+            await global_browser.close()
+            global_browser = None
+    except Exception as e:
+        logger.error(f"ブラウザのクローズに失敗しました: {e}")
     
     return results
 
