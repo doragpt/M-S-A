@@ -23,6 +23,10 @@ import time
 # ロギング設定
 logger = logging.getLogger('app')
 
+# pyppeteerとwebsocketsのロギングレベルを上げてデバッグ出力を抑制
+logging.getLogger('pyppeteer').setLevel(logging.WARNING)
+logging.getLogger('websockets').setLevel(logging.WARNING)
+
 def get_system_resources():
     """システムリソースの使用状況を取得"""
     cpu_percent = psutil.cpu_percent(interval=0.1)
