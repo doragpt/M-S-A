@@ -24,8 +24,10 @@ import time
 logger = logging.getLogger('app')
 
 # pyppeteerとwebsocketsのロギングレベルを上げてデバッグ出力を抑制
-logging.getLogger('pyppeteer').setLevel(logging.WARNING)
-logging.getLogger('websockets').setLevel(logging.WARNING)
+logging.getLogger('pyppeteer').setLevel(logging.ERROR)
+logging.getLogger('websockets').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 def get_system_resources():
     """システムリソースの使用状況を取得"""

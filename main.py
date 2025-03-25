@@ -26,6 +26,12 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
+
+# サードパーティライブラリのロギングレベルを上げて出力を抑制
+logging.getLogger('pyppeteer').setLevel(logging.ERROR)
+logging.getLogger('websockets').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('asyncio').setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # Flaskアプリの初期化
