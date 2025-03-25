@@ -134,32 +134,38 @@ async def init_browser():
         
         while retry_count < max_retries:
             try:
-                # 新しいブラウザを起動（メモリ最適化設定）
+                # Replit環境用の設定を追加
+                chrome_args = [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-background-networking',
+                    '--disable-default-apps',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--hide-scrollbars',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-first-run',
+                    '--safebrowsing-disable-auto-update',
+                    '--js-flags=--max-old-space-size=512',
+                    '--single-process',  # Replit環境での安定性向上
+                    '--no-zygote',       # 子プロセス作成を避ける
+                ]
+                
+                # 新しいブラウザを起動（Replit環境用に最適化）
                 browser = await launch({
                     'headless': True,
                     'handleSIGINT': False,
                     'handleSIGTERM': False,
                     'handleSIGHUP': False,
-                    'args': [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-accelerated-2d-canvas',
-                        '--disable-gpu',
-                        '--disable-extensions',
-                        '--disable-background-networking',
-                        '--disable-default-apps',
-                        '--disable-sync',
-                        '--disable-translate',
-                        '--hide-scrollbars',
-                        '--metrics-recording-only',
-                        '--mute-audio',
-                        '--no-first-run',
-                        '--safebrowsing-disable-auto-update',
-                        '--js-flags=--max-old-space-size=512',  # V8メモリ制限をさらに下げる
-                    ],
+                    'args': chrome_args,
                     'ignoreHTTPSErrors': True,
-                    'defaultViewport': {'width': 1024, 'height': 768},  # 少し小さめに
+                    'defaultViewport': {'width': 800, 'height': 600},  # より小さく設定
+                    'executablePath': '/usr/bin/chromium-browser',  # Replitのデフォルトパス指定
                 })
                 
                 if browser:

@@ -154,23 +154,29 @@ def scheduled_scrape():
         logger.info(f"スクレイピング前メモリ: 使用率={mem_before.percent}%, 利用可能={mem_before.available / (1024*1024):.1f}MB")
 
         try:
-            # 12GB/6コア環境向けの最適化設定でスクレイピング実行
-            max_workers = 3  # 6コアの半分を使用
-            results = scrape_store_data(store_urls, max_workers)
-            
+            # スクレイピング実行（エラーハンドリング強化）
+            try:
+                max_workers = 1  # Replit環境ではワーカー数を減らす
+                results = scrape_store_data(store_urls, max_workers)
+            except Exception as e:
+                logger.error(f"スクレイピング実行中にエラーが発生しました: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                results = []
+
             # 明示的なガベージコレクション
             gc.collect()
-            
+
             logger.info(f"スクレイピング完了: 取得件数 {len(results)}")
 
             # バッチでDBに保存（メモリ効率化）
             record_update_count = 0
             record_insert_count = 0
             batch_size = 50
-            
+
             for i in range(0, len(results), batch_size):
                 batch = results[i:i+batch_size]
-                
+
                 for record in batch:
                     if not record:
                         continue
@@ -192,7 +198,7 @@ def scheduled_scrape():
                     """
                     existing = conn.execute(existing_query, 
                                           [store_name, area, formatted_time]).fetchone()
-                    
+
                     if existing:
                         # 既存レコードを更新
                         stmt = """
@@ -235,14 +241,14 @@ def scheduled_scrape():
                             record.get('shift_time', '')
                         ])
                         record_insert_count += 1
-                
+
                 # バッチごとにコミット
                 conn.commit()
                 conn.close()
-                
+
                 # メモリ解放のためのガベージコレクション
                 gc.collect()
-                
+
                 logger.debug(f"バッチ処理: {i+1}〜{min(i+batch_size, len(results))}件処理済み")
 
             logger.info(f"DB処理完了: 更新={record_update_count}件, 新規追加={record_insert_count}件")
