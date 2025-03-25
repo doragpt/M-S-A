@@ -1,3 +1,4 @@
+
 """
 スクレイピング高速実行スクリプト
 - 通常のアプリケーションとは別に、スクレイピングのみを高速実行するためのスクリプト
@@ -22,8 +23,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# スクレイパーのインポート
-from store_scraper import scrape_store_data
+# 以前のインポートを削除
+# from store_scraper import scrape_store_data
 
 # データベース設定（app.pyと同じ設定を使用）
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
@@ -199,6 +200,9 @@ def main():
     """メイン処理（メモリ管理を最適化）"""
     start_time = time.time()
     logger.info("高速スクレイピング処理を開始します")
+    
+    # store_scraper をここでインポートして循環参照を防ぐ
+    from store_scraper import scrape_store_data
     
     # 初期メモリ使用量をログ出力
     process = psutil.Process(os.getpid())

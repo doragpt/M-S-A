@@ -14,15 +14,94 @@ import traceback
 from pyppeteer import launch
 from pyppeteer.errors import TimeoutError, PageError
 
-# スピードアップスクリプトからの最適化関数のインポート
-from speed_up_script import (
-    calculate_optimal_batch_size,
-    log_performance_metrics,
-    adaptive_sleep
-)
+# 最適化関数を直接定義して循環参照を解消
+import os
+import psutil
+import logging
+import time
 
 # ロギング設定
 logger = logging.getLogger('app')
+
+def get_system_resources():
+    """システムリソースの使用状況を取得"""
+    cpu_percent = psutil.cpu_percent(interval=0.1)
+    memory = psutil.virtual_memory()
+    memory_percent = memory.percent
+    available_memory_mb = memory.available / (1024 * 1024)
+
+    return {
+        'cpu_percent': cpu_percent,
+        'memory_percent': memory_percent,
+        'available_memory_mb': available_memory_mb
+    }
+
+def calculate_optimal_batch_size(total_urls, max_workers=None):
+    """
+    システムリソースに基づいて最適なバッチサイズとワーカー数を計算
+
+    Args:
+        total_urls: 処理する総URL数
+        max_workers: 最大ワーカー数（指定がない場合は自動計算）
+
+    Returns:
+        (batch_size, num_workers): バッチサイズとワーカー数のタプル
+    """
+    # システムリソース情報の取得
+    resources = get_system_resources()
+    cpu_count = psutil.cpu_count(logical=True)
+
+    # 環境情報のログ出力
+    logger.info(f"システム情報: CPU={cpu_count}コア, メモリ使用率={resources['memory_percent']}%, "
+                f"利用可能メモリ={resources['available_memory_mb']:.1f}MB")
+
+    # 最大ワーカー数の決定（指定がない場合）
+    if max_workers is None:
+        # 12GB/6コアの環境向けの最適化：CPUコア数の半分を使用
+        # ブラウザインスタンスはメモリを大量に消費するため、同時実行数を制限
+        max_workers = min(cpu_count // 2 + 1, 3)  # 少なくとも1、最大でも3
+
+    # メモリ使用率に基づいてワーカー数を調整
+    if resources['memory_percent'] > 80:
+        # メモリ使用率が高い場合は並列数を減らす
+        num_workers = max(1, max_workers - 1)
+    elif resources['available_memory_mb'] < 1000:  # 1GB未満の場合
+        num_workers = 1  # 極端にメモリが少ない場合は1にする
+    else:
+        num_workers = max_workers
+
+    # バッチサイズの決定
+    # 各ワーカーあたり最大20URLを処理（メモリ消費を抑えるため）
+    worker_batch_size = min(20, max(5, int(1000 / num_workers)))
+    batch_size = worker_batch_size * num_workers
+
+    # 最小バッチサイズは1、最大はURLの総数
+    batch_size = min(max(1, batch_size), total_urls)
+
+    logger.info(f"最適化設定: ワーカー数={num_workers}, バッチサイズ={batch_size}, "
+                f"ワーカーあたりのURL数={worker_batch_size}")
+
+    return batch_size, num_workers
+
+def log_performance_metrics():
+    """パフォーマンス測定の記録を出力"""
+    resources = get_system_resources()
+    logger.debug(f"現在のリソース使用状況: CPU={resources['cpu_percent']}%, "
+                f"メモリ={resources['memory_percent']}%, "
+                f"利用可能メモリ={resources['available_memory_mb']:.1f}MB")
+
+def adaptive_sleep(last_batch_time, target_time=5.0):
+    """
+    バッチ処理間で適応的なスリープを実行
+
+    Args:
+        last_batch_time: 前回のバッチ処理にかかった時間（秒）
+        target_time: 目標とするバッチ処理+スリープの合計時間（秒）
+    """
+    if last_batch_time < target_time:
+        sleep_time = target_time - last_batch_time
+        logger.debug(f"適応スリープ: {sleep_time:.2f}秒")
+        time.sleep(sleep_time)
 
 # セッション共有のグローバル変数
 global_browser = None
@@ -301,12 +380,13 @@ async def scrape_multiple_stores(urls, max_workers=None):
     
     return results
 
-def scrape_store_data(store_urls, max_workers=None):
+def scrape_store_data(store_urls, batch_size=None, max_workers=None):
     """
     店舗データをスクレイピングするためのメイン関数
     
     Args:
         store_urls: スクレイピングするURLのリスト
+        batch_size: バッチサイズ
         max_workers: 最大並行処理数（Noneの場合は自動設定）
     
     Returns:
