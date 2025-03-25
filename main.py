@@ -111,9 +111,9 @@ with app.app_context():
 # API Blueprint登録
 app.register_blueprint(api_bp, url_prefix='/api')
 
-# スケジューリング用の設定
+# スケジューリング用の設定 (12GB/6コア向け最適化)
 jst = pytz.timezone('Asia/Tokyo')
-executors = {'default': ProcessPoolExecutor(max_workers=1)}
+executors = {'default': ProcessPoolExecutor(max_workers=3)}  # 6コア環境の半分を使用
 scheduler = BackgroundScheduler(executors=executors, timezone=jst)
 
 # 定期スクレイピング処理

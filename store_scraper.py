@@ -11,14 +11,14 @@ import gc
 # 定数設定
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
-# 8GB/6コアVPSのリソースを最適活用（コア数×2+2）
-MAX_CONCURRENT_TASKS = 10  # コア数×2+2の並列処理数（8GB/6コアに最適化）
+# 12GB/6コアVPSのリソースを最適活用（コア数×3）
+MAX_CONCURRENT_TASKS = 18  # 12GB/6コア向けに並列処理数を増加（コア数×3）
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
-PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に延長
+PAGE_LOAD_TIMEOUT = 12000  # ページロードのタイムアウト(12秒)に最適化
 # メモリ管理
-FORCE_GC_AFTER_STORES = 20  # 20店舗処理後に強制GC実行（メモリ節約）
+FORCE_GC_AFTER_STORES = 30  # 12GB RAM向けにGC実行間隔を拡大
 
 # ロギングレベルを設定
 import logging
@@ -279,35 +279,45 @@ async def _scrape_all(store_urls: list) -> list:
             "--disable-renderer-backgrounding",
             "--disable-infobars",
             "--js-flags=--expose-gc",
-            f"--memory-pressure-off",
-            f"--js-flags=--max-old-space-size=4096"
+            "--memory-pressure-off",
+            "--disable-software-rasterizer",
+            "--single-process", 
+            "--no-zygote",
+            "--js-flags=--max-old-space-size=8192"  # 12GB環境向けにメモリ使用上限を拡大
         ]
     )
     # 各店舗URLに対するスクレイピングタスクを作成
     tasks = [scrape_store(browser, url, semaphore) for url in store_urls]
     results = []
-    # タスクをバッチ単位で実行し、各バッチの間の待機時間を短縮
-    for i in range(0, len(tasks), MAX_CONCURRENT_TASKS):
-        batch = tasks[i:i+MAX_CONCURRENT_TASKS]
+    # 12GB/6コア向けに最適化されたバッチ処理
+    # バッチサイズを大きくし、効率的に処理
+    BATCH_SIZE = MAX_CONCURRENT_TASKS * 2  # より大きなバッチで処理
+    
+    for i in range(0, len(tasks), BATCH_SIZE):
+        batch = tasks[i:i+BATCH_SIZE]
         batch_start = i + 1
-        batch_end = min(i + MAX_CONCURRENT_TASKS, len(tasks))
+        batch_end = min(i + BATCH_SIZE, len(tasks))
         logger.info("バッチ処理中: %d〜%d店舗 / 合計%d店舗", batch_start, batch_end, len(store_urls))
         
+        # 並列処理を制御しながら実行（セマフォで上限を管理）
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
         
-        # 例外の処理とログ
+        # 例外の処理とログ - エラー詳細は省略してパフォーマンス向上
+        error_count = 0
         for j, result in enumerate(batch_results):
             if isinstance(result, Exception):
-                store_idx = i + j
-                if store_idx < len(store_urls):
-                    logger.error("店舗処理エラー（URL: %s）: %s", 
-                               store_urls[store_idx], str(result))
-                    batch_results[j] = {}  # エラーの場合は空の辞書に置き換え
+                error_count += 1
+                batch_results[j] = {}  # エラーの場合は空の辞書に置き換え
+        
+        if error_count > 0:
+            logger.warning("バッチ内エラー: %d/%d件", error_count, len(batch))
                     
         results.extend(batch_results)
-        logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
-        # バッチ間の待機なし - CPU使用率を最適化
-        await asyncio.sleep(0)
+        logger.info("バッチ完了: %d/%d件処理済み", min(i + BATCH_SIZE, len(tasks)), len(tasks))
+        
+        # メモリ管理を効率化 - 大きなバッチ処理後のみGCを実行
+        if (i // BATCH_SIZE) % 2 == 0:  # 2バッチごとにGC実行
+            gc.collect()
     
     logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()

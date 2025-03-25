@@ -28,8 +28,12 @@ from store_scraper import scrape_store_data
 
 # データベース設定（app.pyと同じ設定を使用）
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///store_data.db')
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_size=20, max_overflow=40)
 Session = sessionmaker(bind=engine)
+
+# 12GB/6コア環境向けリソース最適化設定
+MEMORY_LIMIT_GB = 12
+CPU_CORES = 6
 
 def get_all_store_urls():
     """データベースから全ての店舗URLを取得"""
@@ -47,11 +51,11 @@ def get_all_store_urls():
         session.close()
 
 def bulk_insert_results(results, timestamp):
-    """スクレイピング結果を一括でデータベースに挿入（最適化版）"""
+    """スクレイピング結果を一括でデータベースに挿入（12GB/6コア向け最適化版）"""
     session = Session()
     try:
-        # バルクインサート用のデータを準備（分割処理で最適化）
-        BATCH_SIZE = 100  # 一回のコミットあたりの最大レコード数
+        # 12GB/6コア向けにバッチサイズを最適化
+        BATCH_SIZE = 250  # 12GB RAMに最適化したバッチサイズ
         insert_values = []
         total_inserted = 0
         
