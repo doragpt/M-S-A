@@ -124,58 +124,77 @@ async def init_browser():
             await global_browser.close()
         except Exception:
             pass
+        global_browser = None
     
-    # 新しいブラウザを起動（メモリ最適化設定）
-    global_browser = await launch({
-        'headless': True,
-        'args': [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--disable-extensions',
-            '--disable-background-networking',
-            '--disable-default-apps',
-            '--disable-sync',
-            '--disable-translate',
-            '--hide-scrollbars',
-            '--metrics-recording-only',
-            '--mute-audio',
-            '--no-first-run',
-            '--safebrowsing-disable-auto-update',
-            '--js-flags=--max-old-space-size=1024',  # V8メモリ制限
-        ],
-        'ignoreHTTPSErrors': True,
-        'defaultViewport': {'width': 1280, 'height': 800},
-    })
-    browser_creation_time = time.time()
-    return global_browser
+    try:
+        # 新しいブラウザを起動（メモリ最適化設定）
+        global_browser = await launch({
+            'headless': True,
+            'args': [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--disable-translate',
+                '--hide-scrollbars',
+                '--metrics-recording-only',
+                '--mute-audio',
+                '--no-first-run',
+                '--safebrowsing-disable-auto-update',
+                '--js-flags=--max-old-space-size=1024',  # V8メモリ制限
+            ],
+            'ignoreHTTPSErrors': True,
+            'defaultViewport': {'width': 1280, 'height': 800},
+        })
+        browser_creation_time = time.time()
+        
+        # ブラウザが正常に起動したか確認
+        if not global_browser:
+            logger.error("ブラウザの初期化に失敗しました")
+            return None
+            
+        return global_browser
+    except Exception as e:
+        logger.error(f"ブラウザ初期化エラー: {e}")
+        return None
 
 async def get_page(browser):
     """新しいページを取得し、ステルスモードを設定"""
-    page = await browser.newPage()
-    
-    # ブラウザフィンガープリントの偽装（検出対策）
-    await page.evaluateOnNewDocument("""
-    () => {
-        Object.defineProperty(navigator, 'webdriver', {
-            get: () => false,
-        });
-    }
-    """)
-    
-    # タイムアウト設定（12GB/6コア環境に最適化）
-    await page.setDefaultNavigationTimeout(15000)
-    await page.setRequestInterception(True)
-    
-    # リソース節約のため不要なリクエストをブロック
-    page.on('request', lambda req: asyncio.ensure_future(
-        req.continue_() if req.resourceType in ['document', 'xhr', 'fetch'] 
-        else req.abort()
-    ))
-    
-    return page
+    if not browser:
+        logger.error("ブラウザインスタンスがNoneです")
+        return None
+        
+    try:
+        page = await browser.newPage()
+        
+        # ブラウザフィンガープリントの偽装（検出対策）
+        await page.evaluateOnNewDocument("""
+        () => {
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => false,
+            });
+        }
+        """)
+        
+        # タイムアウト設定（12GB/6コア環境に最適化）
+        await page.setDefaultNavigationTimeout(30000)  # タイムアウトを30秒に増加
+        await page.setRequestInterception(True)
+        
+        # リソース節約のため不要なリクエストをブロック
+        page.on('request', lambda req: asyncio.ensure_future(
+            req.continue_() if req.resourceType in ['document', 'xhr', 'fetch'] 
+            else req.abort()
+        ))
+        
+        return page
+    except Exception as e:
+        logger.error(f"ページ作成エラー: {e}")
+        return None
 
 async def scrape_single_store(url, retry_count=0, max_retries=2):
     """単一の店舗ページをスクレイピングする関数"""
@@ -183,10 +202,9 @@ async def scrape_single_store(url, retry_count=0, max_retries=2):
     
     # ブラウザインスタンスのライフタイムチェック
     if not global_browser or time.time() - browser_creation_time > MAX_BROWSER_LIFETIME:
-        try:
-            await init_browser()
-        except Exception as e:
-            logger.error(f"ブラウザの初期化に失敗: {e}")
+        browser = await init_browser()
+        if not browser:
+            logger.error("ブラウザの初期化に失敗しました")
             return None
     
     try:
@@ -194,18 +212,24 @@ async def scrape_single_store(url, retry_count=0, max_retries=2):
         logger.info(f"スクレイピング開始: {url}")
         
         page = await get_page(global_browser)
-        
+        if not page:
+            logger.error(f"ページの作成に失敗しました: {url}")
+            return None
+            
         # ページ読み込み
         await page.goto(url, {'waitUntil': 'domcontentloaded'})
         
         # ページが完全に読み込まれるのを待機
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)  # 待機時間を少し長くする
         
         # HTMLコンテンツの取得
         content = await page.content()
         
         # ページを閉じる
-        await page.close()
+        try:
+            await page.close()
+        except Exception as e:
+            logger.debug(f"ページクローズエラー（無視）: {e}")
         
         # BeautifulSoupでHTMLを解析
         soup = BeautifulSoup(content, 'html.parser')
@@ -337,10 +361,9 @@ async def scrape_multiple_stores(urls, max_workers=None):
     processed_count = 0
     
     # ブラウザインスタンスの初期化
-    try:
-        await init_browser()
-    except Exception as e:
-        logger.error(f"ブラウザ初期化エラー: {e}")
+    browser = await init_browser()
+    if not browser:
+        logger.error("ブラウザの初期化に失敗しました。スクレイピングを中止します。")
         return []
     
     # バッチ処理
