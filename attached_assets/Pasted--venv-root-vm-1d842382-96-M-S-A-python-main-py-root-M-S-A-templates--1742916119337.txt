@@ -1,0 +1,182 @@
+(venv) root@vm-1d842382-96:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-26 00:21:20,312 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 00:21:20,315 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 00:21:20,315 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-26 00:21:20,315 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-26 00:21:20,315 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-26 00:21:20,315 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-03-26 00:21:20,315 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-26 01:21:20.312695+09:00 (in 3599.996804 seconds)
+サーバー起動時刻（JST）: 2025-03-26 00:21:20 JST+0900
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=0件, URL=803件
+初期データ収集を開始します...
+2025-03-26 00:21:20,330 - __main__ - INFO - 定期スクレイピングを開始します
+2025-03-26 00:21:20,336 - __main__ - INFO - スクレイピング開始: 対象店舗数 803
+2025-03-26 00:21:20,336 - asyncio - DEBUG - Using selector: EpollSelector
+2025-03-26 00:21:20,337 - app - INFO - スクレイピングを開始します（店舗数: 803、並列実行数: 14）
+2025-03-26 00:21:20,607 - app - INFO - バッチ処理中: 1〜14店舗 / 合計803店舗
+2025-03-26 00:21:20,840 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/attend/soon/
+2025-03-26 00:21:20,840 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/attend/soon/
+2025-03-26 00:21:20,841 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/attend/soon/
+2025-03-26 00:21:20,841 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/attend/soon/
+2025-03-26 00:21:20,841 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/attend/soon/
+2025-03-26 00:21:20,841 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/attend/soon/
+2025-03-26 00:21:20,842 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/attend/soon/
+2025-03-26 00:21:20,842 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/attend/soon/
+2025-03-26 00:21:20,849 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/attend/soon/
+2025-03-26 00:21:20,850 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/attend/soon/
+2025-03-26 00:21:20,850 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/attend/soon/
+2025-03-26 00:21:20,850 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/attend/soon/
+2025-03-26 00:21:20,850 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/attend/soon/
+2025-03-26 00:21:20,851 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/attend/soon/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/
+再取得に失敗:  https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/
+再取得に失敗:  https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/
+再取得に失敗:  https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/tia/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1304/A130401/gingira/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/
+2025-03-26 00:21:27,912 - app - INFO - バッチ完了: 14/803件処理済み
+2025-03-26 00:21:27,913 - app - INFO - バッチ処理中: 15〜28店舗 / 合計803店舗
+2025-03-26 00:21:28,130 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/attend/soon/
+2025-03-26 00:21:28,131 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/attend/soon/
+2025-03-26 00:21:28,135 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/attend/soon/
+2025-03-26 00:21:28,135 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/attend/soon/
+2025-03-26 00:21:28,136 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/attend/soon/
+2025-03-26 00:21:28,140 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/attend/soon/
+2025-03-26 00:21:28,140 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/attend/soon/
+2025-03-26 00:21:28,144 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/attend/soon/
+2025-03-26 00:21:28,145 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/attend/soon/
+2025-03-26 00:21:28,145 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/attend/soon/
+2025-03-26 00:21:28,145 - app - INFO - スクレイピング開始: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/attend/soon/
+2025-03-26 00:21:28,146 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/attend/soon/
+2025-03-26 00:21:28,146 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1315/A131503/episode/attend/soon/
+2025-03-26 00:21:28,146 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/attend/soon/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+再取得に失敗:  https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1317/A131703/t-aventure/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1317/A131703/redberyl/
+再取得に失敗:  https://www.cityheaven.net/shizuoka/A2202/A220201/poison/
+再取得に失敗:  https://www.cityheaven.net/shizuoka/A2203/A220303/essence-n/
+再取得に失敗:  https://www.cityheaven.net/shizuoka/A2201/A220101/final_stage/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0801/A080101/g-spot/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0802/A080202/g-spot_t/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0802/A080202/purecos/
+再取得に失敗:  https://www.cityheaven.net/tokyo/A1315/A131503/episode/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0804/A080401/reddiamond/
+2025-03-26 00:21:34,004 - app - INFO - バッチ完了: 28/803件処理済み
+2025-03-26 00:21:34,004 - app - INFO - バッチ処理中: 29〜42店舗 / 合計803店舗
+2025-03-26 00:21:34,220 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gunma/A1002/A100203/phantom/attend/soon/
+2025-03-26 00:21:34,221 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/hime/attend/soon/
+2025-03-26 00:21:34,221 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/attend/soon/
+2025-03-26 00:21:34,222 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/attend/soon/
+2025-03-26 00:21:34,226 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/attend/soon/
+2025-03-26 00:21:34,227 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/attend/soon/
+2025-03-26 00:21:34,227 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/gekka/attend/soon/
+2025-03-26 00:21:34,227 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/attend/soon/
+2025-03-26 00:21:34,227 - app - INFO - スクレイピング開始: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/attend/soon/
+2025-03-26 00:21:34,228 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/attend/soon/
+2025-03-26 00:21:34,228 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1201/A120101/zero/attend/soon/
+2025-03-26 00:21:34,236 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230105/act/attend/soon/
+2025-03-26 00:21:34,236 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230103/elle/attend/soon/
+2025-03-26 00:21:34,237 - app - INFO - スクレイピング開始: https://www.cityheaven.net/aichi/A2301/A230101/papi/attend/soon/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/gifu/A2101/A210101/hime/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/chiba/A1201/A120101/zero/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/aichi/A2301/A230103/elle/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/aichi/A2301/A230105/act/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/aichi/A2301/A230101/papi/
+再取得に失敗:  https://www.cityheaven.net/gunma/A1002/A100203/phantom/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0802/A080202/palco/
+再取得に失敗:  https://www.cityheaven.net/saga/A4103/A410303/tokimeki/
+再取得に失敗:  https://www.cityheaven.net/gifu/A2101/A210101/hime/
+再取得に失敗:  https://www.cityheaven.net/gifu/A2101/A210101/cosplayacademy/
+再取得に失敗:  https://www.cityheaven.net/ibaraki/A0802/A080202/ring-tchur/
+再取得に失敗:  https://www.cityheaven.net/hiroshima/A3401/A340101/ocean/
+再取得に失敗:  https://www.cityheaven.net/chiba/A1201/A120101/zero/
+再取得に失敗:  https://www.cityheaven.net/kagawa/A3701/A370101/151-a/
+再取得に失敗:  https://www.cityheaven.net/saga/A4103/A410303/u-onepiece/
+再取得に失敗:  https://www.cityheaven.net/aichi/A2301/A230103/elle/
+再取得に失敗:  https://www.cityheaven.net/aichi/A2301/A230105/act/
+再取得に失敗:  https://www.cityheaven.net/aichi/A2301/A230101/gekka/
+再取得に失敗:  https://www.cityheaven.net/aichi/A2301/A230101/papi/
+2025-03-26 00:21:40,093 - app - INFO - バッチ完了: 42/803件処理済み
+2025-03-26 00:21:40,093 - app - INFO - バッチ処理中: 43〜56店舗 / 合計803店舗
+2025-03-26 00:21:40,303 - app - INFO - スクレイピング開始: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/attend/soon/
+2025-03-26 00:21:40,304 - app - INFO - スクレイピング開始: https://www.cityheaven.net/nagano/A2003/A200302/hug/attend/soon/
+2025-03-26 00:21:40,305 - app - INFO - スクレイピング開始: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/attend/soon/
+2025-03-26 00:21:40,305 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/attend/soon/
+2025-03-26 00:21:40,308 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/attend/soon/
+2025-03-26 00:21:40,311 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/attend/soon/
+2025-03-26 00:21:40,312 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/attend/soon/
+2025-03-26 00:21:40,316 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/attend/soon/
+2025-03-26 00:21:40,316 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/attend/soon/
+2025-03-26 00:21:40,317 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1101/A110101/chupa/attend/soon/
+2025-03-26 00:21:40,317 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/attend/soon/
+2025-03-26 00:21:40,317 - app - INFO - スクレイピング開始: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/attend/soon/
+2025-03-26 00:21:40,317 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/attend/soon/
+2025-03-26 00:21:40,323 - app - INFO - スクレイピング開始: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/attend/soon/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/gifu/A2101/A210102/fujiko-gifu/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1105/A110501/kumagayaresort/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/chiba/A1204/A120401/momojiri/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/nagano/A2003/A200302/hug/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1101/A110101/sugoiyoparadise/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/fukui/A1801/A180101/madam_nana/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1101/A110101/chupa/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ishikawa/A1701/A170101/trump_k/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/toyama/A1601/A160101/hillswest_t/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/fukushima/A0702/A070201/siritukooriyamagakuen/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1104/A110403/pottyarino_kk/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/saitama/A1104/A110403/inranclub/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/fukui/A1801/A180101/hillswest/
+店舗情報再取得試行 1 回目: https://www.cityheaven.net/ishikawa/A1701/A170101/madam_nana_k/
+^Z
+[1]+  Stopped                 python main.py
+(venv) root@vm-1d842382-96:~/M-S-A#
