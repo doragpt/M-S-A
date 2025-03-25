@@ -1,0 +1,76 @@
+(venv) root@vm-1d842382-96:~/M-S-A# python main.py
+テンプレートディレクトリ: /root/M-S-A/templates
+静的ファイルディレクトリ: /root/M-S-A/static
+2025-03-25 22:32:54,027 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:32:54,029 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-25 22:32:54,030 - apscheduler.scheduler - INFO - Added job "scheduled_scrape" to job store "default"
+2025-03-25 22:32:54,030 - apscheduler.scheduler - INFO - Added job "<lambda>" to job store "default"
+2025-03-25 22:32:54,030 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-25 22:32:54,030 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+サーバー起動時刻（JST）: 2025-03-25 22:32:54 JST+0900
+2025-03-25 22:32:54,033 - apscheduler.scheduler - DEBUG - Next wakeup is due at 2025-03-25 23:32:54.027603+09:00 (in 3599.993930 seconds)
+アプリケーションを起動しています: http://0.0.0.0:5000
+データベース状態確認: ステータス=0件, URL=803件
+初期データ収集を開始します...
+2025-03-25 22:32:54,048 - __main__ - INFO - 定期スクレイピングを開始します
+2025-03-25 22:32:54,054 - __main__ - INFO - スクレイピング開始: 対象店舗数 803
+2025-03-25 22:32:54,055 - asyncio - DEBUG - Using selector: EpollSelector
+2025-03-25 22:32:54,055 - app - INFO - スクレイピングを開始します（店舗数: 803、並列実行数: 18）
+2025-03-25 22:32:55,480 - app - INFO - バッチ処理中: 1〜36店舗 / 合計803店舗
+2025-03-25 22:32:55,959 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/tia/attend/soon/
+2025-03-25 22:32:55,959 - app - INFO - スクレイピング開始: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/attend/soon/
+2025-03-25 22:32:55,960 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/attend/soon/
+2025-03-25 22:32:55,961 - app - INFO - スクレイピング開始: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/attend/soon/
+2025-03-25 22:32:55,961 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/attend/soon/
+2025-03-25 22:32:55,961 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/attend/soon/
+2025-03-25 22:32:55,961 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/attend/soon/
+2025-03-25 22:32:55,961 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/attend/soon/
+2025-03-25 22:32:55,962 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/attend/soon/
+2025-03-25 22:32:55,962 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/attend/soon/
+2025-03-25 22:32:55,962 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/attend/soon/
+2025-03-25 22:32:55,963 - app - INFO - スクレイピング開始: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/attend/soon/
+2025-03-25 22:32:55,963 - app - INFO - スクレイピング開始: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/attend/soon/
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/attend/soon/ - Protocol error Page.navigate: Target closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1202/A120201/aneshinchi/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/finemotion/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/gingira/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/stella_tokyo/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ug-platinum/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/ultragrace/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1312/A131205/kanteidan2/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/shinjuku-deri/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1303/A130301/eos-gal/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1313/A131301/delice-love/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/kanagawa/A1401/A140103/delice-y/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/ultraparadise/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1305/A130505/i-pururungang/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1303/A130301/a-mone/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/tia/attend/soon/ - Navigation Timeout Exceeded: 15000 ms exceeded.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/attend/soon/ - Navigation Timeout Exceeded: 15000 ms exceeded.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/attend/soon/ - Navigation Timeout Exceeded: 15000 ms exceeded.
+ページロード失敗（リトライ 1/2）: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/attend/soon/ - Navigation Timeout Exceeded: 15000 ms exceeded.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/tia/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/saitama/A1103/A110303/parfaiteluna/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/chiba/A1202/A120201/wonder-hole/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+ページロード失敗（リトライ 2/2）: https://www.cityheaven.net/tokyo/A1304/A130401/deli-shinjuku-k/attend/soon/ - Protocol Error (Page.navigate): Session closed. Most likely the page has been closed.
+^Z
+[1]+  Stopped                 python main.py
+(venv) root@vm-1d842382-96:~/M-S-A#
