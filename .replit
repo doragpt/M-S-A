@@ -12,7 +12,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run"
+runButton = "Run Dev Server"
 
 [[workflows.workflow]]
 name = "Run"
@@ -22,3 +22,21 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
+
+[[workflows.workflow]]
+name = "Run Dev Server"
+author = 40138017
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Run Production Server"
+author = 40138017
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn -c gunicorn_config.py main:app"

@@ -407,15 +407,9 @@ def bulk_add_store_urls():
 
     return redirect(url_for('manage_store_urls'))
 
-# メイン実行部分
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    jst = pytz.timezone('Asia/Tokyo')
-    now_jst = datetime.now(jst)
-    print(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
-    print(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
-
-    # 初期データのスクレイピングを実行
+# 初期データ収集を遅延実行するための関数
+def delayed_initial_setup():
+    """サーバー起動後に初期設定を行う関数"""
     with app.app_context():
         try:
             # 既存データとURLの確認
@@ -423,10 +417,11 @@ if __name__ == '__main__':
             status_count = StoreStatus.query.count()
             url_count = StoreURL.query.count()
 
-            print(f"データベース状態確認: ステータス={status_count}件, URL={url_count}件")
+            logger.info(f"データベース状態確認: ステータス={status_count}件, URL={url_count}件")
 
             if url_count == 0:
-                # サンプルURLを追加
+                # 本番環境用：実際の店舗URLを登録してください
+                # サンプルURLの追加
                 sample_urls = [
                     "https://example1.com/store1",
                     "https://example2.com/store2"
@@ -435,14 +430,33 @@ if __name__ == '__main__':
                     new_url = StoreURL(store_url=url)
                     db.session.add(new_url)
                 db.session.commit()
-                print("サンプルURLを追加しました")
+                logger.info("サンプルURLを追加しました")
 
             if status_count == 0:
-                print("初期データ収集を開始します...")
+                logger.info("初期データ収集を開始します...")
                 scheduled_scrape()
 
         except Exception as e:
-            print(f"初期化エラー: {e}")
+            logger.error(f"初期化エラー: {e}")
 
+# メイン実行部分
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = datetime.now(jst)
+    logger.info(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
+    logger.info(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
+
+    # サーバー起動後に初期データ収集を遅延実行
+    scheduler.add_job(
+        delayed_initial_setup, 
+        trigger='date', 
+        run_date=datetime.now(jst) + timedelta(seconds=10),
+        id='initial_setup'
+    )
+    
+    # 本番環境では debug=False にすることを推奨
+    is_debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
+    
     # サーバー起動
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=is_debug, allow_unsafe_werkzeug=True)

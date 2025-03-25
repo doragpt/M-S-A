@@ -12,7 +12,7 @@ import gc
 # -------------------------------
 # 並列処理する店舗数の上限（同時に処理するタスク数）
 # 8GB/6コアVPSのリソースを最適活用（コア数×2+2）
-MAX_CONCURRENT_TASKS = 14  # コア数×2+2の並列処理数（8GB/6コアに最適化）
+MAX_CONCURRENT_TASKS = 8  # コア数×2+2の並列処理数（8GB/6コアに最適化）
 # 店舗情報が取得できなかった場合の再試行回数
 MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 # タイムアウト設定
@@ -32,13 +32,13 @@ logging.getLogger('pyppeteer').setLevel(logging.WARNING)
 async def fetch_page(page, url, retries=2, timeout=10000):
     """
     指定されたページでURLにアクセスし、ネットワークアイドル状態になるまで待機する関数
-    
+
     Parameters:
       - page: pyppeteer のページオブジェクト
       - url: アクセスするURL
       - retries: リトライ回数（デフォルト2回に短縮）
       - timeout: タイムアウト（ミリ秒単位、デフォルト10000ms=10秒に短縮）
-    
+
     Returns:
       - True: ページの読み込みに成功した場合
       - False: 全てのリトライで失敗した場合
@@ -61,18 +61,18 @@ async def scrape_store(browser, url: str, semaphore) -> dict:
     - ヘッドレスブラウザを用いて対象ページにアクセス
     - BeautifulSoup でHTMLをパースして店舗情報とシフト情報を取得
     - ページ再利用により再取得時に新規ページ作成のオーバーヘッドを削減
-    
+
     Parameters:
       - browser: pyppeteer のブラウザオブジェクト
       - url: 店舗の基本URL（必要に応じて末尾に "/" を追加）
       - semaphore: 並列実行制御用のセマフォ
-    
+
     Returns:
       - dict: 取得した店舗情報およびシフト情報の集計結果
     """
     import logging
     logger = logging.getLogger('app')
-    
+
     async with semaphore:
         # URLの末尾に "/" がなければ追加し、出勤情報ページのURLを作成
         if not url.endswith("/"):
@@ -250,10 +250,10 @@ async def _scrape_all(store_urls: list) -> list:
     """
     import logging
     logger = logging.getLogger('app')
-    
+
     logger.info("スクレイピングを開始します（店舗数: %d、並列実行数: %d）", 
                len(store_urls), MAX_CONCURRENT_TASKS)
-    
+
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     executable_path = '/usr/bin/google-chrome'
     browser = await launch(
@@ -292,9 +292,9 @@ async def _scrape_all(store_urls: list) -> list:
         batch_start = i + 1
         batch_end = min(i + MAX_CONCURRENT_TASKS, len(tasks))
         logger.info("バッチ処理中: %d〜%d店舗 / 合計%d店舗", batch_start, batch_end, len(store_urls))
-        
+
         batch_results = await asyncio.gather(*batch, return_exceptions=True)
-        
+
         # 例外の処理とログ
         for j, result in enumerate(batch_results):
             if isinstance(result, Exception):
@@ -303,12 +303,12 @@ async def _scrape_all(store_urls: list) -> list:
                     logger.error("店舗処理エラー（URL: %s）: %s", 
                                store_urls[store_idx], str(result))
                     batch_results[j] = {}  # エラーの場合は空の辞書に置き換え
-                    
+
         results.extend(batch_results)
         logger.info("バッチ完了: %d/%d件処理済み", min(i + MAX_CONCURRENT_TASKS, len(tasks)), len(tasks))
         # バッチ間の待機なし - CPU使用率を最適化
         await asyncio.sleep(0)
-    
+
     logger.info("全スクレイピング処理完了: 取得レコード数 %d", len(results))
     gc.collect()
     await browser.close()
