@@ -20,3 +20,6 @@ psutil
 flask-session
 reportlab
 openpyxl
+requests
+lxml
+aiohttp

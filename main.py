@@ -119,9 +119,14 @@ with app.app_context():
 # API Blueprint登録
 app.register_blueprint(api_bp, url_prefix='/api')
 
-# スケジューリング用の設定 (12GB/6コア向け最適化)
+# スケジューリング用の設定 (VPS環境向け最適化)
 jst = pytz.timezone('Asia/Tokyo')
-executors = {'default': ProcessPoolExecutor(max_workers=3)}  # 6コア環境の半分を使用
+# 利用可能なCPUコア数に基づいて動的に設定
+import psutil
+cpu_count = psutil.cpu_count(logical=True)
+max_workers = max(1, min(cpu_count // 2, 2))  # VPS環境では1～2を推奨
+logger.info(f"スケジューラの設定: CPUコア数={cpu_count}, ワーカー数={max_workers}")
+executors = {'default': ProcessPoolExecutor(max_workers=max_workers)}
 scheduler = BackgroundScheduler(executors=executors, timezone=jst)
 
 # 定期スクレイピング処理
