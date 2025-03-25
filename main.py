@@ -445,18 +445,29 @@ if __name__ == '__main__':
     jst = pytz.timezone('Asia/Tokyo')
     now_jst = datetime.now(jst)
     logger.info(f"サーバー起動時刻（JST）: {now_jst.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
-    logger.info(f"アプリケーションを起動しています: http://0.0.0.0:{port}")
-
-    # サーバー起動後に初期データ収集を遅延実行
-    scheduler.add_job(
-        delayed_initial_setup, 
-        trigger='date', 
-        run_date=datetime.now(jst) + timedelta(seconds=10),
-        id='initial_setup'
-    )
     
-    # 本番環境では debug=False にすることを推奨
-    is_debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
-    
-    # サーバー起動
-    socketio.run(app, host="0.0.0.0", port=port, debug=is_debug, allow_unsafe_werkzeug=True)
+    # 開発環境の場合のみ:
+    if os.environ.get('FLASK_ENV') == 'development':
+        logger.info(f"開発サーバーを起動しています: http://0.0.0.0:{port}")
+        
+        # サーバー起動後に初期データ収集を遅延実行
+        scheduler.add_job(
+            delayed_initial_setup, 
+            trigger='date', 
+            run_date=datetime.now(jst) + timedelta(seconds=10),
+            id='initial_setup'
+        )
+        
+        # 開発サーバー起動
+        socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    else:
+        # 本番環境では Gunicorn で起動するため、ここでは何もしない
+        # 代わりに gunicorn -c gunicorn_config.py main:app コマンドを使用する
+        
+        # 初期データ収集を即時実行
+        logger.info("本番モードで初期化を行います")
+        delayed_initial_setup()
+        
+        # Gunicorn では socketio.run() を呼び出さない
+        # Gunicorn と eventlet ワーカーが WebSocket 接続を処理する
+        logger.info("本番環境ではgunicornコマンドでサーバーを起動してください: gunicorn -c gunicorn_config.py main:app")

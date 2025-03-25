@@ -6,6 +6,7 @@ import re
 from datetime import datetime, timedelta
 import pytz
 import gc
+import random
 
 # -------------------------------
 # 定数設定
@@ -19,6 +20,7 @@ MAX_RETRIES_FOR_INFO = 1  # 再試行回数を最小化して高速化
 PAGE_LOAD_TIMEOUT = 15000  # ページロードのタイムアウト(15秒)に延長
 # メモリ管理
 FORCE_GC_AFTER_STORES = 40  # 40店舗処理後に強制GC実行（メモリ節約）
+MAX_RETRIES = 3 # 最大再試行回数
 
 # ロギングレベルを設定
 import logging
@@ -279,8 +281,10 @@ async def _scrape_all(store_urls: list) -> list:
             "--disable-renderer-backgrounding",
             "--disable-infobars",
             "--js-flags=--expose-gc",
-            f"--memory-pressure-off",
-            f"--js-flags=--max-old-space-size=4096"
+            "--memory-pressure-off",
+            "--js-flags=--max-old-space-size=4096",
+            "--disable-features=IsolateOrigins,site-per-process",
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         ]
     )
     # 各店舗URLに対するスクレイピングタスクを作成
@@ -347,3 +351,7 @@ def scrape_store_data(store_urls: list) -> list:
 def _scrape_subprocess(store_urls):
     """サブプロセスで実行するためのヘルパー関数"""
     return asyncio.run(_scrape_all(store_urls))
+
+def parse_html(soup, url):
+    # Placeholder - Replace with your actual HTML parsing logic
+    return {"url": url, "data": "parsed data"}
